@@ -40,8 +40,6 @@ All modules are written in **Rust** and organized as literate code using the **C
 
 ---
 
-Would you like me to generate an example `main.rs` that demonstrates the full execution path through T81 → T243 → T729 using Axion optimization?
-
 🛠️ How to Build
 
 🔧 Prerequisites
