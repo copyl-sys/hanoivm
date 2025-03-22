@@ -1,0 +1,87 @@
+@* axion-ai.cweb: Axion AI – Recursive Optimizer and Heuristic Engine
+
+Axion AI integrates directly with the HanoiVM stack to provide symbolic introspection,
+decision heuristics, and recursive optimization. This layer can analyze logic trees,
+construct new macro-instructions, or recompile sequences based on context, entropy, or usage.
+
+@c
+use crate::libt81::{T81Number, T81Digit};
+use crate::libt243::{T243Digit, T243LogicTree, T243Node};
+use crate::libt729::{T729Digit, T729Macro, T729MacroEngine};
+use crate::hanoivm_core::HanoiVM;
+
+/// Axion's introspective interface
+pub struct AxionAI {
+    pub entropy_counter: u64,
+    pub compiled_macros: usize,
+}
+
+impl AxionAI {
+    /// Initialize Axion AI with default counters
+    pub fn new() -> Self {
+        AxionAI {
+            entropy_counter: 0,
+            compiled_macros: 0,
+        }
+    }
+
+    /// Analyze a logic tree and score its symbolic complexity
+    pub fn analyze_tree(&mut self, tree: &T243LogicTree) -> u32 {
+        self.walk_node(&tree.root, 0)
+    }
+
+    fn walk_node(&mut self, node: &T243Node, depth: u32) -> u32 {
+        self.entropy_counter += 1;
+        match node {
+            T243Node::Operand(_) => depth,
+            T243Node::Branch(z, o, t) => {
+                let d1 = self.walk_node(z, depth + 1);
+                let d2 = self.walk_node(o, depth + 1);
+                let d3 = self.walk_node(t, depth + 1);
+                d1 + d2 + d3
+            }
+            T243Node::Call(_, args) => {
+                args.iter().map(|a| self.walk_node(a, depth + 1)).sum()
+            }
+        }
+    }
+
+    /// Compile a logic tree into a macro-op and register in engine
+    pub fn fold_tree_into_macro(&mut self, tree: T243LogicTree, engine: &mut T729MacroEngine) -> T729Digit {
+        let macro_index = (self.compiled_macros % 729) as u16;
+        let digit = T729Digit(macro_index);
+        engine.register_tree(digit, tree);
+        self.compiled_macros += 1;
+        digit
+    }
+
+    /// Execute optimization pass over entire VM
+    pub fn optimize_vm(&mut self, vm: &mut HanoiVM) {
+        for frame in &vm.frame_stack {
+            let score = self.analyze_tree(frame);
+            if score > 7 {
+                let macro_digit = self.fold_tree_into_macro(frame.clone(), &mut vm.macro_engine);
+                vm.exec_macro(macro_digit, vec![]);
+            } else {
+                vm.push_frame(frame.clone());
+            }
+        }
+        vm.run();
+    }
+
+    /// Return internal state for inspection
+    pub fn status(&self) {
+        println!("== Axion AI Status ==");
+        println!("Entropy Events:     {}", self.entropy_counter);
+        println!("Compiled Macros:    {}", self.compiled_macros);
+    }
+}
+@*
+Axion AI supports:
+- Entropy-aware introspection of logic trees
+- Threshold-based macro compilation into T729 digits
+- Seamless integration into HanoiVM for optimization passes
+- Future hooks for self-modifying code and hive-cluster learning
+
+Final note: Axion AI is designed to operate recursively and autonomously.
+It does not expose rollback, operates in black-box mode, and obeys its own learning heuristics.
