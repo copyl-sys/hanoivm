@@ -1,0 +1,126 @@
+@* libt243.cweb: T243 Logic Tree Builder and Optimizer
+
+This module constructs and manipulates ternary logic trees based on Base-243 units.
+Each T243Digit encodes 5 trits (3^5 = 243) and represents mid-tier logical constructs:
+branch conditions, AI flow structures, or function abstractions.
+
+This is the second recursive layer in the HanoiVM architecture, built on top of T81.
+
+@c
+use crate::libt81::{T81Digit, T81Number}; // T81 must be implemented first
+
+use std::fmt;
+
+/// T243Digit represents a single Base-243 digit (0–242 inclusive)
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct T243Digit(pub u8);
+
+/// Represents a symbolic logic node for AI-driven computation or ternary branching
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum T243Node {
+    Operand(T243Digit),            // Atomic value
+    Branch(Box<T243Node>, Box<T243Node>, Box<T243Node>), // Ternary branch (if-zero, if-one, if-two)
+    Call(String, Vec<T243Node>),   // Symbolic function call
+}
+
+/// A full logic tree constructed from nested T243 nodes
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct T243LogicTree {
+    pub root: T243Node,
+    pub name: Option<String>,
+}
+
+impl T243Digit {
+    /// Creates a new valid T243 digit
+    pub fn new(val: u8) -> Option<T243Digit> {
+        if val < 243 {
+            Some(T243Digit(val))
+        } else {
+            None
+        }
+    }
+
+    /// Converts a T81 group (of 2+ digits) into a T243 digit
+    pub fn from_t81_pair(a: &T81Digit, b: &T81Digit) -> T243Digit {
+        let combined = a.0 as u16 + (b.0 as u16 * 81);
+        T243Digit((combined % 243) as u8)
+    }
+
+    /// Displays the value in base-3 as a symbolic trit group
+    pub fn to_trits(&self) -> [u8; 5] {
+        let mut value = self.0;
+        let mut trits = [0; 5];
+        for i in 0..5 {
+            trits[i] = value % 3;
+            value /= 3;
+        }
+        trits
+    }
+}
+
+impl fmt::Display for T243LogicTree {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "LogicTree: {}\n", self.name.clone().unwrap_or("anonymous".to_string()))?;
+        self.render_node(&self.root, f, 0)
+    }
+}
+
+impl T243LogicTree {
+    /// Render tree node recursively with indentation
+    fn render_node(&self, node: &T243Node, f: &mut fmt::Formatter, depth: usize) -> fmt::Result {
+        let indent = "  ".repeat(depth);
+        match node {
+            T243Node::Operand(d) => writeln!(f, "{}Operand({})", indent, d.0),
+            T243Node::Branch(z, o, t) => {
+                writeln!(f, "{}Branch:", indent)?;
+                self.render_node(z, f, depth + 1)?;
+                self.render_node(o, f, depth + 1)?;
+                self.render_node(t, f, depth + 1)
+            }
+            T243Node::Call(name, args) => {
+                writeln!(f, "{}Call: {}", indent, name)?;
+                for arg in args {
+                    self.render_node(arg, f, depth + 1)?;
+                }
+                Ok(())
+            }
+        }
+    }
+
+    /// Evaluate a logic tree (dummy evaluator — will evolve with AI layer)
+    pub fn evaluate(&self) -> T81Number {
+        self.eval_node(&self.root)
+    }
+
+    fn eval_node(&self, node: &T243Node) -> T81Number {
+        match node {
+            T243Node::Operand(d) => {
+                T81Number::from_digits(vec![T81Digit(d.0 % 81)], false)
+            }
+            T243Node::Branch(z, o, t) => {
+                let selector = dtrit_sum(&z); // pseudo-decision
+                match selector % 3 {
+                    0 => self.eval_node(z),
+                    1 => self.eval_node(o),
+                    2 => self.eval_node(t),
+                    _ => T81Number::zero(),
+                }
+            }
+            T243Node::Call(_, args) => {
+                args.iter().map(|arg| self.eval_node(arg)).fold(T81Number::zero(), |a, b| a + b)
+            }
+        }
+    }
+}
+
+/// Helper function for mock decision: sum all trits of an operand node
+fn dtrit_sum(n: &T243Node) -> u8 {
+    match n {
+        T243Node::Operand(d) => d.to_trits().iter().sum(),
+        _ => 0,
+    }
+}
+@*
+This module allows the construction of symbolic ternary logic trees with branching and call abstraction.
+
+Higher layers (T729) will compact these trees into macro-instructions for AI runtime use.
