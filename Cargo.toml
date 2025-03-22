@@ -1,0 +1,9 @@
+[package]
+name = "hanoivm"
+version = "0.1.0"
+edition = "2021"
+authors = ["You <you@example.com>"]
+description = "Recursive HanoiVM Virtual Machine with AI Integration"
+license = "MIT"
+
+[dependencies]
