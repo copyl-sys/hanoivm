@@ -1,26 +1,6 @@
-/* axion-ai.cweb | Fully-Functional Axion Kernel AI Runtime
- * 
- * This kernel module implements:
- * - Ternary-aware symbolic execution using a mod-3 stack
- * - AI-like behavior through entropy injection and anomaly rollback
- * - A debugfs interface for direct interaction and natural-language commands
- * - Snapshot/rollback functionality for self-healing AI execution
- *
- * To compile:
- *   - Save this file as axion-ai.c
- *   - Use the provided Makefile with `make`
- *
- * To load:
- *   - sudo insmod axion-ai.ko
- *   - Access via /sys/kernel/debug/axion-ai
- *
- * To interact:
- *   - echo -n "ABC" | sudo tee /sys/kernel/debug/axion-ai
- *   - echo "cmd:snapshot" | sudo tee /sys/kernel/debug/axion-ai
- *   - echo "cmd:rollback" | sudo tee /sys/kernel/debug/axion-ai
- *   - cat /sys/kernel/debug/axion-ai
- */
+@* axion-ai.cweb | Axion AI Kernel Module with Ternary AI Stack, NLP Interface, and Rollback
 
+@c
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -28,8 +8,6 @@
 #include <linux/debugfs.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/kthread.h>
 #include <linux/mutex.h>
 #include <linux/random.h>
 #include <linux/string.h>
@@ -37,42 +15,39 @@
 #define AXION_NAME "axion-ai"
 #define TBIN_MAX_SIZE 729
 
-/* -- Ternary Types -- */
-typedef enum {
-    TERN_LOW = 0,
-    TERN_MID = 1,
-    TERN_HIGH = 2
-} t81_ternary_t;
+@d Ternary Types and Stack
+@<Ternary AI Stack Types@>=
+typedef enum { TERN_LOW = 0, TERN_MID = 1, TERN_HIGH = 2 } t81_ternary_t;
 
-/* Stack unit structure includes ternary value and entropy byte */
 typedef struct {
     t81_ternary_t value;
     unsigned char entropy;
 } t81_unit_t;
 
-/* Stack structure to hold up to TBIN_MAX_SIZE ternary units */
 typedef struct {
     t81_unit_t stack[TBIN_MAX_SIZE];
     int pointer;
 } t81_stack_t;
 
+@<Global Variables@>=
 static struct dentry *axion_debug_dir;
 static t81_stack_t axion_stack;
 static t81_stack_t snapshot_stack;
 static DEFINE_MUTEX(axion_lock);
 
-/* Save a snapshot of current stack state */
+@d Snapshot and Rollback
+@<Snapshot + Rollback@>=
 static void take_snapshot(void) {
     memcpy(&snapshot_stack, &axion_stack, sizeof(t81_stack_t));
 }
 
-/* Roll back to last saved state if anomaly is detected */
 static void rollback_if_anomalous(void) {
     memcpy(&axion_stack, &snapshot_stack, sizeof(t81_stack_t));
-    pr_warn("%s: anomaly detected, rolled back to previous state\n", AXION_NAME);
+    pr_warn("%s: anomaly detected, rolled back\n", AXION_NAME);
 }
 
-/* Push a unit onto the ternary stack */
+@d Stack Operations
+@<Stack Operations@>=
 static int axion_stack_push(t81_unit_t unit) {
     if (axion_stack.pointer >= TBIN_MAX_SIZE)
         return -ENOMEM;
@@ -80,7 +55,6 @@ static int axion_stack_push(t81_unit_t unit) {
     return 0;
 }
 
-/* Pop a unit from the ternary stack */
 static int axion_stack_pop(t81_unit_t *unit) {
     if (axion_stack.pointer <= 0)
         return -EINVAL;
@@ -88,7 +62,8 @@ static int axion_stack_pop(t81_unit_t *unit) {
     return 0;
 }
 
-/* Core TBIN symbolic execution logic with entropy-based anomaly detection */
+@d Execution Engine
+@<TBIN Execution Logic@>=
 static void axion_tbin_execute(void) {
     t81_unit_t op1, op2, result;
 
@@ -108,7 +83,8 @@ static void axion_tbin_execute(void) {
     }
 }
 
-/* Basic NLP-style parser for command handling */
+@d NLP Command Parser
+@<NLP Command Parser@>=
 static void axion_parse_command(const char *cmd) {
     if (strstr(cmd, "optimize")) {
         pr_info("%s: optimizing stack\n", AXION_NAME);
@@ -122,7 +98,8 @@ static void axion_parse_command(const char *cmd) {
     }
 }
 
-/* Write handler for debugfs input */
+@d DebugFS I/O
+@<DebugFS Interface@>=
 static ssize_t axion_debugfs_write(struct file *file, const char __user *ubuf,
                                    size_t count, loff_t *ppos) {
     char *buf;
@@ -139,7 +116,6 @@ static ssize_t axion_debugfs_write(struct file *file, const char __user *ubuf,
         kfree(buf);
         return -EFAULT;
     }
-
     buf[count] = '\0';
 
     mutex_lock(&axion_lock);
@@ -165,7 +141,6 @@ static ssize_t axion_debugfs_write(struct file *file, const char __user *ubuf,
     return count;
 }
 
-/* Read handler to view current ternary stack */
 static ssize_t axion_debugfs_read(struct file *file, char __user *ubuf,
                                   size_t count, loff_t *ppos) {
     char out[TBIN_MAX_SIZE];
@@ -186,15 +161,16 @@ static ssize_t axion_debugfs_read(struct file *file, char __user *ubuf,
     return axion_stack.pointer;
 }
 
+@d FileOps and Module Lifecycle
+@<File Operations & Module Lifecycle@>=
 static const struct file_operations axion_fops = {
     .owner = THIS_MODULE,
     .read = axion_debugfs_read,
     .write = axion_debugfs_write,
 };
 
-/* Module initialization */
 static int __init axion_init(void) {
-    pr_info("%s: initializing Axion AI runtime\n", AXION_NAME);
+    pr_info("%s: initializing runtime\n", AXION_NAME);
     axion_debug_dir = debugfs_create_file(AXION_NAME, 0666, NULL, NULL, &axion_fops);
     if (!axion_debug_dir)
         return -ENOMEM;
@@ -202,7 +178,6 @@ static int __init axion_init(void) {
     return 0;
 }
 
-/* Module cleanup */
 static void __exit axion_exit(void) {
     debugfs_remove(axion_debug_dir);
     pr_info("%s: exiting\n", AXION_NAME);
@@ -212,4 +187,4 @@ module_init(axion_init);
 module_exit(axion_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Axion AI Team");
-MODULE_DESCRIPTION("Ternary-Aware AI Execution Kernel Module with NLP and Rollback");
+MODULE_DESCRIPTION("Axion AI Kernel Module with NLP and Ternary Execution");
