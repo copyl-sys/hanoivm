@@ -1,8 +1,9 @@
-@* Enhanced T81 Disassembler with Full Type Introspection.
+@* Enhanced T81 Disassembler with Full Type Introspection and Ghidra Integration.
 
 This enhanced disassembler handles all core T81 data types,
 in compliance with the Prime Directive: disassemble every
-T81 data type at any depth.
+T81 data type at any depth. It is designed to be embedded or
+invoked by Ghidra as an external processor or plugin component.
 
 @c
 #include <stdio.h>
@@ -28,79 +29,82 @@ T81 data type at any depth.
 #define OP_PRINT   0x03
 #define OP_HALT    0xFF
 
+// Hook for Ghidra integration output
+#define GHIDRA_OUT stdout
+
 static void disasm_bigint(FILE *in) {
     uint8_t len;
     fread(&len, 1, 1, in);
-    printf("T81BigInt [len=%d] ", len);
-    printf("digits=[");
+    fprintf(GHIDRA_OUT, "T81BigInt [len=%d] ", len);
+    fprintf(GHIDRA_OUT, "digits=[");
     for (int i = 0; i < len; i++) {
         uint8_t digit;
         fread(&digit, 1, 1, in);
-        printf("%d%s", digit, (i < len - 1) ? ", " : "");
+        fprintf(GHIDRA_OUT, "%d%s", digit, (i < len - 1) ? ", " : "");
     }
-    printf("]\n");
+    fprintf(GHIDRA_OUT, "]\n");
 }
 
 static void disasm_fraction(FILE *in) {
-    printf("T81Fraction { numerator: ");
+    fprintf(GHIDRA_OUT, "T81Fraction { numerator: ");
     disasm_bigint(in);
-    printf("  denominator: ");
+    fprintf(GHIDRA_OUT, "  denominator: ");
     disasm_bigint(in);
-    printf("}\n");
+    fprintf(GHIDRA_OUT, "}\n");
 }
 
 static void disasm_float(FILE *in) {
-    printf("T81Float {\n  mantissa: ");
+    fprintf(GHIDRA_OUT, "T81Float {\n  mantissa: ");
     disasm_bigint(in);
     int8_t exponent;
     fread(&exponent, 1, 1, in);
-    printf("  exponent: %d\n}\n", exponent);
+    fprintf(GHIDRA_OUT, "  exponent: %d\n}\n", exponent);
 }
 
 static void disasm_matrix(FILE *in) {
     uint8_t rows, cols;
     fread(&rows, 1, 1, in);
     fread(&cols, 1, 1, in);
-    printf("T81Matrix [%dx%d]:\n", rows, cols);
+    fprintf(GHIDRA_OUT, "T81Matrix [%dx%d]:\n", rows, cols);
     for (int r = 0; r < rows; r++) {
-        printf("  [");
+        fprintf(GHIDRA_OUT, "  [");
         for (int c = 0; c < cols; c++) {
             uint8_t tag;
             fread(&tag, 1, 1, in);
             disasm_operand_by_tag(in, tag);
         }
-        printf("  ]\n");
+        fprintf(GHIDRA_OUT, "  ]\n");
     }
 }
 
 static void disasm_vector(FILE *in) {
     uint8_t len;
     fread(&len, 1, 1, in);
-    printf("T81Vector [len=%d]: [\n", len);
+    fprintf(GHIDRA_OUT, "T81Vector [len=%d]: [\n", len);
     for (int i = 0; i < len; i++) {
         uint8_t tag;
         fread(&tag, 1, 1, in);
-        printf("  element %d: ", i);
+        fprintf(GHIDRA_OUT, "  element %d: ", i);
         disasm_operand_by_tag(in, tag);
     }
-    printf("]\n");
+    fprintf(GHIDRA_OUT, "]\n");
 }
 
 static void disasm_tensor(FILE *in) {
     uint8_t dims;
     fread(&dims, 1, 1, in);
-    printf("T81Tensor [dims=%d]:\n", dims);
+    fprintf(GHIDRA_OUT, "T81Tensor [dims=%d]:\n", dims);
     for (int d = 0; d < dims; d++) {
         uint8_t depth;
         fread(&depth, 1, 1, in);
-        printf("  Depth %d: [\n", d);
+        fprintf(GHIDRA_OUT, "  Depth %d: [\n", d);
         for (int i = 0; i < depth; i++) {
             uint8_t tag;
             fread(&tag, 1, 1, in);
-            printf("    element %d: ", i);
+            fprintf(GHIDRA_OUT, "    element %d: ", i);
             disasm_operand_by_tag(in, tag);
         }
-        printf("  ]\n");
+        fprintf(GHIDRA_OUT, "  ]\n");
     }
 }
 
@@ -119,7 +123,7 @@ static void disasm_operand_by_tag(FILE *in, uint8_t tag) {
         case T81_TAG_TENSOR:
             disasm_tensor(in); break;
         default:
-            printf("UNKNOWN TYPE TAG 0x%02X\n", tag);
+            fprintf(GHIDRA_OUT, "UNKNOWN TYPE TAG 0x%02X\n", tag);
             break;
     }
 }
@@ -133,18 +137,18 @@ void disasm(const char *filename) {
             case OP_PUSH: {
                 uint8_t tag;
                 fread(&tag, 1, 1, in);
-                printf("PUSH ");
+                fprintf(GHIDRA_OUT, "PUSH ");
                 disasm_operand_by_tag(in, tag);
                 break;
             }
             case OP_ADD:
-                printf("ADD\n"); break;
+                fprintf(GHIDRA_OUT, "ADD\n"); break;
             case OP_PRINT:
-                printf("PRINT\n"); break;
+                fprintf(GHIDRA_OUT, "PRINT\n"); break;
             case OP_HALT:
-                printf("HALT\n"); break;
+                fprintf(GHIDRA_OUT, "HALT\n"); break;
             default:
-                printf("UNKNOWN OPCODE 0x%02X\n", opcode);
+                fprintf(GHIDRA_OUT, "UNKNOWN OPCODE 0x%02X\n", opcode);
                 break;
         }
     }
