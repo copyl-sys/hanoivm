@@ -1,0 +1,84 @@
+@* telemetry-cli.cweb | Userland CLI to parse kernel telemetry JSON from debugfs
+
+This tool provides human and AI-readable access to structured JSON data exposed
+by the HanoiVM + Axion kernel runtime. It reads from `/sys/kernel/debug/telemetry-view`
+and supports nested field extraction, raw output, and pretty-printing.
+
+@<Includes and Defines@>=
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <jansson.h>  // Requires libjansson-dev
+
+#define TELEMETRY_PATH "/sys/kernel/debug/telemetry-view"
+
+@<Usage Help Function@>=
+void usage(const char *prog) {
+    printf("Usage: %s [key|nested.key] [--raw]\n", prog);
+    printf("Examples:\n");
+    printf("  %s build.output\n", prog);
+    printf("  %s ai_feedback.entropy_anomalies\n", prog);
+    printf("  %s --raw\n", prog);
+}
+
+@<Nested JSON Lookup@>=
+json_t *json_nested_lookup(json_t *root, const char *path) {
+    char *mutable = strdup(path);
+    char *token = strtok(mutable, ".");
+    json_t *val = root;
+    while (token && val) {
+        val = json_object_get(val, token);
+        token = strtok(NULL, ".");
+    }
+    free(mutable);
+    return val;
+}
+
+@<Main Function@>=
+int main(int argc, char *argv[]) {
+    FILE *fp = fopen(TELEMETRY_PATH, "r");
+    if (!fp) {
+        perror("Error opening telemetry view");
+        return 1;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    rewind(fp);
+
+    char *buf = calloc(1, size + 1);
+    fread(buf, 1, size, fp);
+    fclose(fp);
+
+    json_error_t err;
+    json_t *root = json_loads(buf, 0, &err);
+    free(buf);
+    if (!root) {
+        fprintf(stderr, "JSON parse error: %s (line %d)\n", err.text, err.line);
+        return 1;
+    }
+
+    if (argc == 2 && strcmp(argv[1], "--raw") == 0) {
+        char *raw = json_dumps(root, JSON_INDENT(2));
+        puts(raw);
+        free(raw);
+        json_decref(root);
+        return 0;
+    } else if (argc == 2) {
+        json_t *val = json_nested_lookup(root, argv[1]);
+        if (!val) {
+            fprintf(stderr, "Key not found: %s\n", argv[1]);
+            json_decref(root);
+            return 1;
+        }
+        char *out = json_dumps(val, JSON_ENCODE_ANY);
+        puts(out);
+        free(out);
+        json_decref(root);
+        return 0;
+    } else {
+        usage(argv[0]);
+        json_decref(root);
+        return 1;
+    }
+}
