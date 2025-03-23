@@ -32,6 +32,26 @@ PUSH 4 5 6
 ADD
 ```
 
+## 🖥️ Run hvmcli (Userspace to PCIe Interface)
+
+```bash
+bazel run //:hvmcli -- 01 1 2 3
+```
+
+This sends the opcode `0x01` (PUSH) with a ternary operand split into three base-27 segments: A=1, B=2, C=3.
+
+The result of execution (if available) will be printed to the console.
+
+## 🔌 Firmware Protocol
+
+- `HVM_OPCODE_BUFFER`    → PCIe-mapped 8-bit instruction register
+- `HVM_OPERAND_BUFFER`   → 81-bit (3x27-bit) operand region
+- `HVM_CONTROL_REG`      → Set to `1` to trigger execution
+- `HVM_RESULT_BUFFER`    → Read result from this after execution
+- `HVM_STATUS_REG`       → Will be `1` when result is ready
+
+The firmware runs an infinite loop polling `HVM_CONTROL_REG`. Upon trigger, it executes the instruction via HanoiVM core logic and sets `HVM_STATUS_REG = 1`.
+
 ## 🚀 Components
 
 - hvm_assembler — Converts ternary assembly to .hvm bytecode
