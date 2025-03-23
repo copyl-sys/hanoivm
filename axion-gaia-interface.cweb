@@ -71,3 +71,13 @@ Triton kernels, or diffusion models, depending on GAIA configuration.
 
 This interface abstracts Axion's logic representation into a generative-symbolic format
 and ensures recursive optimization is possible via hardware acceleration.
+
+@* 
+Future Extension Plan:
+- Connect this interface to Axion's internal `axion_trit_optimizer()` using IOCTLs
+- Integrate `tbin_confidence_metric` as an active threshold to trigger GAIA dispatches
+- Serialize `GaiaRequest` to shared memory or `/sys/axion_debug/gaia_request` for userland communication
+- Attach GAIA kernel callback to a ROCm job queue on CDNA/MI300 hardware
+- Expand `updated_macro` feedback into a JIT-compiled instruction stream
+
+// This module supports the full ternary execution path, designed for recursive logic enhancement.
