@@ -67,20 +67,10 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-@* Bazel Build File Example (BUILD.bazel) *@
-@c
-// In assembler/BUILD.bazel
-cc_binary(
-    name = "hvm_assembler",
-    srcs = ["hvm_assembler.c"],
-    deps = [],
-    copts = ["-std=c99"],
-    visibility = ["//visibility:public"],
-)
+@* Unified Bazel Build System *@
 
-@* Bazel Workspace File Example (WORKSPACE) *@
 @c
-// In top-level WORKSPACE
+// WORKSPACE
 workspace(name = "hanoivm")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -93,3 +83,36 @@ http_archive(
 
 load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies")
 rules_cc_dependencies()
+
+@c
+// BUILD.bazel at root level
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+    name = "hvm_assembler",
+    srcs = ["assembler/hvm_assembler.c"],
+    copts = ["-std=c99"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "hvmcli",
+    srcs = ["cli/hvmcli.c"],
+    copts = ["-std=c99"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "hvm_firmware",
+    srcs = ["firmware/hvm_firmware_entry.c"],
+    copts = ["-std=c99"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "hvm_pcie_driver",
+    srcs = ["driver/hvm_pcie_driver.c"],
+    copts = ["-std=gnu99"],
+    visibility = ["//visibility:public"],
+    linkshared = True,
+)
