@@ -91,7 +91,8 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 cc_binary(
     name = "hvm_assembler",
     srcs = ["assembler/hvm_assembler.c"],
-    copts = ["-std=c99"],
+    copts = ["-std=c99", "-Werror", "-Wall"],
+    features = ["no_legacy_features"],
     visibility = ["//visibility:public"],
 )
 
@@ -116,3 +117,19 @@ cc_binary(
     visibility = ["//visibility:public"],
     linkshared = True,
 )
+
+sh_test(
+    name = "hermetic_assembler_test",
+    srcs = ["tests/hermetic_assembler_test.sh"],
+    data = [":hvm_assembler"],
+)
+
+@* Hermetic Test Script (tests/hermetic_assembler_test.sh) *@
+
+@c
+#!/bin/bash
+set -e
+OUT=$(mktemp)
+echo "PUSH 1 2 3" > input.asm
+./hvm_assembler input.asm "$OUT"
+hexdump -C "$OUT"
