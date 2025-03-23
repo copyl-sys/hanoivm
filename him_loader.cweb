@@ -1,0 +1,54 @@
+@* HanoiVM | Bytecode Loader
+
+This module reads a `.hvm` binary file into memory for execution.
+It populates the global buffer `hvm_code[]` and sets `hvm_code_size`
+for use in the VM execution loop.
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+uint8_t* hvm_code = NULL;
+size_t hvm_code_size = 0;
+
+int load_hvm(const char* filename) {
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        fprintf(stderr, "[Loader] Failed to open %s\n", filename);
+        return 0;
+    }
+
+    fseek(file, 0, SEEK_END);
+    hvm_code_size = ftell(file);
+    rewind(file);
+
+    hvm_code = malloc(hvm_code_size);
+    if (!hvm_code) {
+        fprintf(stderr, "[Loader] Memory allocation failed!\n");
+        fclose(file);
+        return 0;
+    }
+
+    if (fread(hvm_code, 1, hvm_code_size, file) != hvm_code_size) {
+        fprintf(stderr, "[Loader] File read failed!\n");
+        free(hvm_code);
+        fclose(file);
+        return 0;
+    }
+
+    fclose(file);
+    return 1;
+}
+
+@h
+#ifndef HVM_LOADER_H
+#define HVM_LOADER_H
+#include <stdint.h>
+
+extern uint8_t* hvm_code;
+extern size_t hvm_code_size;
+
+int load_hvm(const char* filename);
+
+#endif
