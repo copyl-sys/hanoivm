@@ -1,0 +1,85 @@
+@* README.cweb | Literate Documentation for HanoiVM + Axion AI Runtime
+
+This document describes the architecture and usage of the HanoiVM project,
+including the Axion AI kernel module system and the ternary computing runtime
+emulation layer.
+
+@<Project Overview@>=
+## 🧠 Project Overview
+
+**HanoiVM** is a recursive, ternary virtual machine framework designed to explore
+post-binary computing paradigms. It operates using base-3 arithmetic units (`T81`)
+and features a stack-driven execution model inspired by the Tower of Hanoi puzzle.
+
+**Axion AI** is the kernel-level execution and optimization module, built as an
+AI-native runtime system that supports:
+- Ternary AI stack logic (mod-3)
+- Entropy-aware rollback
+- Anomaly detection and self-healing
+- NLP-style interface commands
+
+Together, these systems form a research prototype for AI-native, ternary-powered
+operating environments.
+
+@<Repository Structure@>=
+## 📁 Repository Structure
+
+| File/Folder                 | Purpose                                      |
+|----------------------------|----------------------------------------------|
+| `axion-ai.cweb`            | AI-powered ternary kernel module              |
+| `hanoivm_vm.cweb`          | HanoiVM bytecode execution engine             |
+| `hanoivm-core.cweb`        | Core logic and runtime abstraction            |
+| `hanoivm-runtime.cweb`     | Scheduling, interfaces, syscall dispatch      |
+| `axion-gaia-interface.cweb`| CUDA/ROCm ternary-GPU bridge interface        |
+| `t81_stack.cweb`           | Stack implementation for ternary data types   |
+| `t81asm.cweb`              | Ternary assembler (work in progress)          |
+| `cuda_handle_request.cu`   | CUDA backend to execute ternary macros        |
+| `hanoivm-test.cweb`        | Kernel-mode unit tests for all major modules  |
+| `build-all.cweb`           | Unified Makefile for all modules              |
+| `tangle-all.sh`            | Tangling helper to extract `.c` from `.cweb` |
+
+@<Getting Started@>=
+## 🚀 Getting Started
+
+```bash
+# Tangle all .cweb files into .c
+./tangle-all.sh
+
+# Build all kernel modules
+make -f build-all
+
+# Load core modules
+sudo insmod axion-ai.ko
+sudo insmod hanoivm_vm.ko
+
+# Run kernel-mode tests
+sudo insmod hanoivm-test.ko
+cat /sys/kernel/debug/hanoivm-test
+```
+
+@<Design Goals@>=
+## 🧬 Design Goals
+- Native ternary data abstractions (T81, T243, T729)
+- Recursive, symbolic VM control flow
+- AI introspection via entropy monitoring
+- Support for future post-quantum cryptographic extensions
+- Compatibility with AxionOS and AI-managed package layers
+
+@<License@>=
+## 📝 License
+This project is licensed under the MIT License.
+
+@<Contributors@>=
+## 👤 Authors
+- copyleftsystems
+- Contributors from the HanoiVM + Axion AI research stream
+
+@<References@>=
+## 📚 References
+- Tower of Hanoi (mathematical basis)
+- Ternary Computing (Setun, Balanced Ternary, T81Lang)
+- Snowden leaks (XKeyscore, DCS1000, recursive analysis)
+- Gentoo Portage, CWEB, and literate system design
+
+---
+🌀 Designed for recursion. Powered by AI. Ternary from the ground up.
