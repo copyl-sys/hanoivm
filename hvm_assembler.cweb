@@ -1,0 +1,68 @@
+@* hvm_assembler.cweb - Assembles Ternary VM Assembly into .hvm Bytecode *@
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+#define MAX_LINE 128
+
+@* Instruction format for T81 encoded instructions *@
+@c
+typedef struct {
+    uint8_t opcode;
+    uint32_t a, b, c;
+} hvm_instruction;
+
+@* Simple mnemonic to opcode translator *@
+@c
+uint8_t parse_opcode(const char* mnemonic) {
+    if (strcmp(mnemonic, "NOP") == 0) return 0x00;
+    if (strcmp(mnemonic, "PUSH") == 0) return 0x01;
+    if (strcmp(mnemonic, "POP") == 0) return 0x02;
+    if (strcmp(mnemonic, "ADD") == 0) return 0x03;
+    // Extendable with more opcodes
+    return 0xFF; // Unknown opcode
+}
+
+@* Main assembly loop: parse each line, write opcode + operand to binary file *@
+@c
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <input.asm> <output.hvm>\n", argv[0]);
+        return 1;
+    }
+
+    FILE* fin = fopen(argv[1], "r");
+    FILE* fout = fopen(argv[2], "wb");
+    if (!fin || !fout) {
+        perror("file open error");
+        return 1;
+    }
+
+    char line[MAX_LINE];
+    while (fgets(line, sizeof(line), fin)) {
+        if (line[0] == '#' || strlen(line) < 2) continue;
+
+        char mnemonic[16];
+        uint32_t a = 0, b = 0, c = 0;
+        sscanf(line, "%15s %u %u %u", mnemonic, &a, &b, &c);
+
+        uint8_t opcode = parse_opcode(mnemonic);
+        if (opcode == 0xFF) {
+            fprintf(stderr, "Unknown opcode: %s\n", mnemonic);
+            continue;
+        }
+
+        fwrite(&opcode, 1, 1, fout);
+        fwrite(&a, 4, 1, fout);
+        fwrite(&b, 4, 1, fout);
+        fwrite(&c, 4, 1, fout);
+    }
+
+    fclose(fin);
+    fclose(fout);
+    printf(".hvm file written to %s\n", argv[2]);
+    return 0;
+}
