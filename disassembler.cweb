@@ -1,45 +1,54 @@
-@* HanoiVM | Bytecode Disassembler
-
-This module implements a disassembler for `.hvm` bytecode files.
-It translates opcodes into human-readable mnemonics, including introspection
-of primitive and nested T81 types (planned).
+@* HanoiVM | Bytecode Disassembler — Extended with T81 Operand Support *@
 
 @c
 #include <stdio.h>
 #include <stdint.h>
-#include "opcodes.h"
+#include "advanced_ops.h"
+#include "t81types.h"
 
 extern uint8_t* hvm_code;
 extern size_t hvm_code_size;
 
+@* Fetch T81 ternary operand from byte stream *@
+@c
+uint81_t fetch_operand(const uint8_t* buf) {
+    uint81_t out;
+    out.a = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) | ((uint32_t)buf[2] << 8) | buf[3];
+    out.b = ((uint32_t)buf[4] << 24) | ((uint32_t)buf[5] << 16) | ((uint32_t)buf[6] << 8) | buf[7];
+    out.c = buf[8];
+    return out;
+}
+
 const char* opcode_to_str(uint8_t opcode) {
-    switch (opcode) {
-        case OP_NOP: return "NOP";
-        case OP_PUSH: return "PUSH";
-        case OP_ADD: return "ADD";
-        case OP_SUB: return "SUB";
-        case OP_MOD: return "MOD";
-        case OP_NEG: return "NEG";
-        case OP_DUP: return "DUP";
-        case OP_SWAP: return "SWAP";
-        case OP_DROP: return "DROP";
-        case OP_HALT: return "HALT";
-        default: return "UNKNOWN";
-    }
+    return opcode_name(opcode);  // use unified name resolver
 }
 
 void disassemble_vm(void) {
     size_t ip = 0;
     while (ip < hvm_code_size) {
         uint8_t opcode = hvm_code[ip++];
-        printf("%04zx: %-6s", ip - 1, opcode_to_str(opcode));
+        printf("%04zx: %-12s", ip - 1, opcode_to_str(opcode));
 
-        if (opcode == OP_PUSH && ip < hvm_code_size) {
-            int operand = hvm_code[ip++];
-            printf(" %d", operand);
+        switch (opcode) {
+            case OP_PUSH:
+            case OP_TNN_ACCUM:
+            case OP_T81_MATMUL: {
+                if (ip + 17 < hvm_code_size) {
+                    uint81_t a = fetch_operand(&hvm_code[ip]);
+                    uint81_t b = fetch_operand(&hvm_code[ip + 9]);
+                    ip += 18;
+                    printf(" A:%08X B:%08X C:%02X | A':%08X B':%08X C':%02X\n",
+                        a.a, a.b, a.c, b.a, b.b, b.c);
+                } else {
+                    printf(" [truncated operands]\n");
+                    return;
+                }
+                break;
+            }
+            default:
+                printf("\n");
+                break;
         }
-
-        printf("\n");
     }
 }
 
