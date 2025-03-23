@@ -124,6 +124,18 @@ sh_test(
     data = [":hvm_assembler"],
 )
 
+sh_test(
+    name = "hermetic_cli_test",
+    srcs = ["tests/hermetic_cli_test.sh"],
+    data = [":hvmcli"],
+)
+
+sh_test(
+    name = "hermetic_firmware_test",
+    srcs = ["tests/hermetic_firmware_test.sh"],
+    data = [":hvm_firmware"],
+)
+
 @* Hermetic Test Script (tests/hermetic_assembler_test.sh) *@
 
 @c
@@ -133,3 +145,18 @@ OUT=$(mktemp)
 echo "PUSH 1 2 3" > input.asm
 ./hvm_assembler input.asm "$OUT"
 hexdump -C "$OUT"
+
+@* Hermetic Test Script (tests/hermetic_cli_test.sh) *@
+
+@c
+#!/bin/bash
+set -e
+./hvmcli 01 1 2 3
+
+@* Hermetic Test Script (tests/hermetic_firmware_test.sh) *@
+
+@c
+#!/bin/bash
+set -e
+echo "(Simulated) Firmware interface loaded. No runtime test defined."
+exit 0
