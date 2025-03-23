@@ -1,38 +1,47 @@
-# Makefile for HanoiVM – Extract and Compile CWEB Modules into Rust Crate
+# Makefile for Modular HanoiVM Project using CWEB
 
-CWEB = cweave
-TANGLE = ctangle
-CWEB_FILES = libt81.cweb libt243.cweb libt729.cweb hanoivm-core.cweb axion-ai.cweb
-RST_DIR = src
-EXTRACTED_RS = $(CWEB_FILES:.cweb=.rs)
-PACKAGE_NAME = hanoivm
+# ---- Config ----
 
-all: extract build
+CWEB_SOURCES := hanoivm_cli.cweb t81_stack.cweb hvm_loader.cweb ai_hook.cweb
+C_SOURCES    := $(CWEB_SOURCES:.cweb=.c)
+OBJECTS      := $(C_SOURCES:.c=.o)
+TARGET       := hanoivm
 
-# Step 1: Extract .rs source files from CWEB
-extract:
-	@mkdir -p $(RST_DIR)
-	@for f in $(CWEB_FILES); do \
-		echo "Extracting $$f..."; \
-		ctangle $$f && mv $$f.c $(RST_DIR)/$${f%.cweb}.rs; \
-	done
+CC           := gcc
+CFLAGS       := -Wall -O2
 
-# Step 2: Compile with Cargo
-build:
-	cargo build
+# ---- Default ----
 
-# Clean output
+.PHONY: all clean run doc
+
+all: $(TARGET)
+
+# ---- Tangle all .cweb files ----
+
+%.c: %.cweb
+	ctangle $<
+
+# ---- Compile and link ----
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS)
+
+# ---- Run the VM with debug ----
+
+run: $(TARGET)
+	./$(TARGET) --mode=t81 --debug
+
+# ---- Weave docs for each .cweb into PDF ----
+
+doc: $(CWEB_SOURCES:.cweb=.pdf)
+
+%.tex: %.cweb
+	cweave $<
+
+%.pdf: %.tex
+	pdftex $*
+
+# ---- Cleanup ----
+
 clean:
-	rm -rf target $(RST_DIR)/*.rs
-
-# View output
-run:
-	cargo run
-
-# Check formatting
-fmt:
-	cargo fmt
-
-# Test
-test:
-	cargo test
+	rm -f $(TARGET) *.c *.o *.pdf *.log *.tex *.toc *.scn
