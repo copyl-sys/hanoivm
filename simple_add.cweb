@@ -56,4 +56,16 @@ case OP_PRINT: {
 
 This prints the top of the stack without modifying it.
 
+@* Makefile Target: make run
+
+Add the following to your Makefile to build, generate, and run:
+
+```make
+run: write_simple_add hanoivm
+	./write_simple_add
+	./hanoivm simple_add.hvm --disasm
+```
+
+Now, just type `make run` to go from source to execution.
+
 @* End of program.
