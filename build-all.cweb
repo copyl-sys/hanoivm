@@ -1,0 +1,23 @@
+@* build-all.cweb | Unified Axion + HanoiVM Kernel Module Builder
+
+This literate Makefile builds all tangled kernel modules for the Axion AI runtime
+and HanoiVM subsystem. It assumes all `.cweb` sources are already tangled into `.c`
+and present in the working directory.
+
+@<Unified Kernel Module Build Rules@>=
+# List all kernel modules derived from tangled .c files
+obj-m += axion-ai.o hanoivm_vm.o hanoivm-core.o axion-gaia-interface.o
+
+# Kernel headers and current directory
+KDIR := /lib/modules/$(shell uname -r)/build
+PWD  := $(shell pwd)
+
+# Compile all kernel modules
+all:
+	@echo "[build-all] Compiling Axion + HanoiVM kernel modules..."
+	$(MAKE) -C $(KDIR) M=$(PWD) modules
+
+# Clean build outputs
+clean:
+	@echo "[build-all] Cleaning module build artifacts..."
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
