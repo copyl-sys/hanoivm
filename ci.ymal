@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Install Bazel
+      uses: bazelbuild/setup-bazel@v5
+      with:
+        bazel-version: latest
+
+    - name: Build everything
+      run: bazel build //...
+
+    - name: Run disassembler AI test
+      run: bazel test //:disasm_advanced_test
