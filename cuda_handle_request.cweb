@@ -1,0 +1,112 @@
+@* CUDA Recursive Ternary Logic Handler
+
+This module implements the CUDA backend for Axion's symbolic ternary logic dispatch,
+supporting vectorized recursive transformation of TBIN macros into T729 compressed
+macro instructions. This forms the CUDA-based execution layer of the Axion ↔ GAIA interface.
+
+Axion produces ternary macros with an `intent` (e.g., TRANSFORM, EMIT_VECTOR), which are
+dispatched to the GPU for generative compression, AI reasoning, or entropy-based adaptation.
+
+@c
+#include <cuda_runtime.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+extern "C" {
+    #include "axion-gaia-interface.h"
+}
+
+@* Device-Side: Entropy Delta and Symbolic Logic
+
+These device routines are used by the CUDA kernel to simulate symbolic transformation
+of ternary macros and evaluate the entropy delta. More advanced models can use
+differential statistics or trit diffusion models.
+
+@c
+__device__ int32_t calculate_entropy_delta(const uint8_t* tbin, size_t len) {
+    int delta = 0;
+    for (size_t i = 0; i < len; ++i) {
+        delta += (tbin[i] % 3) - 1;
+    }
+    return delta;
+}
+
+__global__ void symbolic_transform_kernel(const uint8_t* tbin, size_t len,
+                                          uint8_t* out_macro, int32_t* entropy_out,
+                                          uint8_t intent) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        *entropy_out = calculate_entropy_delta(tbin, len);
+
+        for (int i = 0; i < 243; ++i) {
+            if (i < len) {
+                switch (intent) {
+                    case GAIA_ANALYZE:
+                        out_macro[i] = (tbin[i] & 0x3F); break;
+                    case GAIA_TRANSFORM:
+                        out_macro[i] = (tbin[i] ^ 0xA5); break;
+                    case GAIA_RECONSTRUCT:
+                        out_macro[i] = (tbin[i] << 1) | (tbin[i] >> 7); break;
+                    case GAIA_EMIT_VECTOR:
+                        out_macro[i] = (tbin[i] % 81); break;
+                    default:
+                        out_macro[i] = tbin[i]; break;
+                }
+            } else {
+                out_macro[i] = 0x00;
+            }
+        }
+    }
+}
+
+@* Host-Side: CUDA Dispatcher for Axion Symbolic Workloads
+
+The following host function implements the Axion-compliant interface to handle
+a symbolic `GaiaRequest` on the CUDA runtime. It performs:
+
+- Device memory allocation
+- TBIN macro upload
+- CUDA kernel launch
+- Result copyback
+- Status assignment
+
+@c
+extern "C"
+GaiaResponse cuda_handle_request(GaiaRequest request) {
+    GaiaResponse response = {0};
+
+    uint8_t* d_tbin = nullptr;
+    uint8_t* d_out_macro = nullptr;
+    int32_t* d_entropy = nullptr;
+
+    cudaMalloc((void**)&d_tbin, request.tbin_len);
+    cudaMalloc((void**)&d_out_macro, 243);
+    cudaMalloc((void**)&d_entropy, sizeof(int32_t));
+
+    cudaMemcpy(d_tbin, request.tbin, request.tbin_len, cudaMemcpyHostToDevice);
+
+    symbolic_transform_kernel<<<1, 1>>>(d_tbin, request.tbin_len, d_out_macro, d_entropy, request.intent);
+
+    cudaMemcpy(response.updated_macro, d_out_macro, 243, cudaMemcpyDeviceToHost);
+    cudaMemcpy(&response.entropy_delta, d_entropy, sizeof(int32_t), cudaMemcpyDeviceToHost);
+
+    response.symbolic_status = 0; // OK
+
+    cudaFree(d_tbin);
+    cudaFree(d_out_macro);
+    cudaFree(d_entropy);
+
+    return response;
+}
+
+@* Future CUDA Kernel Extensions
+
+This module will eventually support:
+
+- Symbolic macro stack grids: `<<<T243 blocks, T81 threads>>>`
+- Tritwise entropy mapping and graph topologies
+- nvrtc-based dynamic ternary kernel generation
+- AI-accelerated anomaly detection inside CUDA
+- Unified dispatch across CUDA/ROCm using HIP abstractions
+
+@* End of `cuda_handle_request.cweb`
