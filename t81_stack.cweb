@@ -1,0 +1,150 @@
+@* HanoiVM | T81 Stack Module
+
+This literate CWEB module defines the full implementation of the T81 stack,
+the foundational stack for the recursive HanoiVM ternary virtual machine.
+
+Included Features:
+- Stack memory for up to 3^7 (2187) ternary values
+- Safe core operations: `push81`, `pop81`, `peek81`
+- Arithmetic: `add81`, `mod81`, `neg81`
+- Conditional: `ifz81`
+- Stack control: `dup81`, `swap81`, `drop81`
+- Future extension for stack promotion (T243 / T729)
+- External function headers via `@h` block
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+@*1 Constants and Globals
+
+@<T81 Stack Constants@>=
+#define T81_STACK_SIZE 2187  // 3^7 for deep recursion
+
+@<T81 Stack Globals@>=
+static int t81_stack[T81_STACK_SIZE];
+static int t81_sp = -1;
+
+@*1 Function Declarations (Public API)
+
+@<T81 Stack API Declarations@>=
+void push81(int value);
+int  pop81(void);
+int  peek81(void);
+
+void add81(void);
+void mod81(void);
+void neg81(void);
+
+bool ifz81(void);
+
+void dup81(void);
+void swap81(void);
+void drop81(void);
+
+@*1 Stack Safety Operations
+
+@<T81 Stack Core Functions@>=
+
+void push81(int value) {
+    if (t81_sp >= T81_STACK_SIZE - 1) {
+        fprintf(stderr, "[T81] Stack overflow!\n");
+        exit(1);
+    }
+    t81_stack[++t81_sp] = value;
+    printf("[T81] push81 %d\n", value);
+}
+
+int pop81(void) {
+    if (t81_sp < 0) {
+        fprintf(stderr, "[T81] Stack underflow!\n");
+        exit(1);
+    }
+    int value = t81_stack[t81_sp--];
+    printf("[T81] pop81 => %d\n", value);
+    return value;
+}
+
+int peek81(void) {
+    if (t81_sp < 0) {
+        fprintf(stderr, "[T81] Stack empty (peek)\n");
+        exit(1);
+    }
+    return t81_stack[t81_sp];
+}
+
+@*1 Arithmetic and Logic Functions
+
+@<T81 Arithmetic Extensions@>=
+
+void add81(void) {
+    int a = pop81();
+    int b = pop81();
+    int result = a + b;
+    push81(result);
+    printf("[T81] add81: %d + %d = %d\n", a, b, result);
+}
+
+void mod81(void) {
+    int a = pop81();
+    int b = pop81();
+    if (b == 0) {
+        fprintf(stderr, "[T81] mod81: Division by zero!\n");
+        exit(1);
+    }
+    int result = a % b;
+    push81(result);
+    printf("[T81] mod81: %d %% %d = %d\n", a, b, result);
+}
+
+void neg81(void) {
+    int a = pop81();
+    int result = -a;
+    push81(result);
+    printf("[T81] neg81: -%d = %d\n", a, result);
+}
+
+bool ifz81(void) {
+    int a = peek81();
+    printf("[T81] ifz81: top = %d (%s)\n", a, a == 0 ? "TRUE" : "FALSE");
+    return a == 0;
+}
+
+@*1 Stack Control and Ternary Tools
+
+@<T81 Stack Control Operations@>=
+
+void dup81(void) {
+    int val = peek81();
+    push81(val);
+    printf("[T81] dup81: duplicated %d\n", val);
+}
+
+void swap81(void) {
+    if (t81_sp < 1) {
+        fprintf(stderr, "[T81] swap81: Not enough elements\n");
+        exit(1);
+    }
+    int a = pop81();
+    int b = pop81();
+    push81(a);
+    push81(b);
+    printf("[T81] swap81: swapped top two values\n");
+}
+
+void drop81(void) {
+    if (t81_sp < 0) {
+        fprintf(stderr, "[T81] drop81: Stack empty\n");
+        exit(1);
+    }
+    int val = pop81();
+    printf("[T81] drop81: dropped %d\n", val);
+}
+
+@*1 External Header Interface
+
+This header block allows external CWEB or C files to link against this module.
+
+@h
+@<T81 Stack API Declarations@>
