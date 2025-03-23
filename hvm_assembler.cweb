@@ -162,3 +162,15 @@ jobs:
         run: |
           bazel build //...
           bazel test //...
+
+      - name: Upload .hvm artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: hvm-output
+          path: "*.hvm"
+
+@* README.md Badge Suggestion *@
+
+@c
+<!-- Badge markdown (for README.md) -->
+[![CI](https://github.com/copyl-sys/hanoivm/actions/workflows/ci.yml/badge.svg)](https://github.com/copyl-sys/hanoivm/actions/workflows/ci.yml)
