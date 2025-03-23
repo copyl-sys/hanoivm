@@ -10,6 +10,7 @@ The system is designed to simulate ternary instruction execution with GPU accele
 - Extendable stubs for ROCm and CUDA kernel integration
 - Modular and production-ready code structure for future optimization
 - Seamless linkage with HanoiVM’s runtime to provide GPU-accelerated logic during bytecode interpretation
+- Optional runtime profiling support for benchmarking symbolic transformations
 
 @* Includes and Definitions.
 @c
@@ -18,6 +19,7 @@ The system is designed to simulate ternary instruction execution with GPU accele
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define TRIT_VALUES 3
 #define T729_SIZE 6
@@ -55,6 +57,7 @@ typedef struct {
     uint8_t symbolic_status;
     bool success;
     int error_code;
+    double exec_time_ms; // runtime measurement
 } GAIAResponse;
 
 @* Function Prototypes.
@@ -111,9 +114,12 @@ GaiaRequest convert_t729_to_request(const T729Macro* macro) {
 @c
 GAIAResponse dispatch_backend_gpu(const T729Macro* macro, int use_cuda) {
     GaiaRequest req = convert_t729_to_request(macro);
+    clock_t start = clock();
     GAIAResponse res = use_cuda
         ? cuda_handle_request(req)
         : rocm_handle_request(req);
+    clock_t end = clock();
+    res.exec_time_ms = 1000.0 * (double)(end - start) / CLOCKS_PER_SEC;
     res.success = (res.symbolic_status == 0);
     return res;
 }
@@ -184,8 +190,8 @@ void print_response(const GAIAResponse *response) {
     for (int i = 0; i < T729_SIZE; ++i) {
         printf("%d ", response->result_t729[i]);
     }
-    printf("\nEntropy Delta: %.4f\nExplanation: %s\n",
-           response->entropy_delta, response->explanation);
+    printf("\nEntropy Delta: %.4f\nExecution Time: %.3f ms\nExplanation: %s\n",
+           response->entropy_delta, response->exec_time_ms, response->explanation);
 }
 
 @* HanoiVM Runtime Hook: GPU Invocation.
@@ -200,7 +206,8 @@ void hanoi_vm_gpu_hook(int ip, GAIAIntent intent, int* stack_top_6) {
 
     GAIAResponse res = dispatch_backend_gpu(&macro, 1); // use_cuda = 1
     if (res.success) {
-        printf("[HanoiVM→GPU] ΔEntropy: %.4f | %s\n", res.entropy_delta, res.explanation);
+        printf("[HanoiVM→GPU] ΔEntropy: %.4f | Time: %.3f ms | %s\n",
+               res.entropy_delta, res.exec_time_ms, res.explanation);
     } else {
         fprintf(stderr, "[HanoiVM→GPU ERROR] %s\n", res.explanation);
     }
