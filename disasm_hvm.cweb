@@ -57,6 +57,53 @@ static void disasm_float(FILE *in) {
     printf("  exponent: %d\n}\n", exponent);
 }
 
+static void disasm_matrix(FILE *in) {
+    uint8_t rows, cols;
+    fread(&rows, 1, 1, in);
+    fread(&cols, 1, 1, in);
+    printf("T81Matrix [%dx%d]:\n", rows, cols);
+    for (int r = 0; r < rows; r++) {
+        printf("  [");
+        for (int c = 0; c < cols; c++) {
+            uint8_t tag;
+            fread(&tag, 1, 1, in);
+            disasm_operand_by_tag(in, tag);
+        }
+        printf("  ]\n");
+    }
+}
+
+static void disasm_vector(FILE *in) {
+    uint8_t len;
+    fread(&len, 1, 1, in);
+    printf("T81Vector [len=%d]: [\n", len);
+    for (int i = 0; i < len; i++) {
+        uint8_t tag;
+        fread(&tag, 1, 1, in);
+        printf("  element %d: ", i);
+        disasm_operand_by_tag(in, tag);
+    }
+    printf("]\n");
+}
+
+static void disasm_tensor(FILE *in) {
+    uint8_t dims;
+    fread(&dims, 1, 1, in);
+    printf("T81Tensor [dims=%d]:\n", dims);
+    for (int d = 0; d < dims; d++) {
+        uint8_t depth;
+        fread(&depth, 1, 1, in);
+        printf("  Depth %d: [\n", d);
+        for (int i = 0; i < depth; i++) {
+            uint8_t tag;
+            fread(&tag, 1, 1, in);
+            printf("    element %d: ", i);
+            disasm_operand_by_tag(in, tag);
+        }
+        printf("  ]\n");
+    }
+}
+
 static void disasm_operand_by_tag(FILE *in, uint8_t tag) {
     switch (tag) {
         case T81_TAG_BIGINT:
@@ -65,6 +112,12 @@ static void disasm_operand_by_tag(FILE *in, uint8_t tag) {
             disasm_fraction(in); break;
         case T81_TAG_FLOAT:
             disasm_float(in); break;
+        case T81_TAG_MATRIX:
+            disasm_matrix(in); break;
+        case T81_TAG_VECTOR:
+            disasm_vector(in); break;
+        case T81_TAG_TENSOR:
+            disasm_tensor(in); break;
         default:
             printf("UNKNOWN TYPE TAG 0x%02X\n", tag);
             break;
