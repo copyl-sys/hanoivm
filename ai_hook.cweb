@@ -16,6 +16,7 @@ hooks for VM core logic to consume.
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
 
 @*1 Axion Constants and Globals
 
@@ -37,7 +38,7 @@ void axion_log_event_json(const char* type, const char* message);
 void axion_log_open(void);
 void axion_log_close(void);
 
-void axion_signal(int signal_code);
+void axion_signal(uint8_t signal_code);
 int  axion_get_optimization(void);
 void axion_adjust_verbosity(int level);
 
@@ -92,7 +93,7 @@ void axion_log_event_json(const char* type, const char* message) {
 
 @<Axion Signal Functions@>=
 
-void axion_signal(int signal_code) {
+void axion_signal(uint8_t signal_code) {
     axion_last_signal = signal_code;
     if (axion_verbosity > 1)
         printf("[Axion] SIGNAL: code %d → τ[%d]\n", signal_code, AXION_REGISTER_INDEX);
@@ -121,3 +122,22 @@ and call `axion_signal(...)` when significant events (like opcodes) occur.
 // Inside your VM dispatch loop:
 axion_signal(OP_ADD);
 τ[AXION_REGISTER_INDEX] = axion_get_optimization();
+```
+
+@h
+#ifndef AXION_HOOK_H
+#define AXION_HOOK_H
+#include <stdint.h>
+
+#define AXION_REGISTER_INDEX 27
+
+void axion_log(const char* event);
+void axion_log_event_json(const char* type, const char* message);
+void axion_log_open(void);
+void axion_log_close(void);
+
+void axion_signal(uint8_t signal_code);
+int  axion_get_optimization(void);
+void axion_adjust_verbosity(int level);
+
+#endif
