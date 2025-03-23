@@ -1,0 +1,4 @@
+Mode,Avg Ternary Ops/sec,Relative Speedup
+CPU Only,89.502,1.0
+GAIA Accelerated,139.021,1.5532725525686577
+CUDA Accelerated,188.97,2.111349467051016
