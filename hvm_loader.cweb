@@ -1,0 +1,126 @@
+@* HanoiVM | HVM Bytecode Loader
+
+This literate CWEB module defines the binary file loader for the HanoiVM virtual machine.
+It handles reading `.hvm` files, verifying their format, loading bytecode into memory, and
+exposing the buffer for execution by the VM core.
+
+This module includes:
+- `.hvm` file header validation (magic + version)
+- Bytecode loading into `hvm_code[]`
+- Opcode enum definitions
+- Bytecode printing for debugging
+- Clean export of function declarations (no `.c` includes)
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+@*1 Constants and Global Buffers
+
+@<HVM Loader Constants@>=
+#define HVM_MAGIC_0 0x48  // 'H'
+#define HVM_MAGIC_1 0x56  // 'V'
+#define HVM_MAGIC_2 0x4D  // 'M'
+#define HVM_MAGIC_3 0x01  // Version 1
+
+#define HVM_MAX_CODE_SIZE 8192
+
+@<HVM Loader Globals@>=
+uint8_t hvm_code[HVM_MAX_CODE_SIZE];
+size_t hvm_code_size = 0;
+
+@*1 Opcode Enum
+
+The VM will interpret 1-byte opcodes defined in this enum. These correspond to stack,
+arithmetic, and control instructions.
+
+@<Opcode Enum@>=
+typedef enum {
+    OP_NOP   = 0x00,
+    OP_PUSH  = 0x01,
+    OP_ADD   = 0x02,
+    OP_SUB   = 0x03,
+    OP_MOD   = 0x04,
+    OP_NEG   = 0x05,
+    OP_DUP   = 0x06,
+    OP_SWAP  = 0x07,
+    OP_DROP  = 0x08,
+    OP_HALT  = 0xFF
+} Opcode;
+
+@*1 Loader Function Declarations
+
+@<HVM Loader API@>=
+int  load_hvm_file(const char* path);
+void print_hvm_code(void);
+
+@*1 Function Implementations
+
+@<HVM Loader Functions@>=
+
+int load_hvm_file(const char* path) {
+    FILE* file = fopen(path, "rb");
+    if (!file) {
+        fprintf(stderr, "[HVM] Error: Cannot open %s\n", path);
+        return 0;
+    }
+
+    uint8_t header[4];
+    if (fread(header, 1, 4, file) != 4) {
+        fprintf(stderr, "[HVM] Error: Cannot read header\n");
+        fclose(file);
+        return 0;
+    }
+
+    if (header[0] != HVM_MAGIC_0 || header[1] != HVM_MAGIC_1 ||
+        header[2] != HVM_MAGIC_2 || header[3] != HVM_MAGIC_3) {
+        fprintf(stderr, "[HVM] Error: Invalid magic bytes in %s\n", path);
+        fclose(file);
+        return 0;
+    }
+
+    uint32_t code_len = 0;
+    if (fread(&code_len, sizeof(uint32_t), 1, file) != 1) {
+        fprintf(stderr, "[HVM] Error: Cannot read code length\n");
+        fclose(file);
+        return 0;
+    }
+
+    if (code_len > HVM_MAX_CODE_SIZE) {
+        fprintf(stderr, "[HVM] Error: Code too large (%u bytes)\n", code_len);
+        fclose(file);
+        return 0;
+    }
+
+    if (fread(hvm_code, 1, code_len, file) != code_len) {
+        fprintf(stderr, "[HVM] Error: Incomplete bytecode read\n");
+        fclose(file);
+        return 0;
+    }
+
+    hvm_code_size = code_len;
+    fclose(file);
+    printf("[HVM] Loaded %zu bytes from %s\n", hvm_code_size, path);
+    return 1;
+}
+
+void print_hvm_code(void) {
+    printf("[HVM] Bytecode Dump (%zu bytes):\n", hvm_code_size);
+    for (size_t i = 0; i < hvm_code_size; i++) {
+        printf(" %02X", hvm_code[i]);
+        if ((i + 1) % 16 == 0) printf("\n");
+    }
+    if (hvm_code_size % 16 != 0) printf("\n");
+}
+
+@*1 Header Export for External Modules
+
+Other modules (such as `hanoivm_cli.cweb` or a future VM dispatcher) may include
+this file's `.h` output to access the `load_hvm_file()` and `print_hvm_code()` functions,
+as well as the `Opcode` enum.
+
+@h
+@<Opcode Enum@>
+@<HVM Loader API@>
