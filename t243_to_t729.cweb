@@ -1,0 +1,159 @@
+/* t243_to_t729.cweb - T243 Tree to T729 Macro Transformer */
+
+@* Introduction.
+This CWEB document defines the transformation logic that converts symbolic ternary logic trees (T243 trees) into executable T729 macros, ready for GPU dispatch through the GAIA interface. 
+This forms a critical bridge between HanoiVM's recursive logic engine and the Axion Kernel Module. It incorporates entropy scoring, AI telemetry, and real GPU macro dispatch through the Axion-GAIA interface.
+
+@* Includes and Definitions.
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <math.h>
+
+#define T729_SIZE 6
+
+/* GAIA Dispatch Intent */
+typedef enum {
+    GAIA_EMIT_VECTOR = 0,
+    GAIA_RECONSTRUCT,
+    GAIA_FOLD_TREE,
+    GAIA_UNKNOWN
+} GAIAIntent;
+
+/* T729 macro structure */
+typedef struct {
+    int macro_id;
+    GAIAIntent intent;
+    int input[T729_SIZE];
+    float entropy_score;
+} T729Macro;
+
+/* T243 logic tree node (-1, 0, 1 values) */
+typedef struct T243TreeNode {
+    int value; // Trit value at this node
+    struct T243TreeNode* left;
+    struct T243TreeNode* right;
+} T243TreeNode;
+
+/* Axion-aware entropy scoring stub */
+float axion_entropy_score(const int *data, int len) {
+    int counts[3] = {0};
+    for (int i = 0; i < len; ++i) {
+        if (data[i] == -1) counts[0]++;
+        else if (data[i] == 0) counts[1]++;
+        else if (data[i] == 1) counts[2]++;
+    }
+    float p0 = counts[0] / (float)len;
+    float p1 = counts[1] / (float)len;
+    float p2 = counts[2] / (float)len;
+    float entropy = 0.0;
+    if (p0 > 0) entropy -= p0 * log2f(p0);
+    if (p1 > 0) entropy -= p1 * log2f(p1);
+    if (p2 > 0) entropy -= p2 * log2f(p2);
+    return entropy;
+}
+
+/* External GPU backend API (Axion-GAIA Interface) */
+extern void axion_gaia_dispatch(const T729Macro* macro);
+
+@* Function Prototypes.
+@c
+T729Macro generate_macro_from_tree(const T243TreeNode* root, int macro_id);
+void flatten_tree(const T243TreeNode* node, int* buffer, int* index);
+T243TreeNode* create_node(int value);
+T243TreeNode* build_sample_tree(void);
+void print_macro(const T729Macro* macro);
+void dispatch_macro_to_gpu(const T729Macro* macro);
+
+@* Tree to Macro Conversion.
+Converts a T243 symbolic tree into a T729 macro by flattening it in pre-order.
+@c
+T729Macro generate_macro_from_tree(const T243TreeNode* root, int macro_id) {
+    T729Macro macro;
+    macro.macro_id = macro_id;
+    macro.intent = GAIA_FOLD_TREE;
+
+    int index = 0;
+    flatten_tree(root, macro.input, &index);
+
+    // Pad remaining entries with 0 (neutral trit)
+    for (int i = index; i < T729_SIZE; ++i) {
+        macro.input[i] = 0;
+    }
+
+    macro.entropy_score = axion_entropy_score(macro.input, T729_SIZE);
+    printf("[Axion] Macro %d Entropy: %.4f\n", macro_id, macro.entropy_score);
+    return macro;
+}
+
+@* Recursive Tree Flattening.
+Traverses T243 tree and fills macro input array in pre-order (up to 6 nodes).
+@c
+void flatten_tree(const T243TreeNode* node, int* buffer, int* index) {
+    if (!node || *index >= T729_SIZE) return;
+
+    buffer[(*index)++] = node->value;
+    flatten_tree(node->left, buffer, index);
+    flatten_tree(node->right, buffer, index);
+}
+
+@* Utility: Create Tree Node.
+@c
+T243TreeNode* create_node(int value) {
+    T243TreeNode* node = (T243TreeNode*)malloc(sizeof(T243TreeNode));
+    node->value = value;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
+@* Build Sample Tree.
+Creates a simple test tree: root(1) -> left(-1), right(0)
+@c
+T243TreeNode* build_sample_tree(void) {
+    T243TreeNode* root = create_node(1);
+    root->left = create_node(-1);
+    root->right = create_node(0);
+    return root;
+}
+
+@* Print Macro Utility.
+@c
+void print_macro(const T729Macro* macro) {
+    printf("Macro ID: %d\n", macro->macro_id);
+    printf("Intent: %d\n", macro->intent);
+    printf("Entropy Score: %.4f\n", macro->entropy_score);
+    printf("Input Vector: ");
+    for (int i = 0; i < T729_SIZE; ++i) {
+        printf("%d ", macro->input[i]);
+    }
+    printf("\n");
+}
+
+@* Dispatch Macro to GPU (Axion-GAIA Integration).
+Uses Axion-GAIA backend to dispatch macro to actual GPU system.
+@c
+void dispatch_macro_to_gpu(const T729Macro* macro) {
+    printf("[Axion-GAIA] Dispatching Macro %d with intent %d...\n", macro->macro_id, macro->intent);
+    axion_gaia_dispatch(macro);
+}
+
+@* Main Entry for Testing.
+@c
+int main(void) {
+    T243TreeNode* tree = build_sample_tree();
+    T729Macro macro = generate_macro_from_tree(tree, 100);
+    print_macro(&macro);
+    dispatch_macro_to_gpu(&macro);
+
+    // Free tree nodes
+    free(tree->left);
+    free(tree->right);
+    free(tree);
+
+    return 0;
+}
+
+@* End of t243_to_t729.cweb.
