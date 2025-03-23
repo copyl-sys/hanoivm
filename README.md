@@ -29,25 +29,45 @@ HanoiVM powers the evolving ternary stack that includes T81Lang, Axion, and futu
 File	Purpose
 
 hanoivm-core.cweb	- Core VM architecture (registers, memory, opcodes)
+
 hanoivm_vm.cweb	- Bytecode interpreter for .hvm files
+
 hanoivm-runtime.cweb - Runtime environment and symbolic stack frames
+
 t81_stack.cweb, libt81.cweb	- Base-81 arithmetic and stack utilities
+
 libt243.cweb, libt729.cweb	- Higher-order ternary logic for T243 & T729
+
 ai_hook.cweb	- AI feedback interface for Axion hooks
+
 axion-ai.cweb	- AI execution stub (placeholder for Axion runtime)
+
 axion-gaia-interface.cweb	- GPU interface bridge for Axion-GAIA backend
+
 cuda_handle_request.cweb - CUDA dispatch logic for T729 macros
+
 gaia_handle_request.cweb - ROCm/GAIA dispatch stub for symbolic acceleration
+
 disassembler.cweb - Ternary bytecode disassembler (full depth introspection)
+
 hanoivm_cli.cweb - CLI wrapper and binary runner
+
 t81asm.cweb	- Experimental assembler from human-readable syntax
+
 hvm_loader.cweb	- Loader utility for .hvm segments
+
 hanoivm_tests.cweb - Built-in unit test suite for core logic
+
 Makefile	- Build automation for CWEB modules
+
 Cargo.toml	- Future Rust integration for compiler/assembler
+
 HanoiVM.png	- Logo/diagram
+
 ROADMAP.md	- Project goals and future milestones
+
 hanoivm_project_profile_report.pdf - PDF summary of architectural overview
+
 
 🛠️ Build Instructions
 
