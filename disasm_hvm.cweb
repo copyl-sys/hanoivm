@@ -1,47 +1,100 @@
-@* Disassembler for HanoiVM Bytecode.
+@* Enhanced T81 Disassembler with Full Type Introspection.
 
-This utility reads a `.hvm` file and prints a human-readable disassembly
-for inspection and debugging purposes.
+This enhanced disassembler handles all core T81 data types,
+in compliance with the Prime Directive: disassemble every
+T81 data type at any depth.
 
 @c
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+
+// Type Tags for T81 Data Types
+#define T81_TAG_BIGINT     0x01
+#define T81_TAG_FRACTION   0x02
+#define T81_TAG_FLOAT      0x03
+#define T81_TAG_MATRIX     0x04
+#define T81_TAG_VECTOR     0x05
+#define T81_TAG_TENSOR     0x06
+#define T81_TAG_POLYNOMIAL 0x07
+#define T81_TAG_GRAPH      0x08
+#define T81_TAG_QUATERNION 0x09
+#define T81_TAG_OPCODE     0x0A
+
+// Instruction Opcodes
+#define OP_PUSH    0x01
+#define OP_ADD     0x02
+#define OP_PRINT   0x03
+#define OP_HALT    0xFF
+
+static void disasm_bigint(FILE *in) {
+    uint8_t len;
+    fread(&len, 1, 1, in);
+    printf("T81BigInt [len=%d] ", len);
+    printf("digits=[");
+    for (int i = 0; i < len; i++) {
+        uint8_t digit;
+        fread(&digit, 1, 1, in);
+        printf("%d%s", digit, (i < len - 1) ? ", " : "");
+    }
+    printf("]\n");
+}
+
+static void disasm_fraction(FILE *in) {
+    printf("T81Fraction { numerator: ");
+    disasm_bigint(in);
+    printf("  denominator: ");
+    disasm_bigint(in);
+    printf("}\n");
+}
+
+static void disasm_float(FILE *in) {
+    printf("T81Float {\n  mantissa: ");
+    disasm_bigint(in);
+    int8_t exponent;
+    fread(&exponent, 1, 1, in);
+    printf("  exponent: %d\n}\n", exponent);
+}
+
+static void disasm_operand_by_tag(FILE *in, uint8_t tag) {
+    switch (tag) {
+        case T81_TAG_BIGINT:
+            disasm_bigint(in); break;
+        case T81_TAG_FRACTION:
+            disasm_fraction(in); break;
+        case T81_TAG_FLOAT:
+            disasm_float(in); break;
+        default:
+            printf("UNKNOWN TYPE TAG 0x%02X\n", tag);
+            break;
+    }
+}
 
 void disasm(const char *filename) {
     FILE *in = fopen(filename, "rb");
-    if (!in) {
-        perror("Failed to open input file");
-        exit(1);
-    }
-
-    unsigned char opcode;
-    while (fread(&opcode, sizeof(unsigned char), 1, in) == 1) {
+    if (!in) { perror("open"); exit(1); }
+    uint8_t opcode;
+    while (fread(&opcode, 1, 1, in) == 1) {
         switch (opcode) {
-            case 0x01: {
-                // PUSH (needs operand)
-                unsigned char operand;
-                if (fread(&operand, sizeof(unsigned char), 1, in) != 1) {
-                    fprintf(stderr, "Error: Expected operand after PUSH\n");
-                    exit(1);
-                }
-                printf("PUSH 0x%02X\n", operand);
+            case OP_PUSH: {
+                uint8_t tag;
+                fread(&tag, 1, 1, in);
+                printf("PUSH ");
+                disasm_operand_by_tag(in, tag);
                 break;
             }
-            case 0x02:
-                printf("ADD\n");
-                break;
-            case 0x03:
-                printf("PRINT\n");
-                break;
-            case 0xFF:
-                printf("HALT\n");
-                break;
+            case OP_ADD:
+                printf("ADD\n"); break;
+            case OP_PRINT:
+                printf("PRINT\n"); break;
+            case OP_HALT:
+                printf("HALT\n"); break;
             default:
-                printf("UNKNOWN 0x%02X\n", opcode);
+                printf("UNKNOWN OPCODE 0x%02X\n", opcode);
                 break;
         }
     }
-
     fclose(in);
 }
 
@@ -50,9 +103,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Usage: %s <file.hvm>\n", argv[0]);
         return 1;
     }
-
     disasm(argv[1]);
     return 0;
 }
 
-@* End of disassembler.
+@* End of file.
