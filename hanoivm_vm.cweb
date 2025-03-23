@@ -32,6 +32,22 @@ uint81_t fetch_operand(const uint8_t* buf) {
     return out;
 }
 
+@* Stack Extensions for uint81_t support *@
+@c
+void push81u(uint81_t val) {
+    push81(val.c);
+    push81(val.b);
+    push81(val.a);
+}
+
+uint81_t pop81u(void) {
+    uint81_t val;
+    val.a = pop81();
+    val.b = pop81();
+    val.c = pop81();
+    return val;
+}
+
 @<VM Execution Function@>=
 
 void execute_vm(void) {
@@ -101,3 +117,5 @@ void execute_vm(void) {
 @<VM Execution API@>
 @<VM Context Definition@>
 uint81_t fetch_operand(const uint8_t* buf);
+void push81u(uint81_t val);
+uint81_t pop81u(void);
