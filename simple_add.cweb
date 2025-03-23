@@ -4,7 +4,7 @@ This program writes a simple HanoiVM bytecode file (`simple_add.hvm`) that:
 1. Pushes 0x12 (18)
 2. Pushes 0x21 (33)
 3. Adds them
-4. Prints the result
+4. Prints the result (top of stack, non-destructive)
 5. Halts the program
 
 This file can be assembled and executed on the HanoiVM.
@@ -22,7 +22,7 @@ int main(void) {
     // Opcode definitions
     const unsigned char PUSH  = 0x01;
     const unsigned char ADD   = 0x02;
-    const unsigned char PRINT = 0x03;
+    const unsigned char PRINT = 0x03;  // Non-destructive peek
     const unsigned char HALT  = 0xFF;
 
     // Bytecode sequence
@@ -30,7 +30,7 @@ int main(void) {
         PUSH,  0x12,    // PUSH 0x12 (18)
         PUSH,  0x21,    // PUSH 0x21 (33)
         ADD,            // ADD
-        PRINT,          // PRINT
+        PRINT,          // PRINT (peek)
         HALT            // HALT
     };
 
@@ -40,5 +40,20 @@ int main(void) {
     printf("Written bytecode to simple_add.hvm\n");
     return 0;
 }
+
+@* VM Execution Patch: OP_PRINT Implementation
+
+Inside your `hanoivm_vm.cweb` dispatch loop, add the following case:
+
+```c
+case OP_PRINT: {
+    int top = peek81();
+    printf("[VM] PRINT: %d\n", top);
+    axion_log("PRINT");
+    break;
+}
+```
+
+This prints the top of the stack without modifying it.
 
 @* End of program.
