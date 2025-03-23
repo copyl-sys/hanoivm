@@ -1,0 +1,57 @@
+@* test_controlflow_hvm.cweb — Generates a .hvm test for control flow opcodes *@
+
+@c
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+void write_operand(FILE* f, uint32_t a, uint32_t b, uint8_t c) {
+    fputc((a >> 24) & 0xFF, f);
+    fputc((a >> 16) & 0xFF, f);
+    fputc((a >> 8)  & 0xFF, f);
+    fputc(a & 0xFF, f);
+    fputc((b >> 24) & 0xFF, f);
+    fputc((b >> 16) & 0xFF, f);
+    fputc((b >> 8)  & 0xFF, f);
+    fputc(b & 0xFF, f);
+    fputc(c, f);
+}
+
+int main(int argc, char* argv[]) {
+    const char* filename = "tests/test_controlflow.hvm";
+    if (argc > 1) filename = argv[1];
+    FILE* out = fopen(filename, "wb");
+    if (!out) {
+        perror("fopen");
+        return 1;
+    }
+
+    // PUSH 0
+    fputc(0x01, out);
+    write_operand(out, 0, 0, 0);
+
+    // JZ to 0x0015
+    fputc(0x11, out);
+    write_operand(out, 0, 0, 0x15);
+
+    // PUSH 42 (will be skipped)
+    fputc(0x01, out);
+    write_operand(out, 0, 0, 42);
+
+    // JMP to 0x001E (past CALL)
+    fputc(0x10, out);
+    write_operand(out, 0, 0, 0x1E);
+
+    // CALL to 0x0020
+    fputc(0x13, out);
+    write_operand(out, 0, 0, 0x20);
+
+    // RET
+    fputc(0x14, out);
+
+    // HALT
+    fputc(0xFF, out);
+
+    fclose(out);
+    return 0;
+}
