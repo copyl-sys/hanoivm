@@ -22,7 +22,7 @@ Designed for high-efficiency symbolic computing, recursive logic modeling, and i
 - 🧮 **Recursive Ternary Arithmetic** (`T81`, `T243`, `T729`)
 - 📦 **Symbolic Stack Engine** for deeply nested operations
 - 🤖 **Axion-AI Hook Integration** for optimization, prediction, and entropy-based logic
-- ⚙️ **GPU Dispatch Layer** with CUDA stubs (`cuda_handle_request.cu`)
+- ⚙️ **GPU Dispatch Layer** with CUDA (`cuda_handle_request.cweb`)
 - 🔁 **TISC-Compatible** backend support for future ternary compilers
 - 📄 **CWEB Literate Programming Format** for source transparency and AI reasoning
 - 🔬 **Modular Design** for runtime, core VM, and ternary arithmetic isolation
