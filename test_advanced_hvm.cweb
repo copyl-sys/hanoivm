@@ -1,0 +1,44 @@
+@* test_advanced_hvm.cweb — Generates a test .hvm binary with AI opcodes *@
+
+@c
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+void write_operand(FILE* f, uint32_t a, uint32_t b, uint8_t c) {
+    fputc((a >> 24) & 0xFF, f);
+    fputc((a >> 16) & 0xFF, f);
+    fputc((a >> 8)  & 0xFF, f);
+    fputc(a & 0xFF, f);
+    fputc((b >> 24) & 0xFF, f);
+    fputc((b >> 16) & 0xFF, f);
+    fputc((b >> 8)  & 0xFF, f);
+    fputc(b & 0xFF, f);
+    fputc(c, f);
+}
+
+int main(int argc, char* argv[]) {
+    const char* filename = "tests/test_advanced.hvm";
+    if (argc > 1) filename = argv[1];
+    FILE* out = fopen(filename, "wb");
+    if (!out) {
+        perror("fopen");
+        return 1;
+    }
+
+    // T81_MATMUL [1 2 3] × [3 2 1]
+    fputc(0x21, out);
+    write_operand(out, 1, 2, 3);
+    write_operand(out, 3, 2, 1);
+
+    // TNN_ACCUM [6 3 0] + [2 1 1]
+    fputc(0x20, out);
+    write_operand(out, 6, 3, 0);
+    write_operand(out, 2, 1, 1);
+
+    // HALT
+    fputc(0xFF, out);
+
+    fclose(out);
+    return 0;
+}
