@@ -84,40 +84,45 @@ Pull, study, build... then dream deeper.
 Unified Approach: Ternary Logic Ecosystem with AI and GPU Integration
 
 Purpose and Vision
-This ecosystem aims to redefine computation through ternary logic (-1, 0, 1), moving beyond binary constraints to achieve greater efficiency (1.585 bits/trit vs. 2+ bits for "unknown" in binary) and alignment with human-like reasoning. It integrates:  
+This ecosystem aims to redefine computation through ternary logic (-1, 0, 1), moving beyond binary constraints to achieve greater efficiency (1.585 bits/trit vs. 2+ bits for "unknown" in binary) and alignment with human-like reasoning.
 
-	•	HanoiVM: A recursive ternary virtual machine (T81 arithmetic, T243 logic trees, T729 macros) with Axion AI as its autonomous optimizer.  
-	•	Axion Kernel Module: A Linux kernel extension emulating ternary execution, managing resources, and evolving toward native ternary hardware.  
-	•	Axion-GAIA/CUDA Interface: A bridge to GPU backends (AMD GAIA via ROCm, NVIDIA CUDA) for vectorized ternary logic processing.
+It integrates:  
+
+	• HanoiVM: A recursive ternary virtual machine (T81 arithmetic, T243 logic trees, T729 macros) with Axion AI as its autonomous optimizer.  
+	• Axion Kernel Module: A Linux kernel extension emulating ternary execution, managing resources, and evolving toward native ternary hardware.  
+	• Axion-GAIA/CUDA Interface: A bridge to GPU backends (AMD GAIA via ROCm, NVIDIA CUDA) for vectorized ternary logic processing.
 
 The overarching vision is a recursive, self-optimizing computational framework:  
-	•	Philosophy: "Recursion as reality, symbolic compression as intelligence, logic as art" (HanoiVM), mirrored by the kernel’s AI-driven evolution and GPU-enhanced scalability.  
-	•	End Goal: A ternary-native system (e.g., AxionOS) where AI autonomously optimizes logic, resources, and execution across CPU and GPU, supporting applications like ternary neural networks (TNNs), post-quantum cryptography, and generative reasoning.
+	• Philosophy: "Recursion as reality, symbolic compression as intelligence, logic as art" (HanoiVM), mirrored by the kernel’s AI-driven evolution and GPU-enhanced scalability.  
+	• End Goal: A ternary-native system (e.g., AxionOS) where AI autonomously optimizes logic, resources, and execution across CPU and GPU, supporting applications like ternary neural networks (TNNs), post-quantum cryptography, and generative reasoning.
+
 
 Component Synergy
 
-	1	HanoiVM (Rust/CWEB Modules)  
-	◦	T81 (libt81.cweb): Foundational arithmetic layer (4 trits, Base-81) for numeric operations, used by all higher layers and the kernel’s TBIN execution.  
-	◦	T243 (libt243.cweb): Mid-tier symbolic logic trees (5 trits, Base-243) for branching and abstraction, dispatchable to GPU for transformation.  
-	◦	T729 (libt729.cweb): Macro-instruction layer (6 trits, Base-729) for compressed logic, directly mappable to GPU-updated macros via axion-gaia-interface.  
-	◦	Core (hanoivm-core.cweb): Runtime engine executing T243 trees and T729 macros, extensible to kernel IOCTLs or GPU dispatch.  
-	◦	Axion AI (axion-ai.cweb): Introspective optimizer analyzing entropy and folding trees into macros, a precursor to the kernel’s broader AI role.  
-	◦	Synergy: Provides a pure ternary stack with recursive execution, feeding symbolic logic to the kernel and GPU for optimization.
-	2	Axion Kernel Module (axion-ai.c)  
-	◦	Resource Management: AI-driven load balancing (CPU, RAM, GPU) with ternary-aware weighting, extensible to GPU dispatch decisions.  
-	◦	Ternary Execution: Emulates TBIN binaries (TADD, TAND, etc.), aligning with HanoiVM’s T81 ops and preparing for native hardware.  
-	◦	Package Manager: Tracks software states ternarily (-1, 0, 1), potentially optimizing dependencies via T243 trees or GPU reasoning.  
-	◦	AI Features: Predictive needs, anomaly detection, and rollback suppression mirror HanoiVM’s Axion AI, with broader system scope.  
-	◦	Synergy: Acts as a practical bridge between HanoiVM’s theoretical VM and real-world hardware, integrating GPU capabilities via the interface.
-	3	Axion-GAIA/CUDA Interface (axion-gaia-interface.cweb)  
-	◦	Dispatch: Sends TBIN logic (from HanoiVM or kernel) to GPU backends (GAIA/ROCm or CUDA) with intents like transformation or vector emission.  
-	◦	Feedback: Returns entropy shifts and updated T729 macros, feeding back into HanoiVM’s registry or kernel’s execution state.  
-	◦	Synergy: Scales HanoiVM’s recursive logic to GPU parallelism, enhancing the kernel’s ternary emulation with vectorized optimization.
+1   HanoiVM (Rust/CWEB Modules)  
+      ◦ T81 (libt81.cweb): Foundational arithmetic layer (4 trits, Base-81) for numeric operations, used by all higher layers and the kernel’s TBIN execution.  
+      ◦	T243 (libt243.cweb): Mid-tier symbolic logic trees (5 trits, Base-243) for branching and abstraction, dispatchable to GPU for transformation.  
+      ◦	T729 (libt729.cweb): Macro-instruction layer (6 trits, Base-729) for compressed logic, directly mappable to GPU-updated macros via axion-gaia-interface.  
+      ◦	Core (hanoivm-core.cweb): Runtime engine executing T243 trees and T729 macros, extensible to kernel IOCTLs or GPU dispatch.  
+      ◦	Axion AI (axion-ai.cweb): Introspective optimizer analyzing entropy and folding trees into macros, a precursor to the kernel’s broader AI role.  
+      ◦	Synergy: Provides a pure ternary stack with recursive execution, feeding symbolic logic to the kernel and GPU for optimization.
+
+2   Axion Kernel Module (axion-ai.c)  
+      ◦	Resource Management: AI-driven load balancing (CPU, RAM, GPU) with ternary-aware weighting, extensible to GPU dispatch decisions.  
+      ◦	Ternary Execution: Emulates TBIN binaries (TADD, TAND, etc.), aligning with HanoiVM’s T81 ops and preparing for native hardware.  
+      ◦	Package Manager: Tracks software states ternarily (-1, 0, 1), potentially optimizing dependencies via T243 trees or GPU reasoning.  
+      ◦	AI Features: Predictive needs, anomaly detection, and rollback suppression mirror HanoiVM’s Axion AI, with broader system scope.  
+      ◦	Synergy: Acts as a practical bridge between HanoiVM’s theoretical VM and real-world hardware, integrating GPU capabilities via the interface.
+
+3   Axion-GAIA/CUDA Interface (axion-gaia-interface.cweb)  
+      ◦	Dispatch: Sends TBIN logic (from HanoiVM or kernel) to GPU backends (GAIA/ROCm or CUDA) with intents like transformation or vector emission.  
+      ◦	Feedback: Returns entropy shifts and updated T729 macros, feeding back into HanoiVM’s registry or kernel’s execution state.  
+      ◦	Synergy: Scales HanoiVM’s recursive logic to GPU parallelism, enhancing the kernel’s ternary emulation with vectorized optimization.
 
 Interconnectivity
-	•	Data Flow: HanoiVM generates T243 trees and T729 macros → Kernel emulates TBIN execution → GPU interface transforms/compresses logic → Feedback updates HanoiVM/kernel state.  
-	•	AI Role: Axion AI (HanoiVM) and kernel AI collaboratively optimize logic and resources, with GPU providing generative horsepower.  
-	•	Ternary Thread: All components use trits (-1, 0, 1), with HanoiVM’s pure ternary design informing the kernel’s emulation and GPU’s future native support.
+	• Data Flow: HanoiVM generates T243 trees and T729 macros → Kernel emulates TBIN execution → GPU interface transforms/compresses logic → Feedback updates HanoiVM/kernel state.  
+	• AI Role: Axion AI (HanoiVM) and kernel AI collaboratively optimize logic and resources, with GPU providing generative horsepower.  
+	• Ternary Thread: All components use trits (-1, 0, 1), with HanoiVM’s pure ternary design informing the kernel’s emulation and GPU’s future native support.
 
 
 Strengths
