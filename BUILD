@@ -47,3 +47,28 @@ cc_binary(
     srcs = ["test_controlflow_hvm.cweb"],
     deps = [],
 )
+
+# LOGIC TESTS
+
+genrule(
+    name = "generate_test_logic_hvm",
+    srcs = ["test_logic_hvm.cweb"],
+    outs = ["tests/test_logic.hvm"],
+    cmd = "$(location //test_logic_hvm:test_logic_hvm) > $(OUTS)",
+    tools = ["//test_logic_hvm:test_logic_hvm"],
+)
+
+sh_test(
+    name = "disasm_logic_test",
+    srcs = ["tests/disasm_logic_test.sh"],
+    data = [
+        "//disassembler:disassembler",
+        "tests/test_logic.hvm"
+    ],
+)
+
+cc_binary(
+    name = "test_logic_hvm",
+    srcs = ["test_logic_hvm.cweb"],
+    deps = [],
+)
