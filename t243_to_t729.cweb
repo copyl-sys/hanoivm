@@ -13,6 +13,7 @@ This forms a critical bridge between HanoiVM's recursive logic engine and the Ax
 #include <math.h>
 
 #define T729_SIZE 6
+#define MAX_LOG_MSG 128
 
 /* GAIA Dispatch Intent */
 typedef enum {
@@ -37,26 +38,16 @@ typedef struct T243TreeNode {
     struct T243TreeNode* right;
 } T243TreeNode;
 
-/* Axion-aware entropy scoring stub */
-float axion_entropy_score(const int *data, int len) {
-    int counts[3] = {0};
-    for (int i = 0; i < len; ++i) {
-        if (data[i] == -1) counts[0]++;
-        else if (data[i] == 0) counts[1]++;
-        else if (data[i] == 1) counts[2]++;
-    }
-    float p0 = counts[0] / (float)len;
-    float p1 = counts[1] / (float)len;
-    float p2 = counts[2] / (float)len;
-    float entropy = 0.0;
-    if (p0 > 0) entropy -= p0 * log2f(p0);
-    if (p1 > 0) entropy -= p1 * log2f(p1);
-    if (p2 > 0) entropy -= p2 * log2f(p2);
-    return entropy;
-}
+/* GAIA GPU Response structure */
+typedef struct {
+    int result[T729_SIZE];
+    float entropy_delta;
+    char explanation[MAX_LOG_MSG];
+    bool success;
+} GAIAResponse;
 
 /* External GPU backend API (Axion-GAIA Interface) */
-extern void axion_gaia_dispatch(const T729Macro* macro);
+extern GAIAResponse dispatch_macro(const T729Macro* macro);
 
 @* Function Prototypes.
 @c
@@ -66,6 +57,8 @@ T243TreeNode* create_node(int value);
 T243TreeNode* build_sample_tree(void);
 void print_macro(const T729Macro* macro);
 void dispatch_macro_to_gpu(const T729Macro* macro);
+void print_gpu_response(const GAIAResponse* response);
+float axion_entropy_score(const int *data, int len);
 
 @* Tree to Macro Conversion.
 Converts a T243 symbolic tree into a T729 macro by flattening it in pre-order.
@@ -132,12 +125,48 @@ void print_macro(const T729Macro* macro) {
     printf("\n");
 }
 
+@* Print GPU Response.
+@c
+void print_gpu_response(const GAIAResponse* response) {
+    if (!response || !response->success) {
+        printf("[Axion-GAIA ERROR] Dispatch failed: %s\n", response ? response->explanation : "Unknown error");
+        return;
+    }
+
+    printf("[Axion-GAIA Response]\nResult Vector: ");
+    for (int i = 0; i < T729_SIZE; ++i) {
+        printf("%d ", response->result[i]);
+    }
+    printf("\nEntropy Δ: %.4f\nExplanation: %s\n",
+           response->entropy_delta, response->explanation);
+}
+
 @* Dispatch Macro to GPU (Axion-GAIA Integration).
 Uses Axion-GAIA backend to dispatch macro to actual GPU system.
 @c
 void dispatch_macro_to_gpu(const T729Macro* macro) {
     printf("[Axion-GAIA] Dispatching Macro %d with intent %d...\n", macro->macro_id, macro->intent);
-    axion_gaia_dispatch(macro);
+    GAIAResponse result = dispatch_macro(macro);
+    print_gpu_response(&result);
+}
+
+@* Entropy Scoring (Shared).
+@c
+float axion_entropy_score(const int *data, int len) {
+    int counts[3] = {0};
+    for (int i = 0; i < len; ++i) {
+        if (data[i] == -1) counts[0]++;
+        else if (data[i] == 0) counts[1]++;
+        else if (data[i] == 1) counts[2]++;
+    }
+    float p0 = counts[0] / (float)len;
+    float p1 = counts[1] / (float)len;
+    float p2 = counts[2] / (float)len;
+    float entropy = 0.0;
+    if (p0 > 0) entropy -= p0 * log2f(p0);
+    if (p1 > 0) entropy -= p1 * log2f(p1);
+    if (p2 > 0) entropy -= p2 * log2f(p2);
+    return entropy;
 }
 
 @* Main Entry for Testing.
