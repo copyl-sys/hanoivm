@@ -1,47 +1,33 @@
-# Makefile for Modular HanoiVM Project using CWEB
+# Makefile for HanoiVM
 
-# ---- Config ----
+CWEB_SOURCES = \
+	hvm_loader.cweb \
+	disassembler.cweb \
+	hanoivm_vm.cweb \
+	main_driver.cweb
 
-CWEB_SOURCES := hanoivm_cli.cweb t81_stack.cweb hvm_loader.cweb ai_hook.cweb
-C_SOURCES    := $(CWEB_SOURCES:.cweb=.c)
-OBJECTS      := $(C_SOURCES:.c=.o)
-TARGET       := hanoivm
+C_OBJS = \
+	hvm_loader.c \
+	disassembler.c \
+	hanoivm_vm.c \
+	main_driver.c
 
-CC           := gcc
-CFLAGS       := -Wall -O2
+H_OBJS = \
+	hvm_loader.h \
+	disassembler.h \
+	hanoivm_vm.h \
+	main_driver.h
 
-# ---- Default ----
+all: hanoivm
 
-.PHONY: all clean run doc
-
-all: $(TARGET)
-
-# ---- Tangle all .cweb files ----
-
-%.c: %.cweb
+%.c %.h: %.cweb
+	cweave $<
 	ctangle $<
 
-# ---- Compile and link ----
-
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $@ $(OBJECTS)
-
-# ---- Run the VM with debug ----
-
-run: $(TARGET)
-	./$(TARGET) --mode=t81 --debug
-
-# ---- Weave docs for each .cweb into PDF ----
-
-doc: $(CWEB_SOURCES:.cweb=.pdf)
-
-%.tex: %.cweb
-	cweave $<
-
-%.pdf: %.tex
-	pdftex $*
-
-# ---- Cleanup ----
+hanoivm: $(CWEB_SOURCES:.cweb=.c) $(H_OBJS)
+	gcc -o hanoivm $(C_OBJS) -Wall -Wextra -O2
 
 clean:
-	rm -f $(TARGET) *.c *.o *.pdf *.log *.tex *.toc *.scn
+	rm -f *.c *.h *.tex *.log *.scn *.dvi *.pdf *.o hanoivm
+
+.PHONY: all clean
