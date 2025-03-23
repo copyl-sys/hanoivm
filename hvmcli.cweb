@@ -1,0 +1,60 @@
+@* hvmcli.c - Userspace interface to send .hvm opcodes to /dev/hvm0 *@
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <errno.h>
+
+typedef struct {
+    uint32_t a, b, c; // T81 word = 3 x 27-bit segments
+} uint81_t;
+
+int main(int argc, char* argv[]) {
+    if (argc != 5) {
+        fprintf(stderr, "Usage: %s <opcode_hex> <a> <b> <c>\n", argv[0]);
+        return 1;
+    }
+
+    int fd = open("/dev/hvm0", O_RDWR);
+    if (fd < 0) {
+        perror("open /dev/hvm0");
+        return 1;
+    }
+
+    uint8_t opcode = (uint8_t)strtol(argv[1], NULL, 16);
+    uint81_t operand;
+    operand.a = strtoul(argv[2], NULL, 0);
+    operand.b = strtoul(argv[3], NULL, 0);
+    operand.c = strtoul(argv[4], NULL, 0);
+
+    uint8_t buffer[sizeof(opcode) + sizeof(operand)];
+    memcpy(buffer, &opcode, 1);
+    memcpy(buffer + 1, &operand, sizeof(operand));
+
+    if (write(fd, buffer, sizeof(buffer)) != sizeof(buffer)) {
+        perror("write to /dev/hvm0");
+        close(fd);
+        return 1;
+    }
+
+    uint81_t result;
+    int tries = 10;
+    while (--tries > 0) {
+        ssize_t r = read(fd, &result, sizeof(result));
+        if (r == sizeof(result)) {
+            printf("Result: [A=%u] [B=%u] [C=%u]\n", result.a, result.b, result.c);
+            break;
+        } else if (errno == EAGAIN) {
+            usleep(10000); // Wait 10ms
+        } else {
+            perror("read from /dev/hvm0");
+            break;
+        }
+    }
+
+    close(fd);
+    return 0;
+}
