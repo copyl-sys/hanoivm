@@ -136,27 +136,29 @@ sh_test(
     data = [":hvm_firmware"],
 )
 
-@* Hermetic Test Script (tests/hermetic_assembler_test.sh) *@
-
+@* GitHub Actions CI Workflow *@
 @c
-#!/bin/bash
-set -e
-OUT=$(mktemp)
-echo "PUSH 1 2 3" > input.asm
-./hvm_assembler input.asm "$OUT"
-hexdump -C "$OUT"
+// .github/workflows/ci.yml
+name: HanoiVM CI
 
-@* Hermetic Test Script (tests/hermetic_cli_test.sh) *@
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-@c
-#!/bin/bash
-set -e
-./hvmcli 01 1 2 3
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-@* Hermetic Test Script (tests/hermetic_firmware_test.sh) *@
+      - name: Install Bazel
+        uses: bazelbuild/setup-bazel@v5
+        with:
+          bazel-version: 6.4.0
 
-@c
-#!/bin/bash
-set -e
-echo "(Simulated) Firmware interface loaded. No runtime test defined."
-exit 0
+      - name: Build and test
+        run: |
+          bazel build //...
+          bazel test //...
