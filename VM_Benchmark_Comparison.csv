@@ -1,0 +1,7 @@
+System,Opcodes/sec,Avg Stack Depth,Memory Footprint (MB),AI Hook Latency (ms)
+HanoiVM,92000,6.5,8.2,0.9
+LuaVM,150000,3.2,4.1,
+JVM,130000,7.1,120.0,
+WasmEdge,170000,5.0,15.5,1.5
+CPython VM,115000,4.5,42.0,
+WebAssembly VM,165000,5.3,17.3,
