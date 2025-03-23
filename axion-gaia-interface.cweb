@@ -1,85 +1,155 @@
-@* axion-gaia-interface.cweb: Axion ↔ GAIA/CUDA Recursive Logic Bridge
+/* axion-gaia-interface.cweb - GPU Dispatch Interface for Ternary Logic */
 
-This module defines the low-level interface between the Axion AI kernel logic optimizer
-and the GPU-based generative compute architecture, supporting both AMD GAIA (via ROCm)
-and NVIDIA CUDA backends. It allows symbolic ternary trees and macros
-produced by Axion (in TBIN format) to be dispatched to a runtime for vectorized reasoning,
-compression, or transformation.
+@* Introduction.
+This CWEB document defines the GPU dispatch interface for the unified ternary computing ecosystem. It provides an abstracted communication layer between the HanoiVM ternary virtual machine, the Axion Kernel Module, and GPU backends (e.g., GAIA/ROCm or CUDA) for processing vectorized ternary logic instructions (T729 macros).
 
-Axion integrates as a ternary-aware symbolic front-end, and GAIA/CUDA functions as the 
-backend generative interpreter or optimizer.
+The system is designed to simulate ternary instruction execution with GPU acceleration using an intent-based dispatch pattern. This implementation includes:
+- T729 macro processing (Base-729 ternary macro-instruction format)
+- Intent-based function dispatch
+- Mock GPU simulation (entropy feedback, transformation)
+- Extendable stubs for ROCm and CUDA kernel integration
+- Modular and production-ready code structure for future optimization
 
+@* Includes and Definitions.
 @c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
-#include <stddef.h>
+#include <stdbool.h>
 
-/// Enum to define the type of intent Axion has when submitting to a GPU engine.
+#define TRIT_VALUES 3
+#define T729_SIZE 6
+#define MAX_LOG_MSG 128
+
+/* Intent identifiers for GPU logic */
 typedef enum {
-    GAIA_ANALYZE = 0,
-    GAIA_TRANSFORM = 1,
-    GAIA_RECONSTRUCT = 2,
-    GAIA_EMIT_VECTOR = 3
-} GaiaIntent;
+    GAIA_EMIT_VECTOR = 0,
+    GAIA_RECONSTRUCT,
+    GAIA_FOLD_TREE,
+    GAIA_UNKNOWN
+} GAIAIntent;
 
-/// Structure that represents a symbolic logic dispatch request from Axion to GAIA or CUDA.
+/* T729 macro structure (6-trit encoded instruction) */
 typedef struct {
-    const uint8_t* tbin;        // Pointer to TBIN ternary macro (T81 logic bytecode)
-    size_t tbin_len;            // Length of TBIN macro
-    uint8_t confidence;         // Axion's belief in optimization potential (0–100)
-    GaiaIntent intent;          // Request type
-} GaiaRequest;
+    int macro_id;
+    GAIAIntent intent;
+    int input[T729_SIZE]; // Ternary vector (-1, 0, 1)
+} T729Macro;
 
-/// Structure representing the GPU engine's symbolic output for Axion to ingest and learn from.
+/* Result from GPU logic processing */
 typedef struct {
-    int32_t entropy_delta;      // Entropy gain/loss from symbolic transformation
-    uint8_t updated_macro[243]; // Optional new macro (T729 compressed result)
-    uint8_t symbolic_status;    // 0 = OK, 1 = anomaly, 2 = convergence, etc.
-} GaiaResponse;
+    int result[T729_SIZE];
+    float entropy_delta;  // Difference in symbolic compression
+    char explanation[MAX_LOG_MSG]; // Optional human-readable AI feedback
+    bool success;
+} GAIAResponse;
 
-/// Extern interface to a GAIA or CUDA backend handler.
-extern GaiaResponse gaia_handle_request(GaiaRequest request);
-extern GaiaResponse cuda_handle_request(GaiaRequest request);
+@* Function Prototypes.
+@c
+GAIAResponse dispatch_macro(const T729Macro *macro);
+GAIAResponse simulate_gpu_transformation(const T729Macro *macro);
+GAIAResponse cuda_handle_request(const T729Macro *macro);
+GAIAResponse rocm_handle_request(const T729Macro *macro);
+void print_response(const GAIAResponse *response);
 
-/// Unified dispatcher that selects between GAIA and CUDA runtime.
-void axion_dispatch_to_gpu(const uint8_t* logic_blob, size_t len, int use_cuda) {
-    GaiaRequest req = {
-        .tbin = logic_blob,
-        .tbin_len = len,
-        .confidence = 74, // Based on entropy analysis
-        .intent = GAIA_TRANSFORM
-    };
+@* Central Dispatch Function.
+This function dispatches T729 macros based on their intent and backend compatibility.
+@c
+GAIAResponse dispatch_macro(const T729Macro *macro) {
+    if (!macro) {
+        GAIAResponse error = { .success = false };
+        snprintf(error.explanation, MAX_LOG_MSG, "Null macro pointer");
+        return error;
+    }
 
-    GaiaResponse res = use_cuda ? cuda_handle_request(req) : gaia_handle_request(req);
-
-    // Handle GPU feedback
-    if (res.symbolic_status == 0) {
-        axion_update_macro_registry(res.updated_macro);
-        axion_log_entropy_shift(res.entropy_delta);
-    } else {
-        axion_flag_symbolic_warning(res.symbolic_status);
+    switch (macro->intent) {
+        case GAIA_EMIT_VECTOR:
+        case GAIA_RECONSTRUCT:
+        case GAIA_FOLD_TREE:
+            return simulate_gpu_transformation(macro);
+        default: {
+            GAIAResponse unknown = { .success = false };
+            snprintf(unknown.explanation, MAX_LOG_MSG,
+                     "Unsupported intent: %d", macro->intent);
+            return unknown;
+        }
     }
 }
 
-/// Placeholder function definitions (to be defined in Axion or linked elsewhere)
-void axion_update_macro_registry(const uint8_t* macro);
-void axion_log_entropy_shift(int32_t delta);
-void axion_flag_symbolic_warning(uint8_t code);
+@* Simulated GPU Logic Transformation.
+This function rotates trits (-1, 0, 1) and simulates entropy reduction.
+@c
+GAIAResponse simulate_gpu_transformation(const T729Macro *macro) {
+    GAIAResponse response;
+    memset(&response, 0, sizeof(GAIAResponse));
+    response.success = true;
 
-@* 
-This completes the GPU interface module for recursive symbolic logic. 
-The actual engine (`gaia_handle_request` or `cuda_handle_request`) may be backed by:
-- ROCm-based kernels and graph models (GAIA)
-- CUDA C++ device functions and PTX kernels (NVIDIA)
+    for (int i = 0; i < T729_SIZE; ++i) {
+        int t = macro->input[i];
+        response.result[i] = (t == -1) ? 0 : (t == 0) ? 1 : -1;
+    }
 
-This abstraction allows Axion to dispatch ternary logic into a generative AI space,
-and receive compressed or optimized macros for recursive learning.
+    response.entropy_delta = 0.042f; // Placeholder entropy change
+    snprintf(response.explanation, MAX_LOG_MSG,
+             "Macro ID %d optimized via simulated GPU intent %d.",
+             macro->macro_id, macro->intent);
 
-@* 
-Future Extension Plan:
-- Connect this interface to Axion's internal `axion_trit_optimizer()` using IOCTLs
-- Serialize `GaiaRequest` to `/sys/axion_debug/gpu_request` with selectable backend
-- Add a scheduler flag to prefer CUDA or GAIA based on device availability
-- Mirror CUDA block/thread usage to symbolic macro depth (e.g. T243 grid patterns)
-- Use `nvrtc` for runtime PTX codegen and `hip` for portability
+    return response;
+}
 
-// This module supports GPU-enhanced recursive ternary logic at scale.
+@* CUDA Backend Stub.
+Stub for future CUDA-based ternary processing.
+@c
+GAIAResponse cuda_handle_request(const T729Macro *macro) {
+    GAIAResponse response;
+    memset(&response, 0, sizeof(GAIAResponse));
+    response.success = false;
+    snprintf(response.explanation, MAX_LOG_MSG, "CUDA backend not implemented yet.");
+    return response;
+}
+
+@* ROCm Backend Stub.
+Stub for future ROCm-based ternary processing.
+@c
+GAIAResponse rocm_handle_request(const T729Macro *macro) {
+    GAIAResponse response;
+    memset(&response, 0, sizeof(GAIAResponse));
+    response.success = false;
+    snprintf(response.explanation, MAX_LOG_MSG, "ROCm backend not implemented yet.");
+    return response;
+}
+
+@* Utility: Print GPU Response.
+Prints result and feedback from GAIA dispatch.
+@c
+void print_response(const GAIAResponse *response) {
+    if (!response || !response->success) {
+        printf("[ERROR] Dispatch failed: %s\n", response ? response->explanation : "Unknown error");
+        return;
+    }
+
+    printf("[GAIA Response]\nResult Vector: ");
+    for (int i = 0; i < T729_SIZE; ++i) {
+        printf("%d ", response->result[i]);
+    }
+    printf("\nEntropy Delta: %.4f\nExplanation: %s\n",
+           response->entropy_delta, response->explanation);
+}
+
+@* Main Entry for Testing.
+Basic test for the GAIA dispatch using simulated GPU processing.
+@c
+int main(void) {
+    T729Macro test = {
+        .macro_id = 42,
+        .intent = GAIA_FOLD_TREE,
+        .input = { -1, 0, 1, -1, 0, 1 }
+    };
+
+    GAIAResponse result = dispatch_macro(&test);
+    print_response(&result);
+    return result.success ? 0 : 1;
+}
+
+@* End of axion-gaia-interface.cweb.
