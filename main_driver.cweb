@@ -1,0 +1,40 @@
+@* HanoiVM | Main Driver
+
+This is the entry point for the HanoiVM virtual machine. It loads a
+`.hvm` bytecode file, invokes the disassembler (optional), and runs
+the execution loop defined in `hanoivm_vm.cweb`.
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include "hvm_loader.h"
+#include "disassembler.h"
+
+// Provided by hanoivm_vm.cweb
+void execute_vm(void);
+
+int main(int argc, char** argv) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <file.hvm> [--disasm]\n", argv[0]);
+        return 1;
+    }
+
+    if (!load_hvm(argv[1])) {
+        return 1;
+    }
+
+    if (argc > 2 && argv[2] && strcmp(argv[2], "--disasm") == 0) {
+        printf("Disassembly of %s:\n", argv[1]);
+        disassemble_vm();
+        printf("\n--- Executing ---\n\n");
+    }
+
+    execute_vm();
+    return 0;
+}
+
+@h
+#ifndef MAIN_DRIVER_H
+#define MAIN_DRIVER_H
+int main(int argc, char** argv);
+#endif
