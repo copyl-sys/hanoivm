@@ -1,0 +1,85 @@
+@* hanoivm-test.cweb | Unit Test Suite for HanoiVM and Axion Modules
+
+This CWEB module provides basic kernel-mode test harness routines to validate
+core functionality of HanoiVM and Axion AI runtime components. It is intended
+for use as a loadable kernel module with self-check logic and debugfs output.
+
+@c
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
+#include <linux/random.h>
+#include <linux/mutex.h>
+
+#define TEST_NAME "hanoivm-test"
+
+static struct dentry *test_debug_dir;
+static char *test_output;
+static DEFINE_MUTEX(test_lock);
+
+@<Test Routines@>=
+static void test_t81_stack_logic(void) {
+    strcpy(test_output, "[TEST] Running T81 Stack Logic Test...\n");
+    // TODO: Inject values into t81_stack.c routines and validate results
+}
+
+static void test_vm_execution(void) {
+    strcat(test_output, "[TEST] Running VM Execution Test...\n");
+    // TODO: Load mock .hvm bytecode into hanoivm_vm.c and trace logic
+}
+
+static void test_entropy_detection(void) {
+    strcat(test_output, "[TEST] Running Entropy/Anomaly Test...\n");
+    // TODO: Feed high-entropy values into axion-ai.cweb stack and verify rollback
+}
+
+@<DebugFS Interface@>=
+static ssize_t test_debugfs_read(struct file *file, char __user *ubuf,
+                                 size_t count, loff_t *ppos) {
+    if (*ppos > 0)
+        return 0;
+    if (copy_to_user(ubuf, test_output, strlen(test_output)))
+        return -EFAULT;
+    *ppos = strlen(test_output);
+    return *ppos;
+}
+
+static const struct file_operations test_fops = {
+    .owner = THIS_MODULE,
+    .read = test_debugfs_read,
+};
+
+@<Module Lifecycle@>=
+static int __init test_init(void) {
+    pr_info("%s: initializing test harness\n", TEST_NAME);
+    test_output = kzalloc(PAGE_SIZE, GFP_KERNEL);
+    if (!test_output)
+        return -ENOMEM;
+
+    test_debug_dir = debugfs_create_file(TEST_NAME, 0444, NULL, NULL, &test_fops);
+    if (!test_debug_dir)
+        return -ENOMEM;
+
+    mutex_lock(&test_lock);
+    test_t81_stack_logic();
+    test_vm_execution();
+    test_entropy_detection();
+    mutex_unlock(&test_lock);
+
+    return 0;
+}
+
+static void __exit test_exit(void) {
+    debugfs_remove(test_debug_dir);
+    kfree(test_output);
+    pr_info("%s: exiting test harness\n", TEST_NAME);
+}
+
+module_init(test_init);
+module_exit(test_exit);
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Axion + HanoiVM Team");
+MODULE_DESCRIPTION("Kernel-space unit tests for HanoiVM and Axion AI");
