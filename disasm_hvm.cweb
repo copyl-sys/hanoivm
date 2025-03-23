@@ -1,0 +1,58 @@
+@* Disassembler for HanoiVM Bytecode.
+
+This utility reads a `.hvm` file and prints a human-readable disassembly
+for inspection and debugging purposes.
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+
+void disasm(const char *filename) {
+    FILE *in = fopen(filename, "rb");
+    if (!in) {
+        perror("Failed to open input file");
+        exit(1);
+    }
+
+    unsigned char opcode;
+    while (fread(&opcode, sizeof(unsigned char), 1, in) == 1) {
+        switch (opcode) {
+            case 0x01: {
+                // PUSH (needs operand)
+                unsigned char operand;
+                if (fread(&operand, sizeof(unsigned char), 1, in) != 1) {
+                    fprintf(stderr, "Error: Expected operand after PUSH\n");
+                    exit(1);
+                }
+                printf("PUSH 0x%02X\n", operand);
+                break;
+            }
+            case 0x02:
+                printf("ADD\n");
+                break;
+            case 0x03:
+                printf("PRINT\n");
+                break;
+            case 0xFF:
+                printf("HALT\n");
+                break;
+            default:
+                printf("UNKNOWN 0x%02X\n", opcode);
+                break;
+        }
+    }
+
+    fclose(in);
+}
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <file.hvm>\n", argv[0]);
+        return 1;
+    }
+
+    disasm(argv[1]);
+    return 0;
+}
+
+@* End of disassembler.
