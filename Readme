@@ -59,6 +59,32 @@ The firmware runs an infinite loop polling `HVM_CONTROL_REG`. Upon trigger, it e
 - hvm_firmware  — Firmware entry point for ternary PCIe card
 - hvm_pcie_driver — Linux PCIe kernel module
 
+## 🗺️ Roadmap
+
+### Stage 1: VM Core & Stack Expansion
+- [x] Implement base opcodes (NOP, PUSH, POP, ADD)
+- [ ] Add advanced opcodes (MUL, DIV, MOD, JMP, CALL, RET)
+- [ ] Expand ternary stack memory and symbolic type support
+- [ ] Integrate ternary memory-mapped I/O (for sensors, etc.)
+
+### Stage 2: Hardware Readiness
+- [x] Firmware entry for opcode+operand memory mapping
+- [x] PCIe Linux kernel driver with BAR I/O and IOCTL
+- [ ] HDL (Verilog) FSM synthesis of HanoiVM interpreter loop
+- [ ] AXI-lite transport + PCIe testbench on dev board (ECP5/Artix)
+
+### Stage 3: AI/GPU Symbolic Accelerator
+- [x] Simulate GAIA + CUDA ternary macro acceleration
+- [ ] Implement symbolic processing queue in Axion
+- [ ] Ternary intent dispatch logic to GPU (OpenCL/CUDA)
+- [ ] Feedback refinement from symbolic error models
+
+### Stage 4: Toolchain & Distribution
+- [x] Bazel build with sandboxing and CI integration
+- [x] GitHub Actions with test/validate/artifact steps
+- [ ] GUI tracer/visualizer for .hvm stack activity
+- [ ] Package and distribute as SDK via Axion (e.g. hvm-pkg)
+
 ## 📦 Artifacts
 
 Generated .hvm bytecode is uploaded via CI in artifacts named hvm-output.
