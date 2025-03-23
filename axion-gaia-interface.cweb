@@ -9,6 +9,7 @@ The system is designed to simulate ternary instruction execution with GPU accele
 - Mock GPU simulation (entropy feedback, transformation)
 - Extendable stubs for ROCm and CUDA kernel integration
 - Modular and production-ready code structure for future optimization
+- Seamless linkage with HanoiVM’s runtime to provide GPU-accelerated logic during bytecode interpretation
 
 @* Includes and Definitions.
 @c
@@ -65,9 +66,9 @@ GaiaRequest convert_t729_to_request(const T729Macro *macro);
 GAIAResponse cuda_handle_request(GaiaRequest request);
 GAIAResponse rocm_handle_request(GaiaRequest request);
 void print_response(const GAIAResponse *response);
+void hanoi_vm_gpu_hook(int ip, GAIAIntent intent, int* stack_top_6);
 
 @* Central Dispatch Function.
-This function dispatches T729 macros based on their intent and backend compatibility.
 @c
 GAIAResponse dispatch_macro(const T729Macro *macro) {
     if (!macro) {
@@ -118,7 +119,6 @@ GAIAResponse dispatch_backend_gpu(const T729Macro* macro, int use_cuda) {
 }
 
 @* Simulated GPU Logic Transformation.
-This function rotates trits (-1, 0, 1) and simulates entropy reduction.
 @c
 GAIAResponse simulate_gpu_transformation(const T729Macro *macro) {
     GAIAResponse response;
@@ -186,6 +186,24 @@ void print_response(const GAIAResponse *response) {
     }
     printf("\nEntropy Delta: %.4f\nExplanation: %s\n",
            response->entropy_delta, response->explanation);
+}
+
+@* HanoiVM Runtime Hook: GPU Invocation.
+@c
+void hanoi_vm_gpu_hook(int ip, GAIAIntent intent, int* stack_top_6) {
+    T729Macro macro = {
+        .macro_id = ip,
+        .intent = intent
+    };
+    for (int i = 0; i < T729_SIZE; ++i)
+        macro.input[i] = stack_top_6[i];
+
+    GAIAResponse res = dispatch_backend_gpu(&macro, 1); // use_cuda = 1
+    if (res.success) {
+        printf("[HanoiVM→GPU] ΔEntropy: %.4f | %s\n", res.entropy_delta, res.explanation);
+    } else {
+        fprintf(stderr, "[HanoiVM→GPU ERROR] %s\n", res.explanation);
+    }
 }
 
 @* Main Entry for Testing.
