@@ -1,15 +1,4 @@
-@* HanoiVM | VM Execution Engine
-
-This module implements the main VM execution loop for HanoiVM.
-It interprets `.hvm` bytecode (loaded from `hvm_loader`) and executes
-operations using `t81_stack`, while integrating with Axion AI.
-
-It assumes:
-- The bytecode buffer `hvm_code[]` and size `hvm_code_size` are populated.
-- Opcodes are defined in `Opcode` enum.
-- τ-registers are globally accessible.
-- Axion AI hooks are available via `ai_hook`.
-- Ternary-aware types and stack logic are provided by `t81_stack`.
+@* HanoiVM | VM Execution Engine with Advanced Ops Integration *@
 
 @c
 #include <stdio.h>
@@ -19,13 +8,10 @@ It assumes:
 #include "t81_stack.h"
 #include "hvm_loader.h"
 #include "ai_hook.h"
-
-@*1 External τ-registers
+#include "advanced_ops.h"  // integrated opcodes and evaluation
 
 @<Extern τ-registers@>=
 extern int τ[28];  // τ0–τ26 + τ27 (Axion-reserved τ[27])
-
-@*1 Execution Context
 
 @<VM Context Definition@>=
 typedef struct {
@@ -33,12 +19,18 @@ typedef struct {
     int halted;          // Halt flag
 } HVMContext;
 
-@*1 Execution Function Declaration
-
 @<VM Execution API@>=
 void execute_vm(void);
 
-@*1 Execution Loop Implementation
+@* Ternary Operand Loader (reads 81-bit operand) *@
+@c
+uint81_t fetch_operand(const uint8_t* buf) {
+    uint81_t out;
+    out.a = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) | ((uint32_t)buf[2] << 8) | buf[3];
+    out.b = ((uint32_t)buf[4] << 24) | ((uint32_t)buf[5] << 16) | ((uint32_t)buf[6] << 8) | buf[7];
+    out.c = buf[8];
+    return out;
+}
 
 @<VM Execution Function@>=
 
@@ -57,59 +49,41 @@ void execute_vm(void) {
                 break;
 
             case OP_PUSH: {
-                if (ctx.ip >= hvm_code_size) {
-                    fprintf(stderr, "[VM] PUSH without operand!\n");
+                if (ctx.ip + 8 >= hvm_code_size) {
+                    fprintf(stderr, "[VM] PUSH missing operand!\n");
                     return;
                 }
-                int value = hvm_code[ctx.ip++];
-                push81(value);
-                char msg[64];
-                snprintf(msg, sizeof(msg), "PUSH %d", value);
-                axion_log(msg);
+                uint81_t value = fetch_operand(&hvm_code[ctx.ip]);
+                ctx.ip += 9;
+                push81u(value);
+                axion_log("PUSH" /* TODO: stringify value */);
                 break;
             }
 
-            case OP_ADD:
-                add81();  // Assumes internal pop-checks
-                axion_log("ADD");
-                break;
+            case OP_ADD: add81(); axion_log("ADD"); break;
+            case OP_SUB: sub81(); axion_log("SUB"); break;
+            case OP_MUL: mul81(); axion_log("MUL"); break;
+            case OP_DIV: div81(); axion_log("DIV"); break;
+            case OP_MOD: mod81(); axion_log("MOD"); break;
+            case OP_NEG: neg81(); axion_log("NEG"); break;
+            case OP_ABS: abs81(); axion_log("ABS"); break;
+            case OP_CMP3: cmp381(); axion_log("CMP3"); break;
 
-            case OP_SUB: {
-                if (stack_size81() < 2) {
-                    fprintf(stderr, "[VM] SUB underflow!\n");
+            case OP_TNN_ACCUM:
+            case OP_T81_MATMUL: {
+                if (ctx.ip + 17 >= hvm_code_size) {
+                    fprintf(stderr, "[VM] AI opcode missing operands!\n");
                     return;
                 }
-                int b = pop81();
-                int a = pop81();
-                push81(a - b);
-                axion_log("SUB");
+                uint81_t a = fetch_operand(&hvm_code[ctx.ip]);
+                uint81_t b = fetch_operand(&hvm_code[ctx.ip + 9]);
+                ctx.ip += 18;
+
+                uint81_t result = evaluate_opcode(opcode, a, b);
+                push81u(result);
+                axion_log(opcode == OP_TNN_ACCUM ? "TNN_ACCUM" : "T81_MATMUL");
                 break;
             }
-
-            case OP_MOD:
-                mod81();  // Assumes ternary-safe modulus
-                axion_log("MOD");
-                break;
-
-            case OP_NEG:
-                neg81();
-                axion_log("NEG");
-                break;
-
-            case OP_DUP:
-                dup81();
-                axion_log("DUP");
-                break;
-
-            case OP_SWAP:
-                swap81();
-                axion_log("SWAP");
-                break;
-
-            case OP_DROP:
-                drop81();
-                axion_log("DROP");
-                break;
 
             case OP_HALT:
                 axion_log("HALT");
@@ -123,8 +97,7 @@ void execute_vm(void) {
     }
 }
 
-@*1 Export Header
-
 @h
 @<VM Execution API@>
 @<VM Context Definition@>
+uint81_t fetch_operand(const uint8_t* buf);
