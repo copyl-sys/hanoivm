@@ -1,0 +1,48 @@
+# HanoiVM
+
+[![CI](https://github.com/copyl-sys/hanoivm/actions/workflows/ci.yml/badge.svg)](https://github.com/copyl-sys/hanoivm/actions/workflows/ci.yml)
+
+A Ternary Virtual Machine ecosystem built for symbolic computation, recursive stack execution, and AI/GPU acceleration.
+
+## 🔧 Build Instructions
+
+HanoiVM uses Bazel for hermetic builds:
+
+```bash
+bazel build //...
+```
+
+To run tests:
+
+```bash
+bazel test //...
+```
+
+## 🧪 Run the Assembler
+
+```bash
+bazel run //:hvm_assembler -- input.asm output.hvm
+```
+
+Assembly input format:
+
+```
+PUSH 1 2 3
+PUSH 4 5 6
+ADD
+```
+
+## 🚀 Components
+
+- hvm_assembler — Converts ternary assembly to .hvm bytecode
+- hvmcli        — Userspace interface to /dev/hvm0 (PCIe control)
+- hvm_firmware  — Firmware entry point for ternary PCIe card
+- hvm_pcie_driver — Linux PCIe kernel module
+
+## 📦 Artifacts
+
+Generated .hvm bytecode is uploaded via CI in artifacts named hvm-output.
+
+## 📚 Licensing
+
+MIT License. Copyright (c) 2025
