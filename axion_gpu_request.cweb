@@ -1,0 +1,106 @@
+@* Axion GPU Dispatch Serializer (/sys/axion_debug/gpu_request)
+
+This module allows Axion or userspace agents to serialize and submit `GaiaRequest`s
+to the GPU symbolic dispatch layer via the virtual file `/sys/axion_debug/gpu_request`.
+
+It parses structured ternary macros (TBIN) and sends them to CUDA or GAIA (ROCm)
+via the unified dispatch API (`axion_dispatch_to_gpu()`), logging results to Axion’s
+internal telemetry system.
+
+@c
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "axion-gaia-interface.h"
+
+#define GPU_REQUEST_PATH "/sys/axion_debug/gpu_request"
+
+/// Unified interface from axion-gaia-interface.cweb
+extern void axion_dispatch_to_gpu(const uint8_t* logic_blob, size_t len, int use_cuda);
+
+/// Simple writer to serialize a GaiaRequest into /sys
+int write_gpu_request_to_sysfs(const GaiaRequest* request, const char* backend) {
+    FILE* f = fopen(GPU_REQUEST_PATH, "wb");
+    if (!f) {
+        perror("Failed to open /sys/axion_debug/gpu_request");
+        return -1;
+    }
+
+    // Write intent
+    fwrite(&request->intent, sizeof(uint8_t), 1, f);
+
+    // Write confidence
+    fwrite(&request->confidence, sizeof(uint8_t), 1, f);
+
+    // Write TBIN length
+    fwrite(&request->tbin_len, sizeof(size_t), 1, f);
+
+    // Write TBIN macro
+    fwrite(request->tbin, sizeof(uint8_t), request->tbin_len, f);
+
+    // Write backend flag (1 = CUDA, 0 = GAIA)
+    uint8_t backend_flag = (strcmp(backend, "cuda") == 0) ? 1 : 0;
+    fwrite(&backend_flag, sizeof(uint8_t), 1, f);
+
+    fclose(f);
+    return 0;
+}
+
+/// Loader for submitting symbolic macros from userspace binary
+int main(int argc, char** argv) {
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s <tbin_file> <cuda|gaia>\n", argv[0]);
+        return 1;
+    }
+
+    const char* tbin_path = argv[1];
+    const char* backend = argv[2];
+
+    FILE* tf = fopen(tbin_path, "rb");
+    if (!tf) {
+        perror("Failed to open TBIN input file");
+        return 1;
+    }
+
+    fseek(tf, 0, SEEK_END);
+    size_t len = ftell(tf);
+    fseek(tf, 0, SEEK_SET);
+
+    uint8_t* tbin = (uint8_t*)malloc(len);
+    fread(tbin, 1, len, tf);
+    fclose(tf);
+
+    GaiaRequest req = {
+        .tbin = tbin,
+        .tbin_len = len,
+        .confidence = 87,
+        .intent = GAIA_TRANSFORM
+    };
+
+    int ret = write_gpu_request_to_sysfs(&req, backend);
+    free(tbin);
+
+    return ret;
+}
+
+@* Integration Notes
+
+This module assumes the Axion kernel module has mounted a writable sysfs entry at:
+
+    /sys/axion_debug/gpu_request
+
+This pseudo-file is read by the kernel module, parsed as a `GaiaRequest`,
+and relayed into the correct GPU backend (via CUDA or ROCm) using the logic
+defined in `cuda_handle_request.cu` or `gaia_handle_request.cweb`.
+
+Axion will log the result to its internal entropy tracker and
+feedback registry.
+
+@* Future Enhancements
+
+- Add JSON/CBOR format parsing to `tbin_file`
+- Hook this serializer into Axion’s audit + AI refinement logic
+- Kernel hook for `inotify`-style trigger upon file write
+- Option to log the full GaiaResponse into `/sys/axion_debug/gpu_result`
