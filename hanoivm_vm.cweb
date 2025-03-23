@@ -9,6 +9,7 @@ It assumes:
 - Opcodes are defined in `Opcode` enum.
 - τ-registers are globally accessible.
 - Axion AI hooks are available via `ai_hook`.
+- Ternary-aware types and stack logic are provided by `t81_stack`.
 
 @c
 #include <stdio.h>
@@ -22,7 +23,15 @@ It assumes:
 @*1 External τ-registers
 
 @<Extern τ-registers@>=
-extern int τ[28];  // τ0–τ26 + τ27 (Axion)
+extern int τ[28];  // τ0–τ26 + τ27 (Axion-reserved τ[27])
+
+@*1 Execution Context
+
+@<VM Context Definition@>=
+typedef struct {
+    size_t ip;           // Instruction pointer
+    int halted;          // Halt flag
+} HVMContext;
 
 @*1 Execution Function Declaration
 
@@ -34,24 +43,25 @@ void execute_vm(void);
 @<VM Execution Function@>=
 
 void execute_vm(void) {
-    size_t ip = 0;  // Instruction pointer
+    HVMContext ctx = { .ip = 0, .halted = 0 };
 
-    while (ip < hvm_code_size) {
-        uint8_t opcode = hvm_code[ip++];
-        axion_signal(opcode);  // Notify Axion of opcode
+    while (!ctx.halted && ctx.ip < hvm_code_size) {
+        uint8_t opcode = hvm_code[ctx.ip++];
+        axion_signal(opcode);  // Notify Axion of opcode execution
         τ[AXION_REGISTER_INDEX] = axion_get_optimization();
 
         switch (opcode) {
+
             case OP_NOP:
                 axion_log("NOP");
                 break;
 
             case OP_PUSH: {
-                if (ip >= hvm_code_size) {
+                if (ctx.ip >= hvm_code_size) {
                     fprintf(stderr, "[VM] PUSH without operand!\n");
                     return;
                 }
-                int value = hvm_code[ip++];
+                int value = hvm_code[ctx.ip++];
                 push81(value);
                 char msg[64];
                 snprintf(msg, sizeof(msg), "PUSH %d", value);
@@ -60,11 +70,15 @@ void execute_vm(void) {
             }
 
             case OP_ADD:
-                add81();
+                add81();  // Assumes internal pop-checks
                 axion_log("ADD");
                 break;
 
             case OP_SUB: {
+                if (stack_size81() < 2) {
+                    fprintf(stderr, "[VM] SUB underflow!\n");
+                    return;
+                }
                 int b = pop81();
                 int a = pop81();
                 push81(a - b);
@@ -73,7 +87,7 @@ void execute_vm(void) {
             }
 
             case OP_MOD:
-                mod81();
+                mod81();  // Assumes ternary-safe modulus
                 axion_log("MOD");
                 break;
 
@@ -99,10 +113,11 @@ void execute_vm(void) {
 
             case OP_HALT:
                 axion_log("HALT");
-                return;
+                ctx.halted = 1;
+                break;
 
             default:
-                fprintf(stderr, "[VM] Unknown opcode: 0x%02X at IP=%zu\n", opcode, ip - 1);
+                fprintf(stderr, "[VM] Unknown opcode: 0x%02X at IP=%zu\n", opcode, ctx.ip - 1);
                 return;
         }
     }
@@ -112,3 +127,4 @@ void execute_vm(void) {
 
 @h
 @<VM Execution API@>
+@<VM Context Definition@>
