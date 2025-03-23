@@ -68,6 +68,8 @@ ROADMAP.md	- Project goals and future milestones
 
 hanoivm_project_profile_report.pdf - PDF summary of architectural overview
 
+.   .   .
+
 
 🛠️ Build Instructions
 
@@ -81,6 +83,8 @@ Optional: cargo (Rust-based tools in future)
 Compile
 make
 This will generate the HanoiVM binary and supporting tools.
+
+.   .   .
 
 🧪 Running HanoiVM
 
@@ -100,6 +104,8 @@ For debugging or disassembly:
  Formal TISC spec & compiler backend
 See ROADMAP.md for detailed milestones.
 
+.   .   .
+
 🤝 Contributing
 
 We welcome feedback, ideas, and contributions. Please open issues or submit pull requests for:
@@ -108,6 +114,9 @@ Opcode extensions
 AI optimization strategies
 Ternary language experiments
 Visualization tools
+
+.   .   .
+
 🪪 License
 
 MIT License. See LICENSE for details.
