@@ -1,0 +1,141 @@
+@* HanoiVM | T81 Assembler (`.t81` → `.hvm`)
+
+This CWEB document implements the assembler for the HanoiVM virtual machine.
+
+It reads human-readable `.t81` source code and emits binary `.hvm` bytecode files
+that can be executed by the HanoiVM runtime (`hanoivm_vm.cweb`).
+
+---
+
+Supported Instructions:
+push <int> ; push an immediate value add ; add top two stack values sub ;
+subtract top two values mod ; modulo (a % b) neg ; negate top value dup ; 
+duplicate top value swap ; swap top two values drop ; remove top value halt ; stop VM
+
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+
+@*1 Opcode Enum
+
+@<Opcode Enum@>=
+typedef enum {
+    OP_NOP   = 0x00,
+    OP_PUSH  = 0x01,
+    OP_ADD   = 0x02,
+    OP_SUB   = 0x03,
+    OP_MOD   = 0x04,
+    OP_NEG   = 0x05,
+    OP_DUP   = 0x06,
+    OP_SWAP  = 0x07,
+    OP_DROP  = 0x08,
+    OP_HALT  = 0xFF
+} Opcode;
+
+@*1 Constants
+
+@<T81ASM Constants@>=
+#define MAX_CODE_SIZE 8192
+#define HVM_MAGIC "\x48\x56\x4D\x01"  // "HVM" + version byte
+
+@*1 Globals
+
+@<T81ASM Globals@>=
+uint8_t code[MAX_CODE_SIZE];
+size_t code_size = 0;
+
+@*1 Function Declarations
+
+@<T81ASM API@>=
+void assemble_line(char* line);
+void write_hvm_file(const char* out_path);
+
+@*1 Main Entry Point
+
+@<Main Assembler Function@>=
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <input.t81> <output.hvm>\n", argv[0]);
+        return 1;
+    }
+
+    FILE* in = fopen(argv[1], "r");
+    if (!in) {
+        perror("Input file");
+        return 1;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), in)) {
+        assemble_line(line);
+    }
+
+    fclose(in);
+    write_hvm_file(argv[2]);
+
+    printf("[T81ASM] Assembled %zu bytes → %s\n", code_size, argv[2]);
+    return 0;
+}
+
+@*1 Assembler Line Parser
+
+This function parses one line of `.t81` source and emits its opcode(s) into the bytecode buffer.
+
+@<Assembler Parser@>=
+void assemble_line(char* line) {
+    char* tok = strtok(line, " \t\r\n");
+    if (!tok || tok[0] == '#') return;
+
+    if (strcmp(tok, "push") == 0) {
+        char* val_str = strtok(NULL, " \t\r\n");
+        if (!val_str) {
+            fprintf(stderr, "[T81ASM] Error: Missing operand for push\n");
+            exit(1);
+        }
+        int val = atoi(val_str);
+        code[code_size++] = OP_PUSH;
+        code[code_size++] = (uint8_t)val;
+    }
+    else if (strcmp(tok, "add") == 0)   code[code_size++] = OP_ADD;
+    else if (strcmp(tok, "sub") == 0)   code[code_size++] = OP_SUB;
+    else if (strcmp(tok, "mod") == 0)   code[code_size++] = OP_MOD;
+    else if (strcmp(tok, "neg") == 0)   code[code_size++] = OP_NEG;
+    else if (strcmp(tok, "dup") == 0)   code[code_size++] = OP_DUP;
+    else if (strcmp(tok, "swap") == 0)  code[code_size++] = OP_SWAP;
+    else if (strcmp(tok, "drop") == 0)  code[code_size++] = OP_DROP;
+    else if (strcmp(tok, "halt") == 0)  code[code_size++] = OP_HALT;
+    else {
+        fprintf(stderr, "[T81ASM] Error: Unknown instruction: %s\n", tok);
+        exit(1);
+    }
+}
+
+@*1 HVM Output File Writer
+
+This function writes the final `.hvm` binary file:
+- Magic header
+- Code length
+- Code section
+
+@<HVM Writer@>=
+void write_hvm_file(const char* out_path) {
+    FILE* out = fopen(out_path, "wb");
+    if (!out) {
+        perror("[T81ASM] Output file");
+        exit(1);
+    }
+
+    fwrite(HVM_MAGIC, 1, 4, out);                       // magic
+    uint32_t len = (uint32_t)code_size;
+    fwrite(&len, sizeof(uint32_t), 1, out);             // length
+    fwrite(code, 1, code_size, out);                    // code
+    fclose(out);
+}
+
+@*1 Header Export (optional for embedding)
+
+@h
+@<T81ASM API@>
