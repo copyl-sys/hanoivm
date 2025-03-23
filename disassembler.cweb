@@ -1,0 +1,47 @@
+@* HanoiVM | Bytecode Disassembler
+
+This module implements a disassembler for `.hvm` bytecode files.
+It translates opcodes into human-readable mnemonics, including introspection
+of primitive and nested T81 types (planned).
+
+@c
+#include <stdio.h>
+#include <stdint.h>
+#include "opcodes.h"
+
+extern uint8_t* hvm_code;
+extern size_t hvm_code_size;
+
+const char* opcode_to_str(uint8_t opcode) {
+    switch (opcode) {
+        case OP_NOP: return "NOP";
+        case OP_PUSH: return "PUSH";
+        case OP_ADD: return "ADD";
+        case OP_SUB: return "SUB";
+        case OP_MOD: return "MOD";
+        case OP_NEG: return "NEG";
+        case OP_DUP: return "DUP";
+        case OP_SWAP: return "SWAP";
+        case OP_DROP: return "DROP";
+        case OP_HALT: return "HALT";
+        default: return "UNKNOWN";
+    }
+}
+
+void disassemble_vm(void) {
+    size_t ip = 0;
+    while (ip < hvm_code_size) {
+        uint8_t opcode = hvm_code[ip++];
+        printf("%04zx: %-6s", ip - 1, opcode_to_str(opcode));
+
+        if (opcode == OP_PUSH && ip < hvm_code_size) {
+            int operand = hvm_code[ip++];
+            printf(" %d", operand);
+        }
+
+        printf("\n");
+    }
+}
+
+@h
+void disassemble_vm(void);
