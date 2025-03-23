@@ -1,0 +1,114 @@
+@* HanoiVM | VM Execution Engine
+
+This module implements the main VM execution loop for HanoiVM.
+It interprets `.hvm` bytecode (loaded from `hvm_loader`) and executes
+operations using `t81_stack`, while integrating with Axion AI.
+
+It assumes:
+- The bytecode buffer `hvm_code[]` and size `hvm_code_size` are populated.
+- Opcodes are defined in `Opcode` enum.
+- τ-registers are globally accessible.
+- Axion AI hooks are available via `ai_hook`.
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+#include "t81_stack.h"
+#include "hvm_loader.h"
+#include "ai_hook.h"
+
+@*1 External τ-registers
+
+@<Extern τ-registers@>=
+extern int τ[28];  // τ0–τ26 + τ27 (Axion)
+
+@*1 Execution Function Declaration
+
+@<VM Execution API@>=
+void execute_vm(void);
+
+@*1 Execution Loop Implementation
+
+@<VM Execution Function@>=
+
+void execute_vm(void) {
+    size_t ip = 0;  // Instruction pointer
+
+    while (ip < hvm_code_size) {
+        uint8_t opcode = hvm_code[ip++];
+        axion_signal(opcode);  // Notify Axion of opcode
+        τ[AXION_REGISTER_INDEX] = axion_get_optimization();
+
+        switch (opcode) {
+            case OP_NOP:
+                axion_log("NOP");
+                break;
+
+            case OP_PUSH: {
+                if (ip >= hvm_code_size) {
+                    fprintf(stderr, "[VM] PUSH without operand!\n");
+                    return;
+                }
+                int value = hvm_code[ip++];
+                push81(value);
+                char msg[64];
+                snprintf(msg, sizeof(msg), "PUSH %d", value);
+                axion_log(msg);
+                break;
+            }
+
+            case OP_ADD:
+                add81();
+                axion_log("ADD");
+                break;
+
+            case OP_SUB: {
+                int b = pop81();
+                int a = pop81();
+                push81(a - b);
+                axion_log("SUB");
+                break;
+            }
+
+            case OP_MOD:
+                mod81();
+                axion_log("MOD");
+                break;
+
+            case OP_NEG:
+                neg81();
+                axion_log("NEG");
+                break;
+
+            case OP_DUP:
+                dup81();
+                axion_log("DUP");
+                break;
+
+            case OP_SWAP:
+                swap81();
+                axion_log("SWAP");
+                break;
+
+            case OP_DROP:
+                drop81();
+                axion_log("DROP");
+                break;
+
+            case OP_HALT:
+                axion_log("HALT");
+                return;
+
+            default:
+                fprintf(stderr, "[VM] Unknown opcode: 0x%02X at IP=%zu\n", opcode, ip - 1);
+                return;
+        }
+    }
+}
+
+@*1 Export Header
+
+@h
+@<VM Execution API@>
