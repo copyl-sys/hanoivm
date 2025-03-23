@@ -162,21 +162,22 @@ Limitations
 
 
 Potential and Future Directions
-	1	Ternary Hardware Realization:  
-		◦	With native ternary CPUs/GPUs, HanoiVM could run directly, the kernel’s TBIN execution would accelerate, and GPU dispatch would optimize trits natively, fulfilling the 1.585 bits/trit promise.
-	2	AI Evolution:  
-		◦	Axion AI (HanoiVM/kernel) could leverage GPU vectorization for real-time learning, refining ternary instruction sets or TNN weights.  
-		◦	Hive-cluster learning (noted in axion-ai.cweb) could distribute optimization across devices.
-	3	Applications:  
-		◦	Ternary Neural Networks: T243 trees and T729 macros map to trit-based weights, with GPU scaling inference/training.  
-		◦	Post-Quantum Crypto: Ternary encoding and GPU compression could secure symbolic operations.  
-		◦	Generative Reasoning: GPU’s GAIA_RECONSTRUCT/EMIT_VECTOR intents suggest symbolic AI or simulation use cases.
-	4	Ecosystem Expansion:  
-		◦	AxionOS: A ternary-native OS could emerge, using the kernel as a base and HanoiVM as the runtime, with GPU as a coprocessor.  
-		◦	Tooling: CWEB literate programming and kernel debugfs could evolve into a developer suite for ternary coding.
-	5	Optimization Enhancements:  
-		◦	GPU could mirror CUDA block/thread grids to T243 tree depth (as planned), while kernel AI could dynamically adjust ternary thresholds.  
-		◦	HanoiVM’s naive O(n²) multiplication could adopt GPU-accelerated FFT methods.
+
+1   Ternary Hardware Realization:  
+      ◦	With native ternary CPUs/GPUs, HanoiVM could run directly, the kernel’s TBIN execution would accelerate, and GPU dispatch would optimize trits natively, fulfilling the 1.585 bits/trit promise.
+2   AI Evolution:  
+      ◦	Axion AI (HanoiVM/kernel) could leverage GPU vectorization for real-time learning, refining ternary instruction sets or TNN weights.  
+      ◦	Hive-cluster learning (noted in axion-ai.cweb) could distribute optimization across devices.
+3   Applications:  
+      ◦	Ternary Neural Networks: T243 trees and T729 macros map to trit-based weights, with GPU scaling inference/training.  
+      ◦	Post-Quantum Crypto: Ternary encoding and GPU compression could secure symbolic operations.  
+      ◦	Generative Reasoning: GPU’s GAIA_RECONSTRUCT/EMIT_VECTOR intents suggest symbolic AI or simulation use cases.
+4   Ecosystem Expansion:  
+      ◦	AxionOS: A ternary-native OS could emerge, using the kernel as a base and HanoiVM as the runtime, with GPU as a coprocessor.  
+      ◦	Tooling: CWEB literate programming and kernel debugfs could evolve into a developer suite for ternary coding.
+5   Optimization Enhancements:  
+      ◦	GPU could mirror CUDA block/thread grids to T243 tree depth (as planned), while kernel AI could dynamically adjust ternary thresholds.  
+      ◦	HanoiVM’s naive O(n²) multiplication could adopt GPU-accelerated FFT methods.
 
 
 Conclusion
