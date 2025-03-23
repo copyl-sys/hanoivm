@@ -66,3 +66,30 @@ int main(int argc, char* argv[]) {
     printf(".hvm file written to %s\n", argv[2]);
     return 0;
 }
+
+@* Bazel Build File Example (BUILD.bazel) *@
+@c
+// In assembler/BUILD.bazel
+cc_binary(
+    name = "hvm_assembler",
+    srcs = ["hvm_assembler.c"],
+    deps = [],
+    copts = ["-std=c99"],
+    visibility = ["//visibility:public"],
+)
+
+@* Bazel Workspace File Example (WORKSPACE) *@
+@c
+// In top-level WORKSPACE
+workspace(name = "hanoivm")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "rules_cc",
+    urls = ["https://github.com/bazelbuild/rules_cc/archive/refs/tags/0.0.9.zip"],
+    strip_prefix = "rules_cc-0.0.9",
+)
+
+load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies")
+rules_cc_dependencies()
