@@ -1,60 +1,93 @@
-# 🗼 HanoiVM
+🗼 HanoiVM
 
-**Recursive Ternary Virtual Machine for Post-Binary Symbolic Computation**
+Recursive Ternary Virtual Machine for Post-Binary Symbolic Computation
 
-> _"Inspired by the Tower of Hanoi. Powered by trits, recursion, and AI."_
+"Inspired by the Tower of Hanoi. Powered by trits, recursion, and AI."
+🚀 Overview
 
----
+HanoiVM is a recursive ternary virtual machine designed for symbolic computing, AI-driven execution, and post-binary experimentation. It interprets .hvm bytecode structured across three radix layers:
 
-## 🚀 Overview
+T81 (Base-81): 4-trit precision primitives
+T243 (Base-243): Symbolic stack and logic operations
+T729 (Base-729): Macroinstruction encoding for recursive computation
+HanoiVM powers the evolving ternary stack that includes T81Lang, Axion, and future TISC compilers.
 
-**HanoiVM** is a next-generation virtual machine that executes symbolic ternary bytecode across three recursive radix layers:  
-- `T81` (Base-81): 4-trit precision  
-- `T243` (Base-243): 5-trit symbolic stack  
-- `T729` (Base-729): 6-trit macro operations  
 
-Designed for high-efficiency symbolic computing, recursive logic modeling, and integration with AI-powered modules, **HanoiVM** is the foundation of a post-binary computing stack.
+🧠 Key Features
 
----
+🔢 Recursive Ternary Arithmetic (T81, T243, T729)
+📦 Symbolic Stack Engine with deep ternary nesting
+🤖 AI Integration via Axion (feedback, entropy, optimization)
+⚙️ GPU Support via CUDA/GAIA (cuda_handle_request.cweb, gaia_handle_request.cweb)
+🛠 TISC-Compatible instruction set backend
+📜 CWEB Literate Source Format for AI-readable architecture
+🧪 Disassembler + Test Suite (disasm_hvm.cweb, hanoivm_tests.cweb)
+🧩 Assembler & Loader Tools (t81asm.cweb, hvm_loader.cweb)
+🗂 Directory Structure
 
-## 🧠 Key Features
 
-- 🧮 **Recursive Ternary Arithmetic** (`T81`, `T243`, `T729`)
-- 📦 **Symbolic Stack Engine** for deeply nested operations
-- 🤖 **Axion-AI Hook Integration** for optimization, prediction, and entropy-based logic
-- ⚙️ **GPU Dispatch Layer** with CUDA (`cuda_handle_request.cweb`)
-- 🔁 **TISC-Compatible** backend support for future ternary compilers
-- 📄 **CWEB Literate Programming Format** for source transparency and AI reasoning
-- 🔬 **Modular Design** for runtime, core VM, and ternary arithmetic isolation
+File	Purpose
 
----
+hanoivm-core.cweb	- Core VM architecture (registers, memory, opcodes)
+hanoivm_vm.cweb	- Bytecode interpreter for .hvm files
+hanoivm-runtime.cweb - Runtime environment and symbolic stack frames
+t81_stack.cweb, libt81.cweb	- Base-81 arithmetic and stack utilities
+libt243.cweb, libt729.cweb	- Higher-order ternary logic for T243 & T729
+ai_hook.cweb	- AI feedback interface for Axion hooks
+axion-ai.cweb	- AI execution stub (placeholder for Axion runtime)
+axion-gaia-interface.cweb	- GPU interface bridge for Axion-GAIA backend
+cuda_handle_request.cweb - CUDA dispatch logic for T729 macros
+gaia_handle_request.cweb - ROCm/GAIA dispatch stub for symbolic acceleration
+disassembler.cweb - Ternary bytecode disassembler (full depth introspection)
+hanoivm_cli.cweb - CLI wrapper and binary runner
+t81asm.cweb	- Experimental assembler from human-readable syntax
+hvm_loader.cweb	- Loader utility for .hvm segments
+hanoivm_tests.cweb - Built-in unit test suite for core logic
+Makefile	- Build automation for CWEB modules
+Cargo.toml	- Future Rust integration for compiler/assembler
+HanoiVM.png	- Logo/diagram
+ROADMAP.md	- Project goals and future milestones
+hanoivm_project_profile_report.pdf - PDF summary of architectural overview
 
-## 🗂 Directory Structure
+🛠️ Build Instructions
 
-| File/Folder             | Purpose |
-|-------------------------|---------|
-| `hanoivm-core.cweb`     | Core VM logic: opcode definitions, registers, memory |
-| `hanoivm_vm.cweb`       | Execution engine: parses `.hvm` bytecode |
-| `hanoivm-runtime.cweb`  | Runtime environment: symbol table, stack frames |
-| `t81.cweb` / `t243.cweb` / `t729.cweb` | Ternary arithmetic and data types |
-| `ai_hook.cweb`          | Axion-AI logic bridge for feedback and decision-making |
-| `axion-ai.cweb`         | Placeholder for AI runtime engine |
-| `cuda_handle_request.cu`| CUDA entry point (optional acceleration) |
-| `Makefile`              | Build automation |
-| `Cargo.toml`            | Rust integration (future compiler/assembler interface) |
+Requirements
+make, gcc or clang
+nvcc (for optional CUDA backend)
+cweb tools (ctangle, cweave)
 
----
+Optional: cargo (Rust-based tools in future)
 
-## 🛠️ Build Instructions
-
-### Requirements
-
-- `make`
-- `gcc` / `clang`
-- `nvcc` (for optional CUDA support)
-- `cweb` tools (or preprocessor)
-
-### Compile
-
-```bash
+Compile
 make
+This will generate the HanoiVM binary and supporting tools.
+
+🧪 Running HanoiVM
+
+To execute a compiled .hvm file:
+
+./hanoivm_cli path/to/program.hvm
+For debugging or disassembly:
+
+./disasm_hvm path/to/program.hvm
+🔭 Roadmap
+
+ Recursive VM core for T81, T243, and T729
+ Disassembler with symbolic introspection
+ Axion hook bridge for AI feedback
+ Full-featured T81Lang compiler integration
+ GAIA/ROCm GPU backend implementation
+ Formal TISC spec & compiler backend
+See ROADMAP.md for detailed milestones.
+
+🤝 Contributing
+
+We welcome feedback, ideas, and contributions. Please open issues or submit pull requests for:
+
+Opcode extensions
+AI optimization strategies
+Ternary language experiments
+Visualization tools
+🪪 License
+
+MIT License. See LICENSE for details.
