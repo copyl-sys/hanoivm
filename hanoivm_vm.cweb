@@ -9,6 +9,7 @@
 #include "hvm_loader.h"
 #include "ai_hook.h"
 #include "advanced_ops.h"  // integrated opcodes and evaluation
+#include "disassembler.h"  // added disassembler linkage
 
 @<Extern τ-registers@>=
 extern int τ[28];  // τ0–τ26 + τ27 (Axion-reserved τ[27])
@@ -58,10 +59,13 @@ void execute_vm(void) {
         axion_signal(opcode);  // Notify Axion of opcode execution
         τ[AXION_REGISTER_INDEX] = axion_get_optimization();
 
+        char trace_msg[128];
+        snprintf(trace_msg, sizeof(trace_msg), "OP[%s] @IP=%zu", opcode_name(opcode), ctx.ip - 1);
+        axion_log(trace_msg);
+
         switch (opcode) {
 
             case OP_NOP:
-                axion_log("NOP");
                 break;
 
             case OP_PUSH: {
@@ -72,18 +76,17 @@ void execute_vm(void) {
                 uint81_t value = fetch_operand(&hvm_code[ctx.ip]);
                 ctx.ip += 9;
                 push81u(value);
-                axion_log("PUSH" /* TODO: stringify value */);
                 break;
             }
 
-            case OP_ADD: add81(); axion_log("ADD"); break;
-            case OP_SUB: sub81(); axion_log("SUB"); break;
-            case OP_MUL: mul81(); axion_log("MUL"); break;
-            case OP_DIV: div81(); axion_log("DIV"); break;
-            case OP_MOD: mod81(); axion_log("MOD"); break;
-            case OP_NEG: neg81(); axion_log("NEG"); break;
-            case OP_ABS: abs81(); axion_log("ABS"); break;
-            case OP_CMP3: cmp381(); axion_log("CMP3"); break;
+            case OP_ADD: add81(); break;
+            case OP_SUB: sub81(); break;
+            case OP_MUL: mul81(); break;
+            case OP_DIV: div81(); break;
+            case OP_MOD: mod81(); break;
+            case OP_NEG: neg81(); break;
+            case OP_ABS: abs81(); break;
+            case OP_CMP3: cmp381(); break;
 
             case OP_TNN_ACCUM:
             case OP_T81_MATMUL: {
@@ -97,12 +100,10 @@ void execute_vm(void) {
 
                 uint81_t result = evaluate_opcode(opcode, a, b);
                 push81u(result);
-                axion_log(opcode == OP_TNN_ACCUM ? "TNN_ACCUM" : "T81_MATMUL");
                 break;
             }
 
             case OP_HALT:
-                axion_log("HALT");
                 ctx.halted = 1;
                 break;
 
