@@ -27,7 +27,9 @@ HanoiVM is a recursive ternary virtual machine designed to support T81, T243, an
 - [x] τ-register simulation
 - [x] `τ27` reserved for Axion AI
 - [ ] Mode flags for T81 → T243 promotion
-
+  - [ ] Add mode_flags bitfield to HVMContext
+  - [ ] Detect CALL stack depth threshold → set MODE_PROMOTABLE
+  - [ ] Axion runtime promotion trigger via τ27 feedback
 ---
 
 ## 🧬 Phase 2: Recursive Expansion (T243 & T729)
@@ -36,7 +38,8 @@ HanoiVM is a recursive ternary virtual machine designed to support T81, T243, an
 - [ ] Recursive jump depth → T729 stack expansion
 - [ ] Dynamic stack tier promotion/demotion logic
 - [ ] Instruction class remapping for nested mode
-
+- [ ] Implement promote_to_t243() utility
+- [ ] Log tier changes in symbolic trace or disassembler output
 ---
 
 ## 🧠 Phase 3: Language Integration
