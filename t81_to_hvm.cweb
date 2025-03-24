@@ -15,12 +15,27 @@ typedef struct {
 
 static OpEntry opmap[] = {
     {"push",  0x01},
-    {"add",   0x02},
-    {"sub",   0x03},
-    {"mul",   0x04},
-    {"div",   0x05},
-    {"call",  0x06},
-    {"ret",   0x07},
+    {"pop",   0x02},
+    {"add",   0x03},
+    {"sub",   0x04},
+    {"mul",   0x05},
+    {"div",   0x06},
+    {"mod",   0x07},
+    {"neg",   0x08},
+    {"abs",   0x09},
+    {"cmp3",  0x0A},
+    {"jmp",   0x10},
+    {"jz",    0x11},
+    {"jnz",   0x12},
+    {"call",  0x13},
+    {"ret",   0x14},
+    {"tnn_accum", 0x20},
+    {"matmul", 0x21},
+    {"fact",  0x30},
+    {"fib",   0x31},
+    {"tower", 0x32},
+    {"ack",   0x33},
+    {"bp",    0x34},
     {"halt",  0xFF},
     {NULL,     0x00}
 };
@@ -56,10 +71,19 @@ int compile_t81_source(const char* in_path, const char* out_path) {
         uint8_t opcode = lookup_opcode(token);
         fwrite(&opcode, 1, 1, out);
 
-        if (strcmp(token, "push") == 0) {
-            char* val = strtok(NULL, " \t\n");
-            uint81_t operand = parse_uint81(val);
-            fwrite(&operand, sizeof(uint81_t), 1, out);
+        if (strcmp(token, "push") == 0 || strcmp(token, "jmp") == 0 ||
+            strcmp(token, "jz") == 0 || strcmp(token, "jnz") == 0 ||
+            strcmp(token, "tnn_accum") == 0 || strcmp(token, "matmul") == 0) {
+
+            char* op1 = strtok(NULL, " \t\n");
+            char* op2 = strtok(NULL, " \t\n");
+            uint81_t a = parse_uint81(op1);
+            fwrite(&a, sizeof(uint81_t), 1, out);
+
+            if (op2) {
+                uint81_t b = parse_uint81(op2);
+                fwrite(&b, sizeof(uint81_t), 1, out);
+            }
         }
     }
 
