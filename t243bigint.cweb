@@ -108,3 +108,36 @@ void t243bigint_free(TernaryHandle h) {
         free(bigint);
     }
 }
+
+@* T243BigInt Test Harness.
+
+@<Run test case for T243BigInt@>=
+#ifdef TEST_T243BIGINT
+int main() {
+    TernaryHandle A = t243bigint_new_from_string("hello");
+    TernaryHandle B = t243bigint_new_from_string("world");
+
+    TernaryHandle sum, product;
+    t243bigint_add(A, B, &sum);
+    t243bigint_mul(A, B, &product);
+
+    char *a_str, *b_str, *sum_str, *prod_str;
+    t243bigint_to_string(A, &a_str);
+    t243bigint_to_string(B, &b_str);
+    t243bigint_to_string(sum, &sum_str);
+    t243bigint_to_string(product, &prod_str);
+
+    printf("A     : %s\n", a_str);
+    printf("B     : %s\n", b_str);
+    printf("A + B : %s\n", sum_str);
+    printf("A * B : %s\n", prod_str);
+
+    free(a_str); free(b_str); free(sum_str); free(prod_str);
+    t243bigint_free(A);
+    t243bigint_free(B);
+    t243bigint_free(sum);
+    t243bigint_free(product);
+
+    return 0;
+}
+#endif
