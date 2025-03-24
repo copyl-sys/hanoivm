@@ -11,9 +11,15 @@
 #define OP_HALT 0xFF
 #define OP_PUSH 0x01
 
-#define T81_TAG_BIGINT   0x01
-#define T81_TAG_FRACTION 0x02
-#define T81_TAG_FLOAT    0x03
+#define T81_TAG_BIGINT     0x01
+#define T81_TAG_FRACTION   0x02
+#define T81_TAG_FLOAT      0x03
+#define T81_TAG_MATRIX     0x04
+#define T81_TAG_VECTOR     0x05
+#define T81_TAG_TENSOR     0x06
+#define T81_TAG_POLYNOMIAL 0x07
+#define T81_TAG_GRAPH      0x08
+#define T81_TAG_QUATERNION 0x09
 
 @<Opcode Map@>=
 typedef struct {
@@ -69,11 +75,9 @@ uint81_t parse_uint81(const char* str) {
 void write_fraction(FILE* out, const char* num, const char* denom) {
     fputc(OP_PUSH, out);
     fputc(T81_TAG_FRACTION, out);
-
     uint8_t len_num = (uint8_t)strlen(num);
     fputc(len_num, out);
     for (int i = 0; i < len_num; i++) fputc(num[i] - '0', out);
-
     uint8_t len_denom = (uint8_t)strlen(denom);
     fputc(len_denom, out);
     for (int i = 0; i < len_denom; i++) fputc(denom[i] - '0', out);
@@ -83,12 +87,44 @@ void write_fraction(FILE* out, const char* num, const char* denom) {
 void write_float(FILE* out, const char* mantissa, int8_t exponent) {
     fputc(OP_PUSH, out);
     fputc(T81_TAG_FLOAT, out);
-
     uint8_t len = (uint8_t)strlen(mantissa);
     fputc(len, out);
     for (int i = 0; i < len; i++) fputc(mantissa[i] - '0', out);
-
     fwrite(&exponent, sizeof(int8_t), 1, out);
+}
+
+@<Write Matrix Operand@>=
+void write_matrix(FILE* out, int rows, int cols, char** values) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_MATRIX, out);
+    fputc((uint8_t)rows, out);
+    fputc((uint8_t)cols, out);
+    for (int i = 0; i < rows * cols; i++) {
+        fputc(T81_TAG_BIGINT, out);
+        uint8_t len = (uint8_t)strlen(values[i]);
+        fputc(len, out);
+        for (int j = 0; j < len; j++) fputc(values[i][j] - '0', out);
+    }
+}
+
+@<Write Tensor Operand@>=
+void write_tensor(FILE* out, int dims, char** tags_and_vals) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_TENSOR, out);
+    fputc((uint8_t)dims, out);
+    int cursor = 0;
+    for (int i = 0; i < dims; i++) {
+        int depth = atoi(tags_and_vals[cursor++]);
+        fputc((uint8_t)depth, out);
+        for (int j = 0; j < depth; j++) {
+            uint8_t tag = (uint8_t)atoi(tags_and_vals[cursor++]);
+            fputc(tag, out);
+            uint8_t len = (uint8_t)strlen(tags_and_vals[cursor]);
+            fputc(len, out);
+            for (int k = 0; k < len; k++) fputc(tags_and_vals[cursor][k] - '0', out);
+            cursor++;
+        }
+    }
 }
 
 @<Main Entry@>=
@@ -97,14 +133,12 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Usage: %s <input.t81> <output.hvm>\n", argv[0]);
         return 1;
     }
-
     FILE* in = fopen(argv[1], "r");
     FILE* out = fopen(argv[2], "wb");
     if (!in || !out) {
         perror("fopen");
         return 1;
     }
-
     char line[256];
     while (fgets(line, sizeof(line), in)) {
         char* token = strtok(line, " \t\n");
@@ -113,15 +147,28 @@ int main(int argc, char** argv) {
         if (strcmp(token, "push_fraction") == 0) {
             char* num = strtok(NULL, " \t\n");
             char* denom = strtok(NULL, " \t\n");
-            write_fraction(out, num, denom);
-            continue;
+            write_fraction(out, num, denom); continue;
         }
         if (strcmp(token, "push_float") == 0) {
             char* mantissa = strtok(NULL, " \t\n");
             char* expstr = strtok(NULL, " \t\n");
             int8_t exp = (int8_t)atoi(expstr);
-            write_float(out, mantissa, exp);
-            continue;
+            write_float(out, mantissa, exp); continue;
+        }
+        if (strcmp(token, "push_matrix") == 0) {
+            char* rowstr = strtok(NULL, " \t\n");
+            char* colstr = strtok(NULL, " \t\n");
+            int rows = atoi(rowstr), cols = atoi(colstr);
+            char* values[256]; for (int i = 0; i < rows * cols; i++)
+                values[i] = strtok(NULL, " \t\n");
+            write_matrix(out, rows, cols, values); continue;
+        }
+        if (strcmp(token, "push_tensor") == 0) {
+            char* dimstr = strtok(NULL, " \t\n");
+            int dims = atoi(dimstr);
+            char* values[512]; int count = 0;
+            char* v; while ((v = strtok(NULL, " \t\n"))) values[count++] = v;
+            write_tensor(out, dims, values); continue;
         }
 
         uint8_t opcode = lookup_opcode(token);
@@ -130,23 +177,20 @@ int main(int argc, char** argv) {
         if (strcmp(token, "push") == 0 || strcmp(token, "jmp") == 0 ||
             strcmp(token, "jz") == 0 || strcmp(token, "jnz") == 0 ||
             strcmp(token, "tnn_accum") == 0 || strcmp(token, "matmul") == 0) {
-
             char* op1 = strtok(NULL, " \t\n");
             char* op2 = strtok(NULL, " \t\n");
             uint81_t a = parse_uint81(op1);
             fwrite(&a, sizeof(uint81_t), 1, out);
-
             if (op2) {
                 uint81_t b = parse_uint81(op2);
                 fwrite(&b, sizeof(uint81_t), 1, out);
             }
         }
     }
-
     fputc(OP_HALT, out);
     fclose(in);
     fclose(out);
-    printf("[\u2713] Compiled %s \u2192 %s\n", argv[1], argv[2]);
+    printf("[✓] Compiled %s → %s\n", argv[1], argv[2]);
     return 0;
 }
 
@@ -156,6 +200,8 @@ int main(int argc, char** argv) {
 @<Operand Parser: Base-81 Encoding Stub@>
 @<Write Fraction Operand@>
 @<Write Float Operand@>
+@<Write Matrix Operand@>
+@<Write Tensor Operand@>
 @<Main Entry@>
 
 @* End of t81_to_hvm.cweb *@
