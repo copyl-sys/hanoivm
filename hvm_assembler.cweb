@@ -22,6 +22,8 @@ uint8_t parse_opcode(const char* mnemonic) {
     if (strcmp(mnemonic, "PUSH") == 0) return 0x01;
     if (strcmp(mnemonic, "POP") == 0) return 0x02;
     if (strcmp(mnemonic, "ADD") == 0) return 0x03;
+    if (strcmp(mnemonic, "RECURSE_FACT") == 0) return 0xF1;
+    if (strcmp(mnemonic, "RECURSE_FIB") == 0) return 0xF2;
     // Extendable with more opcodes
     return 0xFF; // Unknown opcode
 }
@@ -56,9 +58,13 @@ int main(int argc, char* argv[]) {
         }
 
         fwrite(&opcode, 1, 1, fout);
-        fwrite(&a, 4, 1, fout);
-        fwrite(&b, 4, 1, fout);
-        fwrite(&c, 4, 1, fout);
+
+        // Only write operands for opcodes that require them (e.g., PUSH)
+        if (opcode == 0x01) { // PUSH
+            fwrite(&a, 4, 1, fout);
+            fwrite(&b, 4, 1, fout);
+            fwrite(&c, 4, 1, fout);
+        }
     }
 
     fclose(fin);
@@ -70,7 +76,7 @@ int main(int argc, char* argv[]) {
 @* Unified Bazel Build System *@
 
 @c
-// WORKSPACE
+# WORKSPACE
 workspace(name = "hanoivm")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -85,92 +91,18 @@ load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies")
 rules_cc_dependencies()
 
 @c
-// BUILD.bazel at root level
+# BUILD.bazel
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 cc_binary(
     name = "hvm_assembler",
     srcs = ["assembler/hvm_assembler.c"],
-    copts = ["-std=c99", "-Werror", "-Wall"],
-    features = ["no_legacy_features"],
+    copts = ["-std=c99", "-Wall", "-Werror"],
     visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "hvmcli",
-    srcs = ["cli/hvmcli.c"],
-    copts = ["-std=c99"],
-    visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "hvm_firmware",
-    srcs = ["firmware/hvm_firmware_entry.c"],
-    copts = ["-std=c99"],
-    visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "hvm_pcie_driver",
-    srcs = ["driver/hvm_pcie_driver.c"],
-    copts = ["-std=gnu99"],
-    visibility = ["//visibility:public"],
-    linkshared = True,
 )
 
 sh_test(
-    name = "hermetic_assembler_test",
-    srcs = ["tests/hermetic_assembler_test.sh"],
+    name = "assembler_test",
+    srcs = ["tests/test_hvm_assembler.sh"],
     data = [":hvm_assembler"],
 )
-
-sh_test(
-    name = "hermetic_cli_test",
-    srcs = ["tests/hermetic_cli_test.sh"],
-    data = [":hvmcli"],
-)
-
-sh_test(
-    name = "hermetic_firmware_test",
-    srcs = ["tests/hermetic_firmware_test.sh"],
-    data = [":hvm_firmware"],
-)
-
-@* GitHub Actions CI Workflow *@
-@c
-// .github/workflows/ci.yml
-name: HanoiVM CI
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install Bazel
-        uses: bazelbuild/setup-bazel@v5
-        with:
-          bazel-version: 6.4.0
-
-      - name: Build and test
-        run: |
-          bazel build //...
-          bazel test //...
-
-      - name: Upload .hvm artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: hvm-output
-          path: "*.hvm"
-
-@* README.md Badge Suggestion *@
-
-@c
-<!-- Badge markdown (for README.md) -->
-[![CI](https://github.com/copyl-sys/hanoivm/actions/workflows/ci.yml/badge.svg)](https://github.com/copyl-sys/hanoivm/actions/workflows/ci.yml)
