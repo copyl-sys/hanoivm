@@ -52,6 +52,8 @@ uint81_t pop81u(void) {
 }
 
 @<VM Execution Function@>=
+#define OP_T729_DOT     0xE1
+#define OP_T729_PRINT   0xE2
 
 void execute_vm(void) {
     HVMContext ctx = { .ip = 0, .halted = 0 };
@@ -66,6 +68,23 @@ void execute_vm(void) {
         axion_log(trace_msg);
 
         switch (opcode) {
+
+            case OP_T729_DOT: {
+    TernaryHandle b = stack_pop();
+    TernaryHandle a = stack_pop();
+    TernaryHandle r;
+    t729tensor_contract(a, b, &r);
+    stack_push(r);
+    break;
+}
+
+case OP_T729_PRINT: {
+    TernaryHandle a = stack_pop();
+    printf("[T729] Tensor @ %p
+", a.data);
+    stack_push(a);
+    break;
+}
 
             case OP_NOP:
                 break;
