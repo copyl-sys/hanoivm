@@ -1,60 +1,46 @@
-@* TISC Intermediate Representation for HanoiVM Compiler Backend *@
+@* TISC Intermediate Representation for HanoiVM *@
 
 @c
 #include <stdint.h>
 #include "t81types.h"
 
-@* Enum: TISC Opcodes *@
-@c
+@<TISC Opcode Set@>=
 typedef enum {
-    TISC_OP_NOP,
+    TISC_OP_NOP = 0x00,
     TISC_OP_PUSH,
     TISC_OP_POP,
     TISC_OP_T81ADD,
     TISC_OP_T81SUB,
     TISC_OP_T81MUL,
     TISC_OP_T81DIV,
-    TISC_OP_MOD3,
-    TISC_OP_NEG,
-    TISC_OP_ABS,
-    TISC_OP_CMP3,
-    TISC_OP_JMP,
-    TISC_OP_CALL,
-    TISC_OP_RET,
+    TISC_OP_T81MOD,
+    TISC_OP_TNN,
+    TISC_OP_T81MATMUL,
     TISC_OP_FACT,
     TISC_OP_FIB,
     TISC_OP_TOWER,
     TISC_OP_BACKTRACK,
-    TISC_OP_TNN,
-    TISC_OP_MATMUL,
-    TISC_OP_CUSTOM
+    TISC_OP_ACK,
+    TISC_OP_BP,
+    TISC_OP_HALT
 } TISCOpcode;
 
-@* Struct: TISCInstruction *@
-@c
+@<TISC Instruction Format@>=
 typedef struct {
     TISCOpcode op;
     int operand_count;
-    uint81_t operands[3];  // Max of 3 operands for ternary complexity
-    int depth_hint;        // For recursion analysis, optional
+    uint81_t operands[3];
+    int depth_hint; // optional: used for recursive awareness
 } TISCInstruction;
 
-@* Sequence Type *@
-@c
+@<TISC Program Buffer@>=
 typedef struct {
     TISCInstruction* instructions;
-    size_t count;
-    size_t capacity;
+    int length;
+    int capacity;
 } TISCProgram;
 
-@* Instruction Allocation *@
-@c
-TISCInstruction make_instruction(TISCOpcode op, int count, uint81_t* ops, int depth) {
-    TISCInstruction i;
-    i.op = op;
-    i.operand_count = count;
-    for (int j = 0; j < count; ++j)
-        i.operands[j] = ops[j];
-    i.depth_hint = depth;
-    return i;
-}
+@<Function Prototypes@>=
+void tisc_program_init(TISCProgram* prog);
+void tisc_emit(TISCProgram* prog, TISCOpcode op, int operand_count, uint81_t* operands, int depth_hint);
+void tisc_program_free(TISCProgram* prog);
