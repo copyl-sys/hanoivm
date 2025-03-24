@@ -1,16 +1,23 @@
-// t729tensor.cweb — T729Tensor Implementation
+@* T729Tensor: Tensor operations over Base-729.
 
+This module defines tensor memory management and operations under
+Base-729, leveraging flat memory layouts to support reshape,
+contract, transpose, and slice operations.
+
+@<Include dependencies@>=
 #include "ternary_base.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
+@<Define T729Tensor struct@>=
 typedef struct {
     int rank;
     int* shape;
     float* data; // placeholder flat tensor storage
 } T729Tensor;
 
+@<Compute tensor size@>=
 static size_t t729tensor_size(const T729Tensor* t) {
     size_t size = 1;
     for (int i = 0; i < t->rank; ++i)
@@ -18,6 +25,7 @@ static size_t t729tensor_size(const T729Tensor* t) {
     return size;
 }
 
+@<Tensor allocation@>=
 TernaryHandle t729tensor_new(int rank, const int* shape) {
     T729Tensor* tensor = (T729Tensor*)malloc(sizeof(T729Tensor));
     tensor->rank = rank;
@@ -31,8 +39,8 @@ TernaryHandle t729tensor_new(int rank, const int* shape) {
     return h;
 }
 
+@<Contract two rank-1 tensors@>=
 int t729tensor_contract(TernaryHandle a, TernaryHandle b, TernaryHandle* result) {
-    // Simple dot-product for rank-1 vectors
     T729Tensor* A = (T729Tensor*)a.data;
     T729Tensor* B = (T729Tensor*)b.data;
 
@@ -54,9 +62,10 @@ int t729tensor_contract(TernaryHandle a, TernaryHandle b, TernaryHandle* result)
     return 0;
 }
 
+@<Transpose rank-2 tensor@>=
 int t729tensor_transpose(TernaryHandle h, TernaryHandle* result) {
     T729Tensor* t = (T729Tensor*)h.data;
-    if (t->rank != 2) return -1; // Only support 2D transpose for now
+    if (t->rank != 2) return -1;
 
     int rows = t->shape[0];
     int cols = t->shape[1];
@@ -68,17 +77,16 @@ int t729tensor_transpose(TernaryHandle h, TernaryHandle* result) {
     out->shape[1] = rows;
     out->data = (float*)malloc(sizeof(float) * rows * cols);
 
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
+    for (int i = 0; i < rows; ++i)
+        for (int j = 0; j < cols; ++j)
             out->data[j * rows + i] = t->data[i * cols + j];
-        }
-    }
 
     result->base = BASE_729;
     result->data = out;
     return 0;
 }
 
+@<Reshape tensor with validation@>=
 int t729tensor_reshape(TernaryHandle h, int new_rank, const int* new_shape, TernaryHandle* result) {
     T729Tensor* t = (T729Tensor*)h.data;
     size_t original_size = t729tensor_size(t);
@@ -101,6 +109,7 @@ int t729tensor_reshape(TernaryHandle h, int new_rank, const int* new_shape, Tern
     return 0;
 }
 
+@<Slice tensor by dimension and range@>=
 int t729tensor_slice(TernaryHandle h, int dim, int start, int end, TernaryHandle* result) {
     T729Tensor* t = (T729Tensor*)h.data;
     if (dim >= t->rank || start < 0 || end > t->shape[dim] || start >= end)
@@ -128,6 +137,7 @@ int t729tensor_slice(TernaryHandle h, int dim, int start, int end, TernaryHandle
     return 0;
 }
 
+@<Free tensor@>=
 void t729tensor_free(TernaryHandle h) {
     T729Tensor* tensor = (T729Tensor*)h.data;
     if (tensor) {
