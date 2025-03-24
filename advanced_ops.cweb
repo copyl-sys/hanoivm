@@ -38,6 +38,8 @@ typedef enum {
     OP_T81_MATMUL = 0x21 // AI: Multiply ternary matrix tiles
 } Opcode;
 
+#define PROMOTE_THRESHOLD 5
+
 @* Instruction Evaluation Stub (To be expanded in runtime engine) *@
 @c
 uint81_t evaluate_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext* ctx) {
@@ -50,6 +52,17 @@ uint81_t evaluate_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext* ctx) {
         case OP_NEG: return t81_neg(a);
         case OP_ABS: return t81_abs(a);
         case OP_CMP3: return t81_cmp3(a, b);
+
+        case OP_CALL:
+            ctx->call_depth++;
+            if (ctx->call_depth > PROMOTE_THRESHOLD && ctx->mode == MODE_T81) {
+                ctx->mode_flags |= MODE_PROMOTABLE;
+            }
+            return a;  // dummy forward for CALL
+
+        case OP_RET:
+            if (ctx->call_depth > 0) ctx->call_depth--;
+            return a;  // dummy forward for RET
 
         case OP_TNN_ACCUM:
             if (ctx->mode < MODE_T243) {
@@ -95,7 +108,6 @@ const char* opcode_name(Opcode op) {
 @* AI Symbolic Accumulator Logic (stubbed) *@
 @c
 uint81_t tnn_accumulate(uint81_t activation, uint81_t weight) {
-    // placeholder: weighted ternary activation sum
     return t81_add(activation, weight);
 }
 
