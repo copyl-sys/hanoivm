@@ -1,0 +1,43 @@
+@* T81 Pattern Matcher for Symbolic Folding *@
+
+@c
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include "t81types.h"
+
+@* Pattern Detection Prototypes *@
+@c
+bool detect_hanoi_pattern(FILE* in);
+bool detect_ackermann_pattern(FILE* in);
+bool detect_fib_pattern(FILE* in);
+
+@* Detect Tower of Hanoi Pattern *@
+@c
+bool detect_hanoi_pattern(FILE* in) {
+    long pos = ftell(in);
+    uint8_t peek[4];
+    size_t read = fread(peek, 1, 4, in);
+    fseek(in, pos, SEEK_SET);
+    return read == 4 && peek[0] == OP_PUSH && peek[2] == OP_CALL && peek[3] == OP_CALL;
+}
+
+@* Detect Ackermann Pattern (placeholder) *@
+@c
+bool detect_ackermann_pattern(FILE* in) {
+    long pos = ftell(in);
+    uint8_t buf[8];
+    size_t read = fread(buf, 1, 8, in);
+    fseek(in, pos, SEEK_SET);
+    return read == 8 && buf[0] == OP_PUSH && buf[2] == OP_CALL && buf[5] == OP_CALL;
+}
+
+@* Detect Fibonacci Pattern (placeholder) *@
+@c
+bool detect_fib_pattern(FILE* in) {
+    long pos = ftell(in);
+    uint8_t buf[5];
+    size_t read = fread(buf, 1, 5, in);
+    fseek(in, pos, SEEK_SET);
+    return read == 5 && buf[0] == OP_PUSH && buf[2] == OP_CALL && buf[4] == OP_ADD;
+}
