@@ -8,8 +8,10 @@
 
 @c
 #include <stdint.h>
+#include <stdio.h>
 #include "t81types.h"  // Assumed: defines uint81_t and ternary helper routines
-#include "hvm_context.h"  // NEW: For access to ctx->mode
+#include "hvm_context.h"
+#include "hvm_promotion.h"
 
 @* Extended Opcode Definitions *@
 @c
@@ -56,13 +58,13 @@ uint81_t evaluate_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext* ctx) {
         case OP_CALL:
             ctx->call_depth++;
             if (ctx->call_depth > PROMOTE_THRESHOLD && ctx->mode == MODE_T81) {
-                ctx->mode_flags |= MODE_PROMOTABLE;
+                promote_to_t243(ctx);
             }
-            return a;  // dummy forward for CALL
+            return a;
 
         case OP_RET:
             if (ctx->call_depth > 0) ctx->call_depth--;
-            return a;  // dummy forward for RET
+            return a;
 
         case OP_TNN_ACCUM:
             if (ctx->mode < MODE_T243) {
