@@ -1,0 +1,37 @@
+@* t729tensor_reshape.cweb — Reshapes a T729Tensor into a new shape if valid *@
+
+@<Include Dependencies@>=
+#include "t729tensor.h"
+#include <stdlib.h>
+#include <string.h>
+
+@<Compute Flat Size@>=
+static size_t t729tensor_flat_size(const T729Tensor* t) {
+    size_t size = 1;
+    for (int i = 0; i < t->rank; ++i)
+        size *= t->shape[i];
+    return size;
+}
+
+@<Reshape Tensor Implementation@>=
+int t729tensor_reshape(TernaryHandle h, int new_rank, const int* new_shape, TernaryHandle* result) {
+    T729Tensor* t = (T729Tensor*)h.data;
+    size_t original_size = t729tensor_flat_size(t);
+
+    size_t new_size = 1;
+    for (int i = 0; i < new_rank; ++i)
+        new_size *= new_shape[i];
+
+    if (new_size != original_size) return -1;
+
+    T729Tensor* reshaped = (T729Tensor*)malloc(sizeof(T729Tensor));
+    reshaped->rank = new_rank;
+    reshaped->shape = (int*)malloc(sizeof(int) * new_rank);
+    memcpy(reshaped->shape, new_shape, sizeof(int) * new_rank);
+    reshaped->data = (float*)malloc(sizeof(float) * new_size);
+    memcpy(reshaped->data, t->data, sizeof(float) * new_size);
+
+    result->base = BASE_729;
+    result->data = reshaped;
+    return 0;
+}
