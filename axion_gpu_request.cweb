@@ -1,11 +1,4 @@
-@* Axion GPU Dispatch Serializer (/sys/axion_debug/gpu_request)
-
-This module allows Axion or userspace agents to serialize and submit `GaiaRequest`s
-to the GPU symbolic dispatch layer via the virtual file `/sys/axion_debug/gpu_request`.
-
-It parses structured ternary macros (TBIN) and sends them to CUDA or GAIA (ROCm)
-via the unified dispatch API (`axion_dispatch_to_gpu()`), logging results to Axion’s
-internal telemetry system.
+@* Axion GPU Dispatch Serializer with Context-Aware Promotion (/sys/axion_debug/gpu_request) *@
 
 @c
 #include <stdio.h>
@@ -14,6 +7,8 @@ internal telemetry system.
 #include <string.h>
 
 #include "axion-gaia-interface.h"
+#include "hvm_context.h"
+#include "hvm_promotion.h"
 
 #define GPU_REQUEST_PATH "/sys/axion_debug/gpu_request"
 
@@ -21,7 +16,12 @@ internal telemetry system.
 extern void axion_dispatch_to_gpu(const uint8_t* logic_blob, size_t len, int use_cuda);
 
 /// Simple writer to serialize a GaiaRequest into /sys
-int write_gpu_request_to_sysfs(const GaiaRequest* request, const char* backend) {
+int write_gpu_request_to_sysfs(const GaiaRequest* request, const char* backend, HVMContext* ctx) {
+    if (ctx && ctx->mode < MODE_T729) {
+        fprintf(stderr, "[Axion GPU Request] Promoting context to T729 for GPU macro dispatch.\n");
+        promote_to_t729(ctx);
+    }
+
     FILE* f = fopen(GPU_REQUEST_PATH, "wb");
     if (!f) {
         perror("Failed to open /sys/axion_debug/gpu_request");
@@ -79,7 +79,9 @@ int main(int argc, char** argv) {
         .intent = GAIA_TRANSFORM
     };
 
-    int ret = write_gpu_request_to_sysfs(&req, backend);
+    HVMContext ctx = { .mode = MODE_T243, .call_depth = 3, .mode_flags = 0, .halted = 0, .ip = 0 };
+
+    int ret = write_gpu_request_to_sysfs(&req, backend, &ctx);
     free(tbin);
 
     return ret;
@@ -93,7 +95,7 @@ This module assumes the Axion kernel module has mounted a writable sysfs entry a
 
 This pseudo-file is read by the kernel module, parsed as a `GaiaRequest`,
 and relayed into the correct GPU backend (via CUDA or ROCm) using the logic
-defined in `cuda_handle_request.cu` or `gaia_handle_request.cweb`.
+in `cuda_handle_request.cu` or `gaia_handle_request.cweb`.
 
 Axion will log the result to its internal entropy tracker and
 feedback registry.
