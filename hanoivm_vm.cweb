@@ -1,4 +1,4 @@
-@* HanoiVM | VM Execution Engine with Advanced Ops Integration + Recursion + Axion AI *@
+@* HanoiVM | VM Execution Engine with Advanced Ops Integration + Recursion + Axion AI + Stack Promotion *@
 
 @c
 #include <stdio.h>
@@ -12,7 +12,8 @@
 #include "disassembler.h"
 #include "ternary_base.h"
 #include "t243bigint.h"
-#include "t81recursion.h"  // NEW: Recursion integration
+#include "t81recursion.h"
+#include "hvm_promotion.h"  // NEW: Tier promotion/demotion logic
 
 @<Extern τ-registers@>=
 extern int τ[28];  // τ0–τ26 + Axion-reserved τ27
@@ -21,7 +22,10 @@ extern int τ[28];  // τ0–τ26 + Axion-reserved τ27
 typedef struct {
     size_t ip;
     int halted;
-    int recursion_depth;  // NEW: Recursion state tracking
+    int recursion_depth;
+    int mode;
+    int mode_flags;
+    int call_depth;
 } HVMContext;
 
 @<VM Execution API@>=
@@ -54,13 +58,17 @@ uint81_t pop81u(void) {
 }
 
 @<VM Execution Function@>=
-#define OP_T729_DOT     0xE1
-#define OP_T729_PRINT   0xE2
-#define OP_RECURSE_FACT 0xF1  // NEW: Recursive factorial
-#define OP_RECURSE_FIB  0xF2  // NEW: Tail-recursive Fibonacci
+#define OP_T729_DOT       0xE1
+#define OP_T729_PRINT     0xE2
+#define OP_RECURSE_FACT   0xF1
+#define OP_RECURSE_FIB    0xF2
+#define OP_PROMOTE_T243   0xF0
+#define OP_PROMOTE_T729   0xF3
+#define OP_DEMOTE_T243    0xF4
+#define OP_DEMOTE_T81     0xF5
 
 void execute_vm(void) {
-    HVMContext ctx = { .ip = 0, .halted = 0, .recursion_depth = 0 };
+    HVMContext ctx = { .ip = 0, .halted = 0, .recursion_depth = 0, .mode = MODE_T81, .mode_flags = 0, .call_depth = 0 };
 
     while (!ctx.halted && ctx.ip < hvm_code_size) {
         uint8_t opcode = hvm_code[ctx.ip++];
@@ -71,7 +79,17 @@ void execute_vm(void) {
         snprintf(trace_msg, sizeof(trace_msg), "OP[%s] @IP=%zu", opcode_name(opcode), ctx.ip - 1);
         axion_log(trace_msg);
 
+        TRACE_MODE(&ctx);
+        PROMOTE_T243(&ctx);
+        PROMOTE_T729(&ctx);
+        DEMOTE_STACK(&ctx);
+
         switch (opcode) {
+            case OP_PROMOTE_T243: promote_to_t243(&ctx); break;
+            case OP_PROMOTE_T729: promote_to_t729(&ctx); break;
+            case OP_DEMOTE_T243:
+            case OP_DEMOTE_T81: demote_stack(&ctx); break;
+
             case OP_T729_DOT: {
                 TernaryHandle b = stack_pop();
                 TernaryHandle a = stack_pop();
