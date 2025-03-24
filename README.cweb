@@ -1,8 +1,8 @@
 @* README.cweb | Literate Documentation for HanoiVM + Axion AI Runtime
 
 This document describes the architecture and usage of the HanoiVM project,
-including the Axion AI kernel module system and the ternary computing runtime
-emulation layer.
+including the Axion AI kernel module system, the ternary computing runtime
+emulation layer, and the newly integrated cryptographic systems for secure execution.
 
 @<Project Overview@>=
 ## 🧠 Project Overview
@@ -18,26 +18,116 @@ AI-native runtime system that supports:
 - Anomaly detection and self-healing
 - NLP-style interface commands
 
+In addition, **NIST-approved cryptographic extensions** have been integrated, enabling:
+- AES-NI accelerated AES encryption
+- RSA encryption and decryption
+- SHA-256 hashing
+- Secure key generation and random number generation
+
+These cryptographic enhancements ensure that HanoiVM operates securely in sensitive environments, aligned with modern security practices.
+
 Together, these systems form a research prototype for AI-native, ternary-powered
-operating environments.
+operating environments, with enhanced cryptographic integrity.
 
 @<Repository Structure@>=
 ## 📁 Repository Structure
 
 | File/Folder                 | Purpose                                      |
 |----------------------------|----------------------------------------------|
-| `axion-ai.cweb`            | AI-powered ternary kernel module              |
-| `hanoivm_vm.cweb`          | HanoiVM bytecode execution engine             |
-| `hanoivm-core.cweb`        | Core logic and runtime abstraction            |
-| `hanoivm-runtime.cweb`     | Scheduling, interfaces, syscall dispatch      |
-| `axion-gaia-interface.cweb`| CUDA/ROCm ternary-GPU bridge interface        |
-| `t81_stack.cweb`           | Stack implementation for ternary data types   |
-| `t81asm.cweb`              | Ternary assembler (work in progress)          |
-| `cuda_handle_request.cu`   | CUDA backend to execute ternary macros        |
-| `hanoivm-test.cweb`        | Kernel-mode unit tests for all major modules  |
-| `build-all.cweb`           | Unified Makefile for all modules              |
+| `axion-ai.cweb`            | AI-powered ternary kernel module             |
+| `hanoivm_vm.cweb`          | HanoiVM bytecode execution engine            |
+| `hanoivm-core.cweb`        | Core logic and runtime abstraction           |
+| `hanoivm-runtime.cweb`     | Scheduling, interfaces, syscall dispatch     |
+| `axion-gaia-interface.cweb`| CUDA/ROCm ternary-GPU bridge interface       |
+| `t81_stack.cweb`           | Stack implementation for ternary data types  |
+| `t81asm.cweb`              | Ternary assembler (work in progress)         |
+| `cuda_handle_request.cu`   | CUDA backend to execute ternary macros       |
+| `hanoivm-test.cweb`        | Kernel-mode unit tests for all major modules |
+| `build-all.cweb`           | Unified Makefile for all modules             |
 | `tangle-all.sh`            | Tangling helper to extract `.c` from `.cweb` |
+| `nist_encryption.cweb`     | NIST-approved encryption library with AES-NI support |
 
+@<Getting Started@>=
+## 🚀 Getting Started
+
+```bash
+# Tangle all .cweb files into .c
+./tangle-all.sh
+
+# Build all kernel modules
+make -f build-all
+
+# Load core modules
+sudo insmod axion-ai.ko
+sudo insmod hanoivm_vm.ko
+
+# Load the cryptographic extensions
+sudo insmod nist_encryption.ko
+
+# Run kernel-mode tests
+sudo insmod hanoivm-test.ko
+cat /sys/kernel/debug/hanoivm-test
+
+@<Design Goals@>=
+
+🧬 Design Goals
+
+Native ternary data abstractions (T81, T243, T729)
+Recursive, symbolic VM control flow
+AI introspection via entropy monitoring
+Enhanced security with NIST-approved cryptographic extensions (AES-NI, RSA, SHA)
+Support for future post-quantum cryptographic extensions
+Compatibility with AxionOS and AI-managed package layers
+@<T81 Integration@>=
+
+🔗 T81 Integration
+
+HanoiVM is designed to align with the T81 computing paradigm, which provides a robust foundation for ternary computing:
+
+T81TISC: Ternary Instruction Set Computer
+HanoiVM leverages T81TISC to enable logarithmic processing for AI, cryptography, and parallel computing tasks. T81's self-optimizing execution adapts in real-time, enhancing performance dynamically as workloads evolve.
+T81Lang: Code the Future
+The project integrates T81Lang, a programming language built for Base-81 arithmetic, which is designed to work seamlessly within the HanoiVM environment for AI-driven and high-performance computing tasks.
+T81 Data Types: Precision Meets Power
+T81 introduces arbitrary-precision numbers and tensor-based data structures, which are ideal for handling complex scientific computations and deep learning tasks. HanoiVM supports T81 data types, making it perfect for scientific breakthroughs and machine learning applications.
+T81 Virtual Machine: Run Anywhere, Anytime
+HanoiVM features JIT (Just-In-Time) compilation and cross-platform compatibility, allowing it to run efficiently on various platforms, making T81 accessible and adaptable across the globe.
+Axion AI: Intelligence That Works for You
+Axion AI optimizes the performance of HanoiVM in real-time by predicting and adjusting resource allocation. With Axion AI, the system features autonomous threat detection and blockchain-backed integrity, ensuring both efficiency and security for T81 environments.
+@<Cryptographic Enhancements@>=
+
+🔐 Cryptographic Enhancements
+
+This version of HanoiVM integrates NIST-approved encryption libraries, providing robust, secure cryptographic operations that are essential for modern secure computing environments.
+
+AES-NI: Accelerated AES encryption using hardware support on compatible systems, ensuring fast and secure data encryption.
+RSA: Public-key encryption and decryption for secure communications and key management.
+SHA-256: Secure hashing algorithm for data integrity verification and cryptographic applications.
+Key Generation: Secure generation of AES keys and RSA keypairs with secure random number generation.
+These cryptographic features are implemented in the nist_encryption.cweb module, which is designed to provide secure encryption, decryption, and hashing in a ternary computing environment.
+
+@<License@>=
+
+📝 License
+
+This project is licensed under the MIT License.
+
+@<Contributors@>=
+
+👤 Authors
+
+copyleftsystems
+Contributors from the HanoiVM + Axion AI research stream
+@<References@>=
+
+📚 References
+
+Tower of Hanoi (mathematical basis)
+Ternary Computing (Setun, Balanced Ternary, T81Lang)
+Snowden leaks (XKeyscore, DCS1000, recursive analysis)
+Gentoo Portage, CWEB, and literate system design
+T81 Promo Document: Unlock the Future of Computing with T81
+NIST Special Publications for cryptographic standards (FIPS 197, FIPS 140-2, FIPS 186)
 @<Getting Started@>=
 ## 🚀 Getting Started
 
@@ -83,3 +173,23 @@ This project is licensed under the MIT License.
 
 ---
 🌀 Designed for recursion. Powered by AI. Ternary from the ground up.
+
+
+---
+
+### **Key Updates in the New `README.cweb`:**
+
+1. **T81 Integration**:
+   - **T81** features like **T81TISC**, **T81Lang**, **T81 data types**, and **Axion AI** are directly referenced, aligning **HanoiVM** with **T81**'s architecture.
+   - **Self-optimizing performance**, **base-81 arithmetic**, and **tensor-based structures** are now highlighted as core capabilities of the system.
+
+2. **Cryptographic Enhancements**:
+   - Integration of **NIST-approved encryption libraries** such as AES-NI, RSA, and SHA-256. These align with the system’s **secure AI and ternary architecture**.
+   - The **nist_encryption.cweb** module, which integrates these cryptographic features, is specifically mentioned.
+
+3. **References**:
+   - The **T81Promo** document is included as a reference, tying the **T81** system's goals and features directly into **HanoiVM**'s design and capabilities.
+
+This version of the `README.cweb` incorporates the **T81** advantages and cryptographic security, reflecting the most recent additions to your project.
+?"}:[p=-0[]\
+
