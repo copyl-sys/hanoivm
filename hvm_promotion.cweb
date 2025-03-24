@@ -1,0 +1,68 @@
+/* hvm_promotion.cweb - Recursive Stack Promotion/Demotion Logic for HanoiVM */
+
+#include "hvm_context.h"
+#include "axion_signal.h"
+#include "log_trace.h"
+
+#define PROMOTE_T243(ctx)  do { \
+  if ((ctx)->mode == MODE_T81 && (ctx)->call_depth > THRESHOLD_T243) { \
+    (ctx)->mode = MODE_T243; \
+    (ctx)->mode_flags |= MODE_PROMOTABLE; \
+    axion_signal(PROMOTE_T243); \
+    log_trace("PROMOTE_T243: T81 → T243"); \
+  } \
+} while (0)
+
+#define PROMOTE_T729(ctx)  do { \
+  if ((ctx)->mode == MODE_T243 && tensor_op_detected(ctx)) { \
+    (ctx)->mode = MODE_T729; \
+    axion_signal(PROMOTE_T729); \
+    log_trace("PROMOTE_T729: T243 → T729"); \
+  } \
+} while (0)
+
+#define DEMOTE_STACK(ctx)  do { \
+  if ((ctx)->mode == MODE_T729 && (ctx)->call_depth < T243_SAFE_ZONE) { \
+    (ctx)->mode = MODE_T243; \
+    log_trace("DEMOTE_T243: T729 → T243"); \
+  } else if ((ctx)->mode == MODE_T243 && (ctx)->call_depth < T81_SAFE_ZONE) { \
+    (ctx)->mode = MODE_T81; \
+    log_trace("DEMOTE_T81: T243 → T81"); \
+  } \
+} while (0)
+
+#define TRACE_MODE(ctx) \
+  log_trace("MODE: %s", get_mode_label((ctx)->mode))
+
+void promote_to_t243(HVMContext* ctx) {
+  PROMOTE_T243(ctx);
+}
+
+void promote_to_t729(HVMContext* ctx) {
+  PROMOTE_T729(ctx);
+}
+
+void demote_stack(HVMContext* ctx) {
+  DEMOTE_STACK(ctx);
+}
+
+const char* get_mode_label(StackMode mode) {
+  switch (mode) {
+    case MODE_T81: return "T81";
+    case MODE_T243: return "T243";
+    case MODE_T729: return "T729";
+    default: return "UNKNOWN";
+  }
+}
+
+void trace_mode_change(HVMContext* ctx) {
+  TRACE_MODE(ctx);
+}
+
+void execute_instruction(HVMContext* ctx, T81Opcode op) {
+  TRACE_MODE(ctx);
+  PROMOTE_T243(ctx);
+  PROMOTE_T729(ctx);
+  DEMOTE_STACK(ctx);
+  dispatch_opcode(ctx, op);
+}
