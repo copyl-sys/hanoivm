@@ -79,6 +79,55 @@ int t729tensor_transpose(TernaryHandle h, TernaryHandle* result) {
     return 0;
 }
 
+int t729tensor_reshape(TernaryHandle h, int new_rank, const int* new_shape, TernaryHandle* result) {
+    T729Tensor* t = (T729Tensor*)h.data;
+    size_t original_size = t729tensor_size(t);
+
+    size_t new_size = 1;
+    for (int i = 0; i < new_rank; ++i)
+        new_size *= new_shape[i];
+
+    if (new_size != original_size) return -1;
+
+    T729Tensor* reshaped = (T729Tensor*)malloc(sizeof(T729Tensor));
+    reshaped->rank = new_rank;
+    reshaped->shape = (int*)malloc(sizeof(int) * new_rank);
+    memcpy(reshaped->shape, new_shape, sizeof(int) * new_rank);
+    reshaped->data = (float*)malloc(sizeof(float) * new_size);
+    memcpy(reshaped->data, t->data, sizeof(float) * new_size);
+
+    result->base = BASE_729;
+    result->data = reshaped;
+    return 0;
+}
+
+int t729tensor_slice(TernaryHandle h, int dim, int start, int end, TernaryHandle* result) {
+    T729Tensor* t = (T729Tensor*)h.data;
+    if (dim >= t->rank || start < 0 || end > t->shape[dim] || start >= end)
+        return -1;
+
+    int* new_shape = (int*)malloc(sizeof(int) * t->rank);
+    memcpy(new_shape, t->shape, sizeof(int) * t->rank);
+    new_shape[dim] = end - start;
+
+    size_t stride = 1;
+    for (int i = dim + 1; i < t->rank; ++i)
+        stride *= t->shape[i];
+
+    size_t slice_size = (end - start) * stride;
+    float* new_data = (float*)malloc(sizeof(float) * slice_size);
+    memcpy(new_data, t->data + start * stride, sizeof(float) * slice_size);
+
+    T729Tensor* sliced = (T729Tensor*)malloc(sizeof(T729Tensor));
+    sliced->rank = t->rank;
+    sliced->shape = new_shape;
+    sliced->data = new_data;
+
+    result->base = BASE_729;
+    result->data = sliced;
+    return 0;
+}
+
 void t729tensor_free(TernaryHandle h) {
     T729Tensor* tensor = (T729Tensor*)h.data;
     if (tensor) {
