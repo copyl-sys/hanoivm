@@ -1,0 +1,141 @@
+@* T81Recursion Library | `t81recursion.cweb`
+
+This module defines recursive computation functions using T81BigInt.
+It supports:
+- Recursive factorial
+- Tail-recursive Fibonacci
+- General callback-based recursion dispatcher
+
+Includes stack depth tracking, safety guards, and base-81 awareness.
+
+@d T81RECURSE_MAX_DEPTH 1024
+
+@f #include "t81.h"
+@f #include <stdio.h>
+@f #include <stdlib.h>
+@f #include <string.h>
+
+@<Global variables@> @;
+@<T81BigInt Recursive Factorial@> @;
+@<T81BigInt Tail-Recursive Fibonacci@> @;
+@<Generic Callback Dispatcher@> @;
+@<Reset Recursion Depth@> @;
+
+@*1 Global variables
+
+@<Global variables@>=
+static int t81recursion_depth = 0;
+
+@*1 Recursive Factorial
+
+@<T81BigInt Recursive Factorial@>=
+TritError t81bigint_factorial_recursive(T81BigIntHandle n, T81BigIntHandle* result) {
+    if (t81recursion_depth >= T81RECURSE_MAX_DEPTH)
+        return T81RECURSE_STACK_OVERFLOW;
+
+    t81recursion_depth++;
+
+    char* str;
+    if (t81bigint_to_string(n, &str) != TRIT_OK)
+        return T81RECURSE_INVALID_INPUT;
+
+    if (strcmp(str, "0") == 0) {
+        free(str);
+        *result = t81bigint_new(1);
+        t81recursion_depth--;
+        return TRIT_OK;
+    }
+
+    free(str);
+    T81BigIntHandle one = t81bigint_new(1);
+    T81BigIntHandle n_minus_1;
+    t81bigint_subtract(n, one, &n_minus_1);
+    t81bigint_free(one);
+
+    T81BigIntHandle sub_result;
+    TritError err = t81bigint_factorial_recursive(n_minus_1, &sub_result);
+
+    if (err == TRIT_OK)
+        err = t81bigint_multiply(n, sub_result, result);
+
+    t81bigint_free(n_minus_1);
+    t81bigint_free(sub_result);
+    t81recursion_depth--;
+    return err;
+}
+
+@*1 Tail-Recursive Fibonacci
+
+@<T81BigInt Tail-Recursive Fibonacci@>=
+TritError t81bigint_fibonacci_tail_helper(T81BigIntHandle n, T81BigIntHandle a, T81BigIntHandle b, T81BigIntHandle* result) {
+    if (t81recursion_depth >= T81RECURSE_MAX_DEPTH)
+        return T81RECURSE_STACK_OVERFLOW;
+
+    t81recursion_depth++;
+    char* str;
+    t81bigint_to_string(n, &str);
+
+    if (strcmp(str, "0") == 0) {
+        *result = t81bigint_copy(a);
+        free(str);
+        t81recursion_depth--;
+        return TRIT_OK;
+    }
+
+    if (strcmp(str, "1") == 0) {
+        *result = t81bigint_copy(b);
+        free(str);
+        t81recursion_depth--;
+        return TRIT_OK;
+    }
+
+    free(str);
+    T81BigIntHandle one = t81bigint_new(1);
+    T81BigIntHandle n1;
+    t81bigint_subtract(n, one, &n1);
+    t81bigint_free(one);
+
+    T81BigIntHandle next;
+    t81bigint_add(a, b, &next);
+    TritError err = t81bigint_fibonacci_tail_helper(n1, b, next, result);
+
+    t81bigint_free(n1);
+    t81bigint_free(next);
+    t81recursion_depth--;
+    return err;
+}
+
+TritError t81bigint_fibonacci_tail(T81BigIntHandle n, T81BigIntHandle* result) {
+    T81BigIntHandle a = t81bigint_new(0);
+    T81BigIntHandle b = t81bigint_new(1);
+    TritError err = t81bigint_fibonacci_tail_helper(n, a, b, result);
+    t81bigint_free(a);
+    t81bigint_free(b);
+    return err;
+}
+
+@*1 Generic Dispatcher Callback
+
+@<Generic Callback Dispatcher@>=
+typedef TritError (*T81RecursiveCallback)(
+    T81BigIntHandle current,
+    void* context,
+    T81BigIntHandle* result
+);
+
+TritError t81recurse(T81BigIntHandle start, T81RecursiveCallback callback, void* context, T81BigIntHandle* result) {
+    if (t81recursion_depth >= T81RECURSE_MAX_DEPTH)
+        return T81RECURSE_STACK_OVERFLOW;
+
+    t81recursion_depth++;
+    TritError err = callback(start, context, result);
+    t81recursion_depth--;
+    return err;
+}
+
+@*1 Reset Recursion Depth
+
+@<Reset Recursion Depth@>=
+void t81recursion_reset_depth() {
+    t81recursion_depth = 0;
+}
