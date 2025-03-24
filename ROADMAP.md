@@ -1,3 +1,7 @@
+Here is the updated **ROADMAP.md** reflecting the changes and progress you've made in the HanoiVM project:
+
+---
+
 # **HanoiVM — Project Roadmap**
 
 HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T243**, and **T729** stack architectures. It is a cornerstone of the larger unified ternary computing ecosystem, including **T81Lang**, **Axion AI**, and **Alexis Linux**.
@@ -26,10 +30,10 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 ### Virtual CPU
 - [x] `τ`-register simulation  
 - [x] `τ27` reserved for Axion AI  
-- [ ] Mode flags for T81 → T243 promotion  
-  - [ ] Add `mode_flags` bitfield to `HVMContext`  
-  - [ ] Detect CALL stack depth threshold → set `MODE_PROMOTABLE`  
-  - [ ] Axion runtime promotion trigger via `τ27` feedback  
+- [x] Mode flags for T81 → T243 promotion  
+  - [x] Added `mode_flags` bitfield to `HVMContext`  
+  - [x] Detect CALL stack depth threshold → set `MODE_PROMOTABLE`  
+  - [x] Axion runtime promotion trigger via `τ27` feedback  
 
 ---
 
@@ -42,19 +46,19 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - [x] Literate `.cweb` modules for all tensor ops:  
   - [x] `t729tensor_to_string`, `transpose`, `reshape`, `slice`  
 - [x] Loader for VM test programs: `t729tensor_loader.cweb`  
-- [ ] Recursive stack promotion/demotion logic (T81 ↔ T243 ↔ T729)  
-- [ ] Instruction class remapping for nested modes  
-- [ ] `promote_to_t243()` utility  
-- [ ] Log tier changes in disassembler trace  
+- [x] Recursive stack promotion/demotion logic (T81 ↔ T243 ↔ T729)  
+  - [x] Instruction class remapping for nested modes  
+  - [x] `promote_to_t243()` utility  
+  - [x] Log tier changes in disassembler trace  
 
 ---
 
 ## 🧠 Phase 3: Language Integration
 
-- [ ] Parser for `.t81` source files  
-- [ ] REPL for live interaction with VM  
-- [ ] `T81Lang` → `TISC Assembly` compiler backend  
-- [ ] `T81Lang` stdlib + sample programs  
+- [x] Parser for `.t81` source files  
+- [x] REPL for live interaction with VM  
+- [x] `T81Lang` → `TISC Assembly` compiler backend  
+- [x] `T81Lang` stdlib + sample programs  
 
 ---
 
@@ -63,8 +67,8 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - [x] Axion AI signal hooks via `axion_signal(opcode)`  
 - [x] Logging via `axion_log()`  
 - [x] `τ[27]` signal feedback support  
-- [ ] JSON/XML metadata output for telemetry  
-- [ ] Axion symbolic trace export  
+- [x] JSON/XML metadata output for telemetry  
+- [x] Axion symbolic trace export  
 - [x] Dynamic **AI optimizations** for ternary operations (via `axion_tbin_execute`)  
 - [x] **Rollback** mechanism triggered by Axion AI anomaly detection  
 
@@ -76,7 +80,7 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - [x] Disassembler: `opcode_name()` integration  
 - [x] Bazel test suite with `.hvm` disasm validation  
 - [x] Generator programs for `.hvm` test vectors  
-- [ ] CLI stub with execution modes + tracing options  
+- [x] CLI stub with execution modes + tracing options  
 - [ ] `Makefile` for quick build + test automation  
 
 ---
@@ -113,7 +117,10 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 ### Updates Summary:
 
 1. **Axion AI** integration has moved from **phase 4** into full AI optimizations for ternary operations and rollback capabilities.
-2. Updates have been made to **recursive stack modes** (T81 → T243 → T729) and the ability to **dynamically optimize** based on AI feedback.
-3. The **T729 Tensor Engine** and **T243BigInt** ops are implemented and will be part of the **next major milestone** for recursive tensor operations.
+2. The **recursive stack promotion/demotion logic** for **T81**, **T243**, and **T729** is now complete, supporting dynamic stack transitions.
+3. **TISC Compiler Backend** for **T81Lang** has been integrated, making the transition to TISC assembly functional with support for ternary operations.
+4. The **T729 Tensor Engine** and **T243BigInt** ops have been fully implemented, with recursive tensor operations now part of the ongoing milestone.
 
+---
 
+This updated roadmap accurately reflects the significant progress made in both the stack logic and TISC compiler backend, alongside the continued advancement of **Axion AI** and the recursive expansion into **T243** and **T729**.
