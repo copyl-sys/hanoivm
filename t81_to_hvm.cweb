@@ -1,11 +1,14 @@
-@* T81Lang to HVM Bytecode Compiler — Parser and Encoder for Symbolic Ternary Programs *@
+@* t81_to_hvm.cweb | T81Lang → HVM Bytecode Compiler *@
 
 @c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <ctype.h>
 #include "t81types.h"
+
+#define OP_HALT 0xFF
 
 @<Opcode Map@>=
 typedef struct {
@@ -47,7 +50,7 @@ uint8_t lookup_opcode(const char* token) {
             return opmap[i].opcode;
         }
     }
-    return 0x00;  // Unknown
+    return 0x00;
 }
 
 @<Operand Parser: Base-81 Encoding Stub@>=
@@ -57,16 +60,24 @@ uint81_t parse_uint81(const char* str) {
     return result;
 }
 
-@<Main T81 Compiler Function@>=
-int compile_t81_source(const char* in_path, const char* out_path) {
-    FILE* in = fopen(in_path, "r");
-    FILE* out = fopen(out_path, "wb");
-    if (!in || !out) return -1;
+@<Main Entry@>=
+int main(int argc, char** argv) {
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <input.t81> <output.hvm>\n", argv[0]);
+        return 1;
+    }
 
-    char line[128];
+    FILE* in = fopen(argv[1], "r");
+    FILE* out = fopen(argv[2], "wb");
+    if (!in || !out) {
+        perror("fopen");
+        return 1;
+    }
+
+    char line[256];
     while (fgets(line, sizeof(line), in)) {
         char* token = strtok(line, " \t\n");
-        if (!token || token[0] == '#') continue;  // Skip comments
+        if (!token || token[0] == '#') continue;
 
         uint8_t opcode = lookup_opcode(token);
         fwrite(&opcode, 1, 1, out);
@@ -87,9 +98,17 @@ int compile_t81_source(const char* in_path, const char* out_path) {
         }
     }
 
+    fputc(OP_HALT, out);
     fclose(in);
     fclose(out);
+    printf("[\u2713] Compiled %s \u2192 %s\n", argv[1], argv[2]);
     return 0;
 }
 
-@* Example: "push 1:2:3\nadd\nhalt" ➝ Encoded as OP_PUSH + operand + OP_ADD + OP_HALT *@
+@h
+@<Opcode Map@>
+@<Utility: Match Opcode@>
+@<Operand Parser: Base-81 Encoding Stub@>
+@<Main Entry@>
+
+@* End of t81_to_hvm.cweb *@
