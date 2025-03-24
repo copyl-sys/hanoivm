@@ -11,14 +11,20 @@ typedef struct {
     float* data; // placeholder flat tensor storage
 } T729Tensor;
 
+static size_t t729tensor_size(const T729Tensor* t) {
+    size_t size = 1;
+    for (int i = 0; i < t->rank; ++i)
+        size *= t->shape[i];
+    return size;
+}
+
 TernaryHandle t729tensor_new(int rank, const int* shape) {
     T729Tensor* tensor = (T729Tensor*)malloc(sizeof(T729Tensor));
     tensor->rank = rank;
     tensor->shape = (int*)malloc(sizeof(int) * rank);
     memcpy(tensor->shape, shape, sizeof(int) * rank);
 
-    size_t size = 1;
-    for (int i = 0; i < rank; ++i) size *= shape[i];
+    size_t size = t729tensor_size(tensor);
     tensor->data = (float*)calloc(size, sizeof(float));
 
     TernaryHandle h = { .base = BASE_729, .data = tensor };
@@ -26,17 +32,47 @@ TernaryHandle t729tensor_new(int rank, const int* shape) {
 }
 
 int t729tensor_contract(TernaryHandle a, TernaryHandle b, TernaryHandle* result) {
-    // Placeholder: copy tensor A
-    T729Tensor* src = (T729Tensor*)a.data;
-    T729Tensor* out = (T729Tensor*)malloc(sizeof(T729Tensor));
-    out->rank = src->rank;
-    out->shape = (int*)malloc(sizeof(int) * src->rank);
-    memcpy(out->shape, src->shape, sizeof(int) * src->rank);
+    // Simple dot-product for rank-1 vectors
+    T729Tensor* A = (T729Tensor*)a.data;
+    T729Tensor* B = (T729Tensor*)b.data;
 
-    size_t size = 1;
-    for (int i = 0; i < src->rank; ++i) size *= src->shape[i];
-    out->data = (float*)malloc(sizeof(float) * size);
-    memcpy(out->data, src->data, sizeof(float) * size);
+    if (A->rank != 1 || B->rank != 1 || A->shape[0] != B->shape[0]) return -1;
+
+    float dot = 0.0f;
+    for (int i = 0; i < A->shape[0]; ++i)
+        dot += A->data[i] * B->data[i];
+
+    T729Tensor* out = (T729Tensor*)malloc(sizeof(T729Tensor));
+    out->rank = 1;
+    out->shape = (int*)malloc(sizeof(int));
+    out->shape[0] = 1;
+    out->data = (float*)malloc(sizeof(float));
+    out->data[0] = dot;
+
+    result->base = BASE_729;
+    result->data = out;
+    return 0;
+}
+
+int t729tensor_transpose(TernaryHandle h, TernaryHandle* result) {
+    T729Tensor* t = (T729Tensor*)h.data;
+    if (t->rank != 2) return -1; // Only support 2D transpose for now
+
+    int rows = t->shape[0];
+    int cols = t->shape[1];
+
+    T729Tensor* out = (T729Tensor*)malloc(sizeof(T729Tensor));
+    out->rank = 2;
+    out->shape = (int*)malloc(sizeof(int) * 2);
+    out->shape[0] = cols;
+    out->shape[1] = rows;
+    out->data = (float*)malloc(sizeof(float) * rows * cols);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            out->data[j * rows + i] = t->data[i * cols + j];
+        }
+    }
 
     result->base = BASE_729;
     result->data = out;
