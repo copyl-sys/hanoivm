@@ -27,7 +27,13 @@ int t729tensor_transpose(TernaryHandle h, TernaryHandle* result) {
     result->data = out;
     return 0;
 
-@<Transpose Dispatch Handler@>
+case OP_T729_TRANS: {
+    TernaryHandle a = stack_pop();
+    TernaryHandle r;
+    t729tensor_transpose(a, &r);
+    stack_push(r);
+    break;
+}
 }
 
 @<Transpose Loop@>=
