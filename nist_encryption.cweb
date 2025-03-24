@@ -1,0 +1,143 @@
+@* nist_encryption.cweb - A NIST-approved encryption library with AES-NI support *@
+
+module nist_encryption;
+
+/* Include necessary cryptographic libraries */
+#include <openssl/aes.h>    // For AES encryption
+#include <openssl/rsa.h>    // For RSA encryption
+#include <openssl/sha.h>    // For SHA hashing
+#include <openssl/pem.h>    // For reading/writing RSA keys
+#include <openssl/evp.h>    // For AES-NI support and EVP interface
+#include <openssl/rand.h>   // For secure random number generation
+
+/* Define core encryption structures */
+
+/* AES Encryption Block Structure */
+structure AES_Ctx {
+    key: string;  /* The AES encryption key */
+    iv: string;   /* Initialization Vector for AES */
+    cipher: string;  /* Holds the encrypted output */
+};
+
+/* RSA Encryption Block Structure */
+structure RSA_Ctx {
+    public_key: string;   /* The public RSA key */
+    private_key: string;  /* The private RSA key */
+    cipher: string;       /* Holds the RSA encrypted output */
+};
+
+/* SHA Hashing Block Structure */
+structure SHA_Ctx {
+    message: string;  /* Message to hash */
+    hash: string;     /* Resulting hash output */
+};
+
+/* Macros for AES Encryption and Decryption */
+
+/* AES Encryption (AES-NI support enabled where available) */
+macro AES_Encrypt(plaintext, AES_Ctx) -> string {
+    /* Initialize AES encryption context */
+    if (AES_NI_enabled()) {
+        /* Use AES-NI for faster AES encryption if available */
+        AES_set_encrypt_key(AES_Ctx.key, AES_BLOCK_SIZE, &AES_Ctx.cipher);
+        AES_nist_encrypt(plaintext, AES_Ctx.cipher, AES_Ctx.iv);
+    } else {
+        /* Fallback to regular AES encryption if AES-NI is not available */
+        AES_set_encrypt_key(AES_Ctx.key, AES_BLOCK_SIZE, &AES_Ctx.cipher);
+        AES_cbc_encrypt(plaintext, AES_Ctx.cipher, AES_Ctx.iv, AES_ENCRYPT);
+    }
+    
+    return AES_Ctx.cipher;
+}
+
+/* AES Decryption (AES-NI support enabled where available) */
+macro AES_Decrypt(ciphertext, AES_Ctx) -> string {
+    /* Initialize AES decryption context */
+    if (AES_NI_enabled()) {
+        /* Use AES-NI for faster AES decryption if available */
+        AES_set_decrypt_key(AES_Ctx.key, AES_BLOCK_SIZE, &AES_Ctx.cipher);
+        AES_nist_decrypt(ciphertext, AES_Ctx.cipher, AES_Ctx.iv);
+    } else {
+        /* Fallback to regular AES decryption if AES-NI is not available */
+        AES_set_decrypt_key(AES_Ctx.key, AES_BLOCK_SIZE, &AES_Ctx.cipher);
+        AES_cbc_encrypt(ciphertext, AES_Ctx.cipher, AES_Ctx.iv, AES_DECRYPT);
+    }
+
+    return AES_Ctx.cipher;
+}
+
+/* Macros for RSA Encryption and Decryption */
+
+/* RSA Encryption */
+macro RSA_Encrypt(plaintext, RSA_Ctx) -> string {
+    /* Initialize RSA encryption context */
+    rsa_key = PEM_read_RSA_PUBKEY(RSA_Ctx.public_key);
+    
+    /* Encrypt the message using RSA public key */
+    RSA_public_encrypt(plaintext, rsa_key);
+    
+    return RSA_Ctx.cipher;
+}
+
+/* RSA Decryption */
+macro RSA_Decrypt(ciphertext, RSA_Ctx) -> string {
+    /* Initialize RSA decryption context */
+    rsa_key = PEM_read_RSA_PRIVATE_KEY(RSA_Ctx.private_key);
+    
+    /* Decrypt the ciphertext using RSA private key */
+    RSA_private_decrypt(ciphertext, rsa_key);
+    
+    return RSA_Ctx.cipher;
+}
+
+/* Macros for SHA Hashing */
+
+/* SHA256 Hashing */
+macro SHA256_Hash(message) -> string {
+    /* Create SHA256 context */
+    sha256_ctx = SHA256_CTX();
+    
+    /* Perform the SHA256 hash computation */
+    SHA256_Init(&sha256_ctx);
+    SHA256_Update(&sha256_ctx, message, len(message));
+    SHA256_Final(&sha256_ctx.hash);
+    
+    return sha256_ctx.hash;
+}
+
+/* Macros for Key Generation */
+
+/* Generate AES Key */
+macro Generate_AES_Key() -> string {
+    /* Generate a random AES key */
+    aes_key = random_bytes(AES_BLOCK_SIZE);
+    
+    return aes_key;
+}
+
+/* Generate RSA Keypair */
+macro Generate_RSA_Keypair(bits) -> RSA_Ctx {
+    /* Generate RSA public/private key pair */
+    rsa_keypair = RSA_generate_key(bits, RSA_F4);
+    pem_public_key = PEM_write_RSA_PUBKEY(rsa_keypair);
+    pem_private_key = PEM_write_RSA_PRIVATE_KEY(rsa_keypair);
+    
+    rsa_ctx = RSA_Ctx(pem_public_key, pem_private_key);
+    return rsa_ctx;
+}
+
+/* Macro for Random Bytes Generation */
+
+/* Generate Secure Random Bytes */
+macro random_bytes(length) -> string {
+    /* Generate secure random data */
+    random_data = secure_random(length);
+    
+    return random_data;
+}
+
+/* Helper function to check if AES-NI is available */
+function AES_NI_enabled() -> bool {
+    /* Check if AES-NI support is available on the CPU */
+    return EVP_AES_NI_enabled();
+}
