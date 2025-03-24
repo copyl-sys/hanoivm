@@ -1,4 +1,4 @@
-@* HanoiVM File List and Manifesto *@
+@* HanoiVM File Manifesto *@
 
 This document serves as the official file listing and usage description for the **HanoiVM** project. Each file in the project has a specific role in building the virtual machine, providing essential functionality, and ensuring smooth operation across different components.
 
