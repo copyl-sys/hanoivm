@@ -1,4 +1,4 @@
-# Makefile for HanoiVM
+# Makefile for HanoiVM + Axion Ecosystem
 
 CWEB_SOURCES = \
 	hvm_loader.cweb \
@@ -8,21 +8,8 @@ CWEB_SOURCES = \
 	write_simple_add.cweb \
 	t81_test_suite.cweb
 
-C_OBJS = \
-	hvm_loader.c \
-	disassembler.c \
-	hanoivm_vm.c \
-	main_driver.c \
-	write_simple_add.c \
-	t81_test_suite.c
-
-H_OBJS = \
-	hvm_loader.h \
-	disassembler.h \
-	hanoivm_vm.h \
-	main_driver.h \
-	write_simple_add.h \
-	t81_test_suite.h
+C_OBJS = $(CWEB_SOURCES:.cweb=.c)
+H_OBJS = $(CWEB_SOURCES:.cweb=.h)
 
 all: hanoivm write_simple_add t81_test_suite
 
@@ -39,14 +26,24 @@ write_simple_add: write_simple_add.c
 t81_test_suite: t81_test_suite.c
 	gcc -o t81_test_suite t81_test_suite.c -Wall -Wextra -O2
 
-run-test-suite: t81_test_suite
-	./t81_test_suite
-
 run: write_simple_add hanoivm
 	./write_simple_add
 	./hanoivm simple_add.hvm --disasm
 
-clean:
-	rm -f *.c *.h *.tex *.log *.scn *.dvi *.pdf *.o hanoivm write_simple_add t81_test_suite simple_add.hvm test_all_types.hvm
+run-test-suite: t81_test_suite
+	./t81_test_suite
 
-.PHONY: all clean run run-test-suite
+ghidra-test: t81_test_suite
+	./t81_test_suite
+	ghidra_disasm_plugin test_all_types.hvm > ghidra_output.log
+	@echo "[✓] Disassembled test_all_types.hvm to ghidra_output.log"
+
+modules:
+	$(MAKE) -f build-all.cweb
+
+clean:
+	rm -f *.c *.h *.tex *.log *.scn *.dvi *.pdf *.o \
+	      hanoivm write_simple_add t81_test_suite \
+	      simple_add.hvm test_all_types.hvm ghidra_output.log
+
+.PHONY: all clean run run-test-suite modules ghidra-test
