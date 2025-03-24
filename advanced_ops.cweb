@@ -9,6 +9,7 @@
 @c
 #include <stdint.h>
 #include "t81types.h"  // Assumed: defines uint81_t and ternary helper routines
+#include "hvm_context.h"  // NEW: For access to ctx->mode
 
 @* Extended Opcode Definitions *@
 @c
@@ -39,7 +40,7 @@ typedef enum {
 
 @* Instruction Evaluation Stub (To be expanded in runtime engine) *@
 @c
-uint81_t evaluate_opcode(Opcode op, uint81_t a, uint81_t b) {
+uint81_t evaluate_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext* ctx) {
     switch (op) {
         case OP_ADD: return t81_add(a, b);
         case OP_SUB: return t81_sub(a, b);
@@ -48,12 +49,25 @@ uint81_t evaluate_opcode(Opcode op, uint81_t a, uint81_t b) {
         case OP_MOD: return t81_mod(a, b);
         case OP_NEG: return t81_neg(a);
         case OP_ABS: return t81_abs(a);
-        case OP_CMP3: return t81_cmp3(a, b);  // -1, 0, +1 result encoded in base-81
+        case OP_CMP3: return t81_cmp3(a, b);
 
-        case OP_TNN_ACCUM: return tnn_accumulate(a, b);
-        case OP_T81_MATMUL: return t81_matmul(a, b);
+        case OP_TNN_ACCUM:
+            if (ctx->mode < MODE_T243) {
+                fprintf(stderr, "[ERROR] OP_TNN_ACCUM requires MODE_T243 or higher\n");
+                return (uint81_t){0};
+            }
+            return tnn_accumulate(a, b);
 
-        default: return (uint81_t){0};
+        case OP_T81_MATMUL:
+            if (ctx->mode < MODE_T243) {
+                fprintf(stderr, "[ERROR] OP_T81_MATMUL requires MODE_T243 or higher\n");
+                return (uint81_t){0};
+            }
+            return t81_matmul(a, b);
+
+        default:
+            fprintf(stderr, "[WARN] Unknown opcode 0x%02X\n", op);
+            return (uint81_t){0};
     }
 }
 
@@ -82,13 +96,12 @@ const char* opcode_name(Opcode op) {
 @c
 uint81_t tnn_accumulate(uint81_t activation, uint81_t weight) {
     // placeholder: weighted ternary activation sum
-    return t81_add(activation, weight);  // Replace with weighted ternary neuron logic
+    return t81_add(activation, weight);
 }
 
 @* T81 Matrix Multiply Logic (stubbed) *@
 @c
 uint81_t t81_matmul(uint81_t a, uint81_t b) {
-    // interpret a and b as compressed vector tiles: a = row, b = col
     uint81_t out = {0, 0, 0};
     for (int i = 0; i < 3; ++i) {
         uint27_t row = t81_extract(a, i);
@@ -100,14 +113,4 @@ uint81_t t81_matmul(uint81_t a, uint81_t b) {
 }
 
 @* .hvm Test Bytecode Reference:
-  This sequence performs ternary matrix multiply followed by symbolic accumulation
-  (in pseudocode):
-
-      T81_MATMUL  [A:1 B:2 C:3] [A:3 B:2 C:1]  // Simulate matrix dot product
-      TNN_ACCUM   [A:6 B:3 C:0] [A:2 B:1 C:1]  // Apply learned weight signal
-
-  Encoded as:
-    0x21  1 2 3   3 2 1
-    0x20  6 3 0   2 1 1
-
-  Purpose: Validates logic of AI opcode tier in a standalone ternary instruction stream. *@
+  T81_MATMUL + TNN_ACCUM with operand tiles to simulate a symbolic AI layer *@
