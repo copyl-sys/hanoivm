@@ -1,7 +1,3 @@
-Here is the updated **ROADMAP.md** reflecting the changes and progress you've made in the HanoiVM project:
-
----
-
 # **HanoiVM — Project Roadmap**
 
 HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T243**, and **T729** stack architectures. It is a cornerstone of the larger unified ternary computing ecosystem, including **T81Lang**, **Axion AI**, and **Alexis Linux**.
