@@ -1,5 +1,27 @@
 # STATUS.md
 
+## 📊 Reevaluated System Progress (March 2025)
+
+| Subsystem | Description | Status | Completion |
+|-----------|-------------|--------|------------|
+| **T81Lang** | Full spec, compiler design, language grammar, REPL, JIT | ✅ Documented | **85%** |
+| **T81VM** | Virtual machine for `.t81` / `.hvm` execution | 🔄 Core WIP | **40%** |
+| **T81 Data Types** | T81BigInt, Float, Tensor, Graph, Matrix, etc. | ✅ Library + Stubs | **60–90%** |
+| **T81 Compiler** | Rust-based: Lexer → AST → Optimizer → TISC | 🔄 Parser Spec Done | **25%** |
+| **T81TISC** | Instruction set for ternary computing (AI/Crypto/Physics) | ✅ Complete Spec | **95%** |
+| **Axion AI** | Kernel AI for optimization, package mgmt, auto-healing | ✅ Axion.ko | **90%** |
+| **Axion Package Format** | `.cweb` AI-optimized packages w/ blockchain | ✅ Defined | **70%** |
+| **T81 Accelerator (M.2)** | PCIe ternary logic card | 🧠 R&D Stage | **10%** |
+| **AI Optimizations** | Loop unrolling, SIMD, auto-flags, log feedback | 🔄 Compiler Integration | **40%** |
+| **Guardian AI** | Security layer for Alexis Linux | 🔲 Planned | **0%** |
+| **Alexis Linux** | Modular AI OS w/ Axion, NeuraDE, T81 kernel | ✅ Alpha/QEMU | **80%** |
+| **Looking Glass UI** | 3D visualizer for ternary states | 🧠 Planned | **15%** |
+| **RiftCat Forensics Tool** | TCP/IP oscilloscope Ghidra plugin | 🔄 UI Design | **30%** |
+| **Disassembler / Debugger** | For `.hvm` + recursive T81 types | 🔲 Not Started | **0%** |
+| **Tensor + Math Libraries** | CUDA, TritJS, T81Tensor, FFT, AI ops | 🔄 Partial | **40%** |
+
+---
+
 ## ✅ Ternary Core Projects
 
 | Component | Name | Purpose | Status | Notes |
@@ -16,10 +38,10 @@
 
 | Component | Purpose | Status | Notes |
 |---|---|---|---|
-| 🔤 T81Lang Spec | Full programming language spec w/ compiler & JIT | 🧠 In Planning | Focused on base-81 math, strong typing, SIMD, AI hooks |
+| 🔤 T81Lang Spec | Full programming language spec w/ compiler & JIT | ✅ Fully Documented | Grammar, parser, optimizer pipeline sketched |
 | 💾 T81VM | Execution engine for T81Lang | 🔄 Pending after `hanoivm_vm.cweb` | Will interpret T81Lang and compile to TISC |
 | 📦 Axion Package Format (`.cweb`) | Ternary-optimized plaintext package system | ✅ Designed | AI-managed, with auto-splitting and blockchain logs |
-| 🧬 T81 Types Library | T81BigInt, T81Float, T81Fraction | 🔄 In Progress | Will underpin T81Lang math types and HanoiVM stack |
+| 🧬 T81 Types Library | T81BigInt, T81Float, T81Fraction | 🔄 In Progress | Defined and partially implemented |
 
 ---
 
@@ -47,8 +69,8 @@
 
 | Concept | Description | Status | Notes |
 |---|---|---|---|
-| 🔁 Recursive T81 Library | Foundation for all nested ternary logic | 🧠 Prototype phase | Needed for VM stack, disasm, deep type support |
-| 📐 TISC | Ternary Instruction Set Computer | 🔄 Opcode planning | Core for future HanoiVM-native execution |
+| 🔁 Recursive T81 Library | Foundation for all nested ternary logic | 🔄 Partially Coded | Needed for VM stack, disasm, deep type support |
+| 📐 TISC | Ternary Instruction Set Computer | ✅ Opcode Manual Done | Ready for HDL/Verilog implementation |
 | 🧬 M.2 Accelerator Card | Ternary PCIe device for HanoiVM | 🧠 Planned | Verilog scaffold, Linux PCI driver & firmware stub |
 | 🕸️ Axion Metadata Blockchain | Immutable local logging & SaaS/SaaP toggle | ✅ Defined | Metadata logs, mode control, local-first by default |
 
