@@ -1,6 +1,15 @@
 @* recursive_tier_execution.cweb — Demonstrates recursive tier promotion in HanoiVM *@
 
 @<Include Dependencies@>=
+#include <time.h>
+
+const char* timestamp() {
+    static char buffer[32];
+    time_t now = time(NULL);
+    struct tm* t = localtime(&now);
+    strftime(buffer, sizeof(buffer), "%H:%M:%S", t);
+    return buffer;
+}
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,8 +47,8 @@ typedef struct {
 } HVMContext;
 
 @<Promotion Thresholds@>=
-#define MAX_DEPTH_T81 12
-#define MAX_DEPTH_T243 24
+int MAX_DEPTH_T81 = 12
+int MAX_DEPTH_T243 = 24
 
 @<Recursive Tier Promotion Logic@>=
 void check_tier_promotion(HVMContext* ctx) {
@@ -49,19 +58,31 @@ void check_tier_promotion(HVMContext* ctx) {
     } else if (ctx->tier == TIER_T243 && ctx->depth > MAX_DEPTH_T243) {
         ctx->tier = TIER_T729;
         axion_log("[TIER] Promoted to T729 tensor mode");
+    } else if (ctx->tier == TIER_T729 && ctx->depth <= MAX_DEPTH_T243) {
+        ctx->tier = TIER_T243;
+        axion_log("[TIER] Demoted to T243 stack mode");
+    } else if (ctx->tier == TIER_T243 && ctx->depth <= MAX_DEPTH_T81) {
+        ctx->tier = TIER_T81;
+        axion_log("[TIER] Demoted to T81 base mode");
+    }
+} else if (ctx->tier == TIER_T243 && ctx->depth > MAX_DEPTH_T243) {
+        ctx->tier = TIER_T729;
+        axion_log("[TIER] Promoted to T729 tensor mode");
     }
 }
 
 @<Simulate Recursive Calls@>=
 void simulate_execution(HVMContext* ctx) {
+    int reverse = 0;
     for (int i = 0; i < 30; ++i) {
-        ctx->depth++;
+        if (reverse) ctx->depth--;
+        else ctx->depth++;
         check_tier_promotion(ctx);
 
         printf("
-%s=== [ RECURSION STEP %02d ] Tier = %d | Depth = %d ===%s
-", COLOR_TIER, i, ctx->tier, ctx->depth, COLOR_RESET);
-printf("%s[INFO]%s Executing logic for TIER_%s
+%s[%s]%s === [ RECURSION STEP %02d ] Tier = %d | Depth = %d ===
+", COLOR_TIER, timestamp(), COLOR_RESET, i, ctx->tier, ctx->depth);
+printf("%s[%s] [INFO]%s Executing logic for TIER_%s
 ", COLOR_INFO, COLOR_RESET, 
     ctx->tier == TIER_T81 ? "T81" : ctx->tier == TIER_T243 ? "T243" : "T729");
 
@@ -106,7 +127,8 @@ break;
             }
         }
 
-        if (ctx->tier == TIER_T729) break;
+        if (ctx->tier == TIER_T729 && !reverse) reverse = 1;
+        if (ctx->tier == TIER_T81 && reverse) break;
     }
 }
 
@@ -119,6 +141,16 @@ int main(int argc, char** argv) {
         if (strcmp(argv[i], "--no-color") == 0) {
             use_color = 0;
         }
+        if (strncmp(argv[i], "--max-depth=", 12) == 0) {
+            int maxd = atoi(argv[i] + 12);
+            if (maxd > 0) {
+                printf("%s[INFO]%s Max depth overridden to %d
+", COLOR_WARN, COLOR_RESET, maxd);
+                MAX_DEPTH_T243 = maxd > MAX_DEPTH_T243 ? maxd : MAX_DEPTH_T243;
+                MAX_DEPTH_T81 = maxd / 2;
+            }
+        }
+    }
     }
     HVMContext ctx = { .ip = 0, .halted = 0, .tier = TIER_T81, .depth = 0 };
     printf("%s[INFO]%s Loaded .cweb modules: t81_stack, t243bigint, t729tensor
