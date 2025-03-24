@@ -1,11 +1,10 @@
-@* CUDA Recursive Ternary Logic Handler
-
+@* CUDA Recursive Ternary Logic Handler for Axion-GAIA GPU Bridge
 This module implements the CUDA backend for Axion's symbolic ternary logic dispatch,
 supporting vectorized recursive transformation of TBIN macros into T729 compressed
-macro instructions. This forms the CUDA-based execution layer of the Axion ↔ GAIA interface.
+macro instructions. It provides the CUDA execution layer for the Axion ↔ GAIA interface.
 
-Axion produces ternary macros with an `intent` (e.g., TRANSFORM, EMIT_VECTOR), which are
-dispatched to the GPU for generative compression, AI reasoning, or entropy-based adaptation.
+This file defines the CUDA routines for symbolic ternary logic transformation, entropy
+delta calculation, and dispatching requests from Axion's AI kernel to the GPU.
 
 @c
 #include <cuda_runtime.h>
@@ -23,7 +22,16 @@ These device routines are used by the CUDA kernel to simulate symbolic transform
 of ternary macros and evaluate the entropy delta. More advanced models can use
 differential statistics or trit diffusion models.
 
+@macros
+    @define T729_MAX_SIZE 243
+    @define GAIA_ANALYZE 0
+    @define GAIA_TRANSFORM 1
+    @define GAIA_RECONSTRUCT 2
+    @define GAIA_EMIT_VECTOR 3
+    @define GAIA_DEFAULT 4
+
 @c
+// Calculate the entropy delta based on ternary input.
 __device__ int32_t calculate_entropy_delta(const uint8_t* tbin, size_t len) {
     int delta = 0;
     for (size_t i = 0; i < len; ++i) {
@@ -32,13 +40,15 @@ __device__ int32_t calculate_entropy_delta(const uint8_t* tbin, size_t len) {
     return delta;
 }
 
+// CUDA kernel for symbolic transformation of ternary macros.
 __global__ void symbolic_transform_kernel(const uint8_t* tbin, size_t len,
                                           uint8_t* out_macro, int32_t* entropy_out,
                                           uint8_t intent) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         *entropy_out = calculate_entropy_delta(tbin, len);
 
-        for (int i = 0; i < 243; ++i) {
+        // Transform the TBIN based on intent (e.g., TRANSFORM, EMIT_VECTOR)
+        for (int i = 0; i < T729_MAX_SIZE; ++i) {
             if (i < len) {
                 switch (intent) {
                     case GAIA_ANALYZE:
@@ -79,19 +89,24 @@ GaiaResponse cuda_handle_request(GaiaRequest request) {
     uint8_t* d_out_macro = nullptr;
     int32_t* d_entropy = nullptr;
 
+    // Allocate device memory
     cudaMalloc((void**)&d_tbin, request.tbin_len);
-    cudaMalloc((void**)&d_out_macro, 243);
+    cudaMalloc((void**)&d_out_macro, T729_MAX_SIZE);  // Fixed size for T729 macro
     cudaMalloc((void**)&d_entropy, sizeof(int32_t));
 
+    // Upload TBIN macro to device
     cudaMemcpy(d_tbin, request.tbin, request.tbin_len, cudaMemcpyHostToDevice);
 
+    // Launch kernel for symbolic transformation
     symbolic_transform_kernel<<<1, 1>>>(d_tbin, request.tbin_len, d_out_macro, d_entropy, request.intent);
 
-    cudaMemcpy(response.updated_macro, d_out_macro, 243, cudaMemcpyDeviceToHost);
+    // Copy results back to host
+    cudaMemcpy(response.updated_macro, d_out_macro, T729_MAX_SIZE, cudaMemcpyDeviceToHost);
     cudaMemcpy(&response.entropy_delta, d_entropy, sizeof(int32_t), cudaMemcpyDeviceToHost);
 
     response.symbolic_status = 0; // OK
 
+    // Free device memory
     cudaFree(d_tbin);
     cudaFree(d_out_macro);
     cudaFree(d_entropy);
