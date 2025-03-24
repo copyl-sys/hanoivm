@@ -1,10 +1,12 @@
-@* CUDA Recursive Ternary Logic Handler for Axion-GAIA GPU Bridge
-This module implements the CUDA backend for Axion's symbolic ternary logic dispatch,
-supporting vectorized recursive transformation of TBIN macros into T729 compressed
-macro instructions. It provides the CUDA execution layer for the Axion ↔ GAIA interface.
+@* CUDA Recursive Ternary Logic Handler with Runtime Introspection and Symbolic Disassembly Browser
+This module provides the CUDA backend for Axion's symbolic ternary logic dispatch.
+It supports:
+- Recursive transformation of TBIN macros into T729 compressed macro instructions.
+- Runtime introspection for debugging and monitoring of macro state.
+- Symbolic disassembly of ternary transformations to provide visibility into execution steps.
 
-This file defines the CUDA routines for symbolic ternary logic transformation, entropy
-delta calculation, and dispatching requests from Axion's AI kernel to the GPU.
+This document defines the CUDA routines for symbolic ternary logic transformation,
+entropy delta calculation, and dispatching requests from Axion's AI kernel to the GPU.
 
 @c
 #include <cuda_runtime.h>
@@ -19,8 +21,8 @@ extern "C" {
 @* Device-Side: Entropy Delta and Symbolic Logic
 
 These device routines are used by the CUDA kernel to simulate symbolic transformation
-of ternary macros and evaluate the entropy delta. More advanced models can use
-differential statistics or trit diffusion models.
+of ternary macros and evaluate the entropy delta. The entropy calculation can be 
+enhanced with more advanced models such as differential statistics or trit diffusion models.
 
 @macros
     @define T729_MAX_SIZE 243
@@ -71,9 +73,8 @@ __global__ void symbolic_transform_kernel(const uint8_t* tbin, size_t len,
 
 @* Host-Side: CUDA Dispatcher for Axion Symbolic Workloads
 
-The following host function implements the Axion-compliant interface to handle
-a symbolic `GaiaRequest` on the CUDA runtime. It performs:
-
+This host function handles a symbolic `GaiaRequest` on the CUDA runtime.
+It performs:
 - Device memory allocation
 - TBIN macro upload
 - CUDA kernel launch
@@ -114,14 +115,135 @@ GaiaResponse cuda_handle_request(GaiaRequest request) {
     return response;
 }
 
-@* Future CUDA Kernel Extensions
+@* Runtime Introspection: Inspecting and Debugging Symbolic Logic Execution
 
-This module will eventually support:
+Runtime introspection provides tools for inspecting the execution state at runtime, 
+allowing detailed monitoring and debugging. This includes inspecting the macro states 
+(TBIN, output macros), entropy values, and other relevant details during symbolic transformations.
 
+@c
+__device__ void inspect_state(const uint8_t* tbin, size_t len, const uint8_t* out_macro, int32_t entropy_out) {
+    // Print the current state (for debugging or introspection tools)
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        printf("Entropy Delta: %d\n", entropy_out);
+        printf("TBIN: ");
+        for (int i = 0; i < len; ++i) {
+            printf("%d ", tbin[i]);
+        }
+        printf("\nOut Macro: ");
+        for (int i = 0; i < T729_MAX_SIZE; ++i) {
+            printf("%d ", out_macro[i]);
+        }
+        printf("\n");
+    }
+}
+
+@* Host-Side: Introspection Function to Expose Runtime State
+
+This host-side function calls the CUDA kernel to perform symbolic transformation and 
+then prints the relevant state for debugging purposes.
+
+@c
+extern "C"
+void introspect_macro_state(GaiaRequest request) {
+    uint8_t* d_tbin = nullptr;
+    uint8_t* d_out_macro = nullptr;
+    int32_t* d_entropy = nullptr;
+    
+    cudaMalloc((void**)&d_tbin, request.tbin_len);
+    cudaMalloc((void**)&d_out_macro, T729_MAX_SIZE);
+    cudaMalloc((void**)&d_entropy, sizeof(int32_t));
+    
+    cudaMemcpy(d_tbin, request.tbin, request.tbin_len, cudaMemcpyHostToDevice);
+    
+    symbolic_transform_kernel<<<1, 1>>>(d_tbin, request.tbin_len, d_out_macro, d_entropy, request.intent);
+    
+    // Perform introspection on the macro state
+    inspect_state(d_tbin, request.tbin_len, d_out_macro, *d_entropy);
+    
+    cudaFree(d_tbin);
+    cudaFree(d_out_macro);
+    cudaFree(d_entropy);
+}
+
+@* Symbolic Disassembly Browser
+
+The symbolic disassembly browser provides a step-by-step trace of symbolic transformations,
+allowing the user to view how the TBIN macros are processed at each stage.
+
+@c
+__device__ void disassemble_step(const uint8_t* tbin, uint8_t intent, uint8_t* out_macro, int idx) {
+    printf("Step %d: ", idx);
+    switch (intent) {
+        case GAIA_ANALYZE:
+            printf("Analyzing TBIN: ");
+            for (int i = 0; i < T729_MAX_SIZE; ++i) {
+                printf("%d ", tbin[i]);
+            }
+            break;
+        case GAIA_TRANSFORM:
+            printf("Transforming TBIN with XOR: ");
+            for (int i = 0; i < T729_MAX_SIZE; ++i) {
+                printf("%d ", out_macro[i]);
+            }
+            break;
+        case GAIA_RECONSTRUCT:
+            printf("Reconstructing TBIN: ");
+            for (int i = 0; i < T729_MAX_SIZE; ++i) {
+                printf("%d ", out_macro[i]);
+            }
+            break;
+        case GAIA_EMIT_VECTOR:
+            printf("Emitting Vector: ");
+            for (int i = 0; i < T729_MAX_SIZE; ++i) {
+                printf("%d ", out_macro[i]);
+            }
+            break;
+        default:
+            printf("No operation performed");
+            break;
+    }
+    printf("\n");
+}
+
+@* Host-Side: Disassembly and Introspection Integration
+
+The disassembly and introspection functions work together to provide a complete view of
+the symbolic transformations happening during execution. This can be useful for debugging
+and optimizing ternary logic.
+
+@c
+extern "C"
+void disassemble_and_introspect(GaiaRequest request) {
+    uint8_t* d_tbin = nullptr;
+    uint8_t* d_out_macro = nullptr;
+    int32_t* d_entropy = nullptr;
+    
+    cudaMalloc((void**)&d_tbin, request.tbin_len);
+    cudaMalloc((void**)&d_out_macro, T729_MAX_SIZE);
+    cudaMalloc((void**)&d_entropy, sizeof(int32_t));
+    
+    cudaMemcpy(d_tbin, request.tbin, request.tbin_len, cudaMemcpyHostToDevice);
+    
+    // Perform symbolic transformation
+    symbolic_transform_kernel<<<1, 1>>>(d_tbin, request.tbin_len, d_out_macro, d_entropy, request.intent);
+    
+    // Perform introspection and disassembly
+    disassemble_step(d_tbin, request.intent, d_out_macro, 1);  // Example: Step 1
+    inspect_state(d_tbin, request.tbin_len, d_out_macro, *d_entropy);
+    
+    cudaFree(d_tbin);
+    cudaFree(d_out_macro);
+    cudaFree(d_entropy);
+}
+
+@* Future Extensions
+
+Future work could include the following:
 - Symbolic macro stack grids: `<<<T243 blocks, T81 threads>>>`
 - Tritwise entropy mapping and graph topologies
-- nvrtc-based dynamic ternary kernel generation
-- AI-accelerated anomaly detection inside CUDA
+- Dynamic ternary kernel generation using `nvrtc`
+- AI-powered anomaly detection inside CUDA
 - Unified dispatch across CUDA/ROCm using HIP abstractions
 
 @* End of `cuda_handle_request.cweb`
