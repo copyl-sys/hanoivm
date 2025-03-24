@@ -4,51 +4,79 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "t81types.h"
-#include "tisc_ir.cweb"
+#include "tisc_ir.h"
+#include "disassembler.h"
+#include "t81_patterns.h"
 
-@* Initialize TISC Program Sequence *@
+@* Emit a TISC Instruction *@
 @c
-void tisc_init(TISCProgram* prog) {
-    prog->count = 0;
+void tisc_emit(TISCProgram* prog, TISCOpcode op, int operand_count, uint81_t* operands, int depth_hint) {
+    if (prog->length >= prog->capacity) {
+        prog->capacity *= 2;
+        prog->instructions = realloc(prog->instructions, sizeof(TISCInstruction) * prog->capacity);
+    }
+    TISCInstruction* instr = &prog->instructions[prog->length++];
+    instr->op = op;
+    instr->operand_count = operand_count;
+    for (int i = 0; i < operand_count; i++) instr->operands[i] = operands[i];
+    instr->depth_hint = depth_hint;
+}
+
+@* Initialize Program Structure *@
+@c
+void tisc_program_init(TISCProgram* prog) {
+    prog->length = 0;
     prog->capacity = 16;
     prog->instructions = malloc(sizeof(TISCInstruction) * prog->capacity);
 }
 
-void tisc_emit(TISCProgram* prog, TISCInstruction instr) {
-    if (prog->count >= prog->capacity) {
-        prog->capacity *= 2;
-        prog->instructions = realloc(prog->instructions, sizeof(TISCInstruction) * prog->capacity);
+@* Free Memory *@
+@c
+void tisc_program_free(TISCProgram* prog) {
+    free(prog->instructions);
+    prog->instructions = NULL;
+    prog->length = prog->capacity = 0;
+}
+
+@* Compile from HVM Disassembly to TISC IR *@
+@c
+int tisc_compile_from_hvm(const char* filename, TISCProgram* prog) {
+    FILE* in = fopen(filename, "rb");
+    if (!in) return -1;
+
+    uint8_t opcode;
+    while (fread(&opcode, 1, 1, in) == 1) {
+        uint81_t args[3] = {0};
+        switch (opcode) {
+            case OP_PUSH:
+                fread(&args[0], sizeof(uint81_t), 1, in);
+                tisc_emit(prog, TISC_OP_PUSH, 1, args, 0);
+                break;
+            case OP_ADD:
+                tisc_emit(prog, TISC_OP_T81ADD, 0, args, 0);
+                break;
+            case OP_MUL:
+                tisc_emit(prog, TISC_OP_T81MUL, 0, args, 0);
+                break;
+            case OP_CALL:
+                if (detect_hanoi_pattern(in)) {
+                    tisc_emit(prog, TISC_OP_TOWER, 0, args, 3);
+                } else {
+                    tisc_emit(prog, TISC_OP_CALL, 0, args, 1);
+                }
+                break;
+            case OP_RET:
+                tisc_emit(prog, TISC_OP_RET, 0, args, 0);
+                break;
+            case OP_HALT:
+                tisc_emit(prog, TISC_OP_HALT, 0, args, 0);
+                break;
+            default:
+                fprintf(stderr, "[WARN] Unhandled HVM opcode 0x%02X\n", opcode);
+                break;
+        }
     }
-    prog->instructions[prog->count++] = instr;
-}
 
-@* Example Symbolic Compiler Entry Point *@
-@c
-void compile_symbolic_fib(uint81_t input, TISCProgram* prog) {
-    uint81_t ops[1] = { input };
-    TISCInstruction instr = make_instruction(TISC_OP_FIB, 1, ops, 1);
-    tisc_emit(prog, instr);
-}
-
-@* Print TISC Program Sequence *@
-@c
-void print_tisc(const TISCProgram* prog) {
-    for (size_t i = 0; i < prog->count; ++i) {
-        printf("[%zu] OP=%d depth=%d\n", i, prog->instructions[i].op, prog->instructions[i].depth_hint);
-    }
-}
-
-@* Main Test Entry *@
-@c
-int main() {
-    TISCProgram program;
-    tisc_init(&program);
-
-    uint81_t input = { .a = 0, .b = 0, .c = 7 };  // fib(7)
-    compile_symbolic_fib(input, &program);
-    print_tisc(&program);
-
-    free(program.instructions);
+    fclose(in);
     return 0;
 }
