@@ -2,20 +2,27 @@ HanoiVM
 
 HanoiVM is a recursive ternary virtual machine built to explore symbolic computing using base-81 logic. Designed as part of the broader Axion + T81Lang ecosystem, HanoiVM simulates a Ternary Instruction Set Computer (TISC) with support for AI integration, ternary recursion, and future hardware acceleration.
 
-Features
+Features:
 
 🔺 81-bit ternary operand architecture (uint81_t)
+
 🔁 Recursive stack modes for T81, T243, and T729
+
 🧠 Symbolic opcodes for AI, including:
-TNN_ACCUM — ternary neural accumulation
-T81_MATMUL — ternary matrix multiply
+-TNN_ACCUM — ternary neural accumulation
+-T81_MATMUL — ternary matrix multiply
+
 🧩 T729Tensor engine for base-729 tensor manipulation:
-OP_T729_DOT, OP_T729_TRANS, OP_T729_SLICE, OP_T729_PRINT
+-OP_T729_DOT, OP_T729_TRANS, OP_T729_SLICE, OP_T729_PRINT
+
 🔢 T243BigInt arithmetic:
-OP_T243_ADD, OP_T243_MUL, OP_T243_PRINT
+-OP_T243_ADD, OP_T243_MUL, OP_T243_PRINT
+
 📄 .cweb literate programming format
-Modular, readable source code + inline docs
+-Modular, readable source code + inline docs
+
 🧪 CI-integrated test suite with .hvm bytecode disassembler
+
 ⚙️ Designed to connect with Axion AI, T81Lang, and Project Looking Glass
 Repository Structure
 
