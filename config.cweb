@@ -1,0 +1,91 @@
+@* config.cweb | Centralized Configuration for HanoiVM *@
+
+This file defines the global configuration settings for the HanoiVM project.
+All components will read these settings to ensure consistent behavior across the system.
+
+---
+
+@<Hardware Configuration@>=
+## Hardware Configuration
+
+// PCIe Integration
+// Enables or disables PCIe hardware acceleration support in HanoiVM.
+// Set to false to disable PCIe support.
+#define ENABLE_PCIE_ACCELERATION   true
+
+// GPU Support
+// Enables or disables GPU hardware acceleration (if available).
+// Set to false to disable GPU support.
+#define ENABLE_GPU_SUPPORT         true
+
+---
+
+@<AI Configuration@>=
+## AI Configuration
+
+// AI Optimization Mode
+// Controls the optimization mode for AI-driven enhancements.
+// Options: "Basic" for basic optimizations, "Advanced" for aggressive optimizations.
+#define AI_OPTIMIZATION_MODE       "Advanced"
+
+// Anomaly Detection
+// Enable or disable anomaly detection by the AI module.
+#define ENABLE_ANOMALY_DETECTION   true
+
+---
+
+@<Logging Configuration@>=
+## Logging Configuration
+
+// Log Level
+// Sets the level of logging output.
+// Options: "DEBUG", "INFO", "WARN", "ERROR"
+#define LOG_LEVEL                  "INFO"
+
+// Log Output Format
+// Defines the format for log output.
+// Options: "TEXT" for simple text, "JSON" for JSON-formatted logs.
+#define LOG_OUTPUT_FORMAT          "TEXT"
+
+---
+
+@<Resource Management@>=
+## Resource Management
+
+// Memory Allocation (in MB)
+// Controls the amount of memory allocated to HanoiVM.
+#define MEMORY_ALLOCATION          4096
+
+// CPU Affinity
+// Set the CPU cores to be used by HanoiVM (e.g., "0,1,2,3" for cores 0-3).
+#define CPU_AFFINITY               "0,1,2,3"
+
+// GPU Allocation (in MB)
+// If GPU support is enabled, set the amount of GPU memory allocated.
+#define GPU_ALLOCATION             4096
+
+---
+
+@<Environment Detection@>=
+## Environment Detection
+
+// Detect GPU
+// Automatically detects whether a compatible GPU is available.
+#define DETECT_GPU                 true
+
+// Detect PCIe Accelerator
+// Automatically detects whether a PCIe accelerator is present.
+#define DETECT_PCIE_ACCELERATOR    true
+
+---
+
+@<Global Settings@>=
+## Global Settings
+
+// Ternary Logic Mode
+// Choose the ternary logic mode for HanoiVM. Options: "T81", "T243", "T729"
+#define TERNARY_LOGIC_MODE         "T81"
+
+// Enable Debug Mode
+// Enable or disable debugging mode for additional logs and debugging tools.
+#define ENABLE_DEBUG_MODE          true
