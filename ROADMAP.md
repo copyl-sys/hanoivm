@@ -81,7 +81,7 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - [x] Bazel test suite with `.hvm` disasm validation  
 - [x] Generator programs for `.hvm` test vectors  
 - [x] CLI stub with execution modes + tracing options  
-- [ ] `Makefile` for quick build + test automation  
+- [x] `Makefile` for quick build + test automation  
 
 ---
 
