@@ -1,7 +1,7 @@
 @* T243BigInt: Arbitrary precision integers in Base-243.
 
 This module implements base-243 arithmetic for use in the HanoiVM and TernaryHandle system.
-Supports addition with normalization logic and conversion from string.
+Supports addition with normalization logic, conversion from string, and string serialization.
 
 @<Include dependencies@>=
 #include "ternary_base.h"
@@ -83,6 +83,20 @@ int t243bigint_mul(TernaryHandle a, TernaryHandle b, TernaryHandle* result) {
     t243bigint_normalize(R);
     result->base = BASE_243;
     result->data = R;
+    return 0;
+}
+
+@<Convert T243BigInt to string@>=
+int t243bigint_to_string(TernaryHandle h, char** out) {
+    T243BigInt* bigint = (T243BigInt*)h.data;
+    size_t len = bigint->length * 4 + 2; // generous buffer
+    char* buffer = (char*)malloc(len);
+    char* ptr = buffer;
+
+    for (ssize_t i = bigint->length - 1; i >= 0; --i)
+        ptr += sprintf(ptr, "%03u", bigint->digits[i]);
+
+    *out = buffer;
     return 0;
 }
 
