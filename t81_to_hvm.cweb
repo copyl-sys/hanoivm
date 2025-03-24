@@ -1,0 +1,71 @@
+@* T81Lang to HVM Bytecode Compiler — Parser and Encoder for Symbolic Ternary Programs *@
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include "t81types.h"
+
+@<Opcode Map@>=
+typedef struct {
+    const char* keyword;
+    uint8_t opcode;
+} OpEntry;
+
+static OpEntry opmap[] = {
+    {"push",  0x01},
+    {"add",   0x02},
+    {"sub",   0x03},
+    {"mul",   0x04},
+    {"div",   0x05},
+    {"call",  0x06},
+    {"ret",   0x07},
+    {"halt",  0xFF},
+    {NULL,     0x00}
+};
+
+@<Utility: Match Opcode@>=
+uint8_t lookup_opcode(const char* token) {
+    for (int i = 0; opmap[i].keyword != NULL; i++) {
+        if (strcmp(opmap[i].keyword, token) == 0) {
+            return opmap[i].opcode;
+        }
+    }
+    return 0x00;  // Unknown
+}
+
+@<Operand Parser: Base-81 Encoding Stub@>=
+uint81_t parse_uint81(const char* str) {
+    uint81_t result = {0, 0, 0};
+    sscanf(str, "%u:%u:%u", &result.a, &result.b, &result.c);
+    return result;
+}
+
+@<Main T81 Compiler Function@>=
+int compile_t81_source(const char* in_path, const char* out_path) {
+    FILE* in = fopen(in_path, "r");
+    FILE* out = fopen(out_path, "wb");
+    if (!in || !out) return -1;
+
+    char line[128];
+    while (fgets(line, sizeof(line), in)) {
+        char* token = strtok(line, " \t\n");
+        if (!token || token[0] == '#') continue;  // Skip comments
+
+        uint8_t opcode = lookup_opcode(token);
+        fwrite(&opcode, 1, 1, out);
+
+        if (strcmp(token, "push") == 0) {
+            char* val = strtok(NULL, " \t\n");
+            uint81_t operand = parse_uint81(val);
+            fwrite(&operand, sizeof(uint81_t), 1, out);
+        }
+    }
+
+    fclose(in);
+    fclose(out);
+    return 0;
+}
+
+@* Example: "push 1:2:3\nadd\nhalt" ➝ Encoded as OP_PUSH + operand + OP_ADD + OP_HALT *@
