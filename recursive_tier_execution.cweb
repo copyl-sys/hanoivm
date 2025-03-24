@@ -1,0 +1,132 @@
+@* recursive_tier_execution.cweb — Demonstrates recursive tier promotion in HanoiVM *@
+
+@<Include Dependencies@>=
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int use_color = 1;
+#define COLOR_RESET   (use_color ? "[0m" : "")
+#define COLOR_INFO    (use_color ? "[1;36m" : "")
+#define COLOR_WARN    (use_color ? "[1;33m" : "")
+#define COLOR_STATUS  (use_color ? "[1;32m" : "")
+#define COLOR_TIER    (use_color ? "[1;35m" : "")
+#include <stdio.h>
+#define COLOR_RESET "[0m"
+#define COLOR_INFO "[1;36m"
+#define COLOR_WARN "[1;33m"
+#define COLOR_STATUS "[1;32m"
+#define COLOR_TIER "[1;35m"
+#include "t81_stack.h"
+#include "t243bigint.h"
+#include "t729tensor.h"
+#include "ai_hook.h"
+#include <stdio.h>
+
+@<HVMContext With Tier@>=
+typedef enum {
+    TIER_T81 = 0,
+    TIER_T243 = 1,
+    TIER_T729 = 2
+} HVM_Tier;
+
+typedef struct {
+    size_t ip;
+    int halted;
+    HVM_Tier tier;
+    int depth;
+} HVMContext;
+
+@<Promotion Thresholds@>=
+#define MAX_DEPTH_T81 12
+#define MAX_DEPTH_T243 24
+
+@<Recursive Tier Promotion Logic@>=
+void check_tier_promotion(HVMContext* ctx) {
+    if (ctx->tier == TIER_T81 && ctx->depth > MAX_DEPTH_T81) {
+        ctx->tier = TIER_T243;
+        axion_log("[TIER] Promoted to T243 stack mode");
+    } else if (ctx->tier == TIER_T243 && ctx->depth > MAX_DEPTH_T243) {
+        ctx->tier = TIER_T729;
+        axion_log("[TIER] Promoted to T729 tensor mode");
+    }
+}
+
+@<Simulate Recursive Calls@>=
+void simulate_execution(HVMContext* ctx) {
+    for (int i = 0; i < 30; ++i) {
+        ctx->depth++;
+        check_tier_promotion(ctx);
+
+        printf("
+%s=== [ RECURSION STEP %02d ] Tier = %d | Depth = %d ===%s
+", COLOR_TIER, i, ctx->tier, ctx->depth, COLOR_RESET);
+printf("%s[INFO]%s Executing logic for TIER_%s
+", COLOR_INFO, COLOR_RESET, 
+    ctx->tier == TIER_T81 ? "T81" : ctx->tier == TIER_T243 ? "T243" : "T729");
+
+        switch (ctx->tier) {
+            case TIER_T81: {
+                uint81_t a = { .a = 0x11111111, .b = 0x22222222, .c = 0x33 };
+                push81(a.a); push81(a.b); push81(a.c);
+                printf("[T81] uint81_t pushed to stack: a=0x%X b=0x%X c=0x%X
+", a.a, a.b, a.c);
+                printf("%s[STATUS]%s Completed uint81_t stack push at Tier T81
+
+", COLOR_STATUS, COLOR_RESET);
+break;
+            }
+            case TIER_T243: {
+                TernaryHandle h243;
+                t243bigint_new_from_string("12345678901234567890", &h243);
+                char* out243;
+                t243bigint_to_string(h243, &out243);
+                printf("[T243] BigInt = %s
+", out243);
+                printf("%s[STATUS]%s Printed T243 BigInt successfully
+
+", COLOR_STATUS, COLOR_RESET);
+                free(out243);
+                break;
+            }
+            case TIER_T729: {
+                int shape[2] = {2, 2};
+                TernaryHandle h729 = t729tensor_new(2, shape);
+                T729Tensor* t = (T729Tensor*)h729.data;
+                for (int j = 0; j < 4; ++j) t->data[j] = (float)(j + 1);
+                char* out729;
+                t729tensor_to_string(h729, &out729);
+                printf("[T729] Tensor = %s
+", out729);
+                printf("%s[STATUS]%s Printed T729 Tensor successfully
+
+", COLOR_STATUS, COLOR_RESET);
+                free(out729);
+                break;
+            }
+        }
+
+        if (ctx->tier == TIER_T729) break;
+    }
+}
+
+@<Main@>=
+int main(int argc, char** argv) {
+    printf("%s[BOOT]%s Starting recursive tier execution demo...
+", COLOR_INFO, COLOR_RESET);
+
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--no-color") == 0) {
+            use_color = 0;
+        }
+    }
+    HVMContext ctx = { .ip = 0, .halted = 0, .tier = TIER_T81, .depth = 0 };
+    printf("%s[INFO]%s Loaded .cweb modules: t81_stack, t243bigint, t729tensor
+", COLOR_INFO, COLOR_RESET);
+    printf("%s[INFO]%s Axion AI signal hooks initialized
+", COLOR_INFO, COLOR_RESET);
+    simulate_execution(&ctx);
+    printf("%s[EXIT]%s Recursive tier execution demo complete.
+", COLOR_STATUS, COLOR_RESET);
+    return 0;
+}
