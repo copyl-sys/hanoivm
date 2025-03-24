@@ -1,4 +1,4 @@
-@* axion-ai.cweb | Axion AI Kernel Module with Ternary AI Stack, NLP Interface, and Rollback
+@* axion-ai.cweb | Axion AI Kernel Module with Ternary AI Stack, NLP Interface, and Rollback *@
 
 @c
 #include <linux/module.h>
