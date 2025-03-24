@@ -41,6 +41,7 @@ typedef enum {
 } Opcode;
 
 #define PROMOTE_THRESHOLD 5
+#define DEMOTE_THRESHOLD 2
 
 @* Instruction Evaluation Stub (To be expanded in runtime engine) *@
 @c
@@ -57,13 +58,18 @@ uint81_t evaluate_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext* ctx) {
 
         case OP_CALL:
             ctx->call_depth++;
-            if (ctx->call_depth > PROMOTE_THRESHOLD && ctx->mode == MODE_T81) {
-                promote_to_t243(ctx);
+            if (ctx->call_depth > PROMOTE_THRESHOLD) {
+                if (ctx->mode == MODE_T81) promote_to_t243(ctx);
+                else if (ctx->mode == MODE_T243) promote_to_t729(ctx);
             }
             return a;
 
         case OP_RET:
             if (ctx->call_depth > 0) ctx->call_depth--;
+            if (ctx->call_depth < DEMOTE_THRESHOLD) {
+                if (ctx->mode == MODE_T243) demote_to_t81(ctx);
+                else if (ctx->mode == MODE_T729) demote_to_t243(ctx);
+            }
             return a;
 
         case OP_TNN_ACCUM:
