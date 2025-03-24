@@ -13,10 +13,10 @@ Features:
 -T81_MATMUL — ternary matrix multiply
 
 🧩 T729Tensor engine for base-729 tensor manipulation:
--OP_T729_DOT, OP_T729_TRANS, OP_T729_SLICE, OP_T729_PRINT
+ OP_T729_DOT, OP_T729_TRANS, OP_T729_SLICE, OP_T729_PRINT
 
 🔢 T243BigInt arithmetic:
--OP_T243_ADD, OP_T243_MUL, OP_T243_PRINT
+ OP_T243_ADD, OP_T243_MUL, OP_T243_PRINT
 
 📄 .cweb literate programming format
 -Modular, readable source code + inline docs
