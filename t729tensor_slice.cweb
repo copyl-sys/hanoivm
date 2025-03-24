@@ -8,7 +8,14 @@
 @<Slice Tensor Implementation@>=
 #define OP_T729_SLICE 0xE4
 
-@<Slice Dispatch Handler@>
+case OP_T729_SLICE: {
+    // For now, use fixed dim/start/end (e.g., dim=0, start=0, end=2)
+    TernaryHandle a = stack_pop();
+    TernaryHandle r;
+    t729tensor_slice(a, 0, 0, 2, &r);
+    stack_push(r);
+    break;
+}
 #define OP_T729_SLICE 0xE4
 int t729tensor_slice(TernaryHandle h, int dim, int start, int end, TernaryHandle* result) {
     T729Tensor* t = (T729Tensor*)h.data;
@@ -26,7 +33,14 @@ int t729tensor_slice(TernaryHandle h, int dim, int start, int end, TernaryHandle
     result->data = sliced;
     return 0;
 
-@<Slice Dispatch Handler@>
+case OP_T729_SLICE: {
+    // For now, use fixed dim/start/end (e.g., dim=0, start=0, end=2)
+    TernaryHandle a = stack_pop();
+    TernaryHandle r;
+    t729tensor_slice(a, 0, 0, 2, &r);
+    stack_push(r);
+    break;
+}
 }
 
 @<Bounds Check@>=
