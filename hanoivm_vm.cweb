@@ -10,6 +10,8 @@
 #include "ai_hook.h"
 #include "advanced_ops.h"  // integrated opcodes and evaluation
 #include "disassembler.h"  // added disassembler linkage
+#include "ternary_base.h"   // for T243 integration
+#include "t243bigint.h"     // BigInt VM support
 
 @<Extern τ-registers@>=
 extern int τ[28];  // τ0–τ26 + τ27 (Axion-reserved τ[27])
@@ -100,6 +102,34 @@ void execute_vm(void) {
 
                 uint81_t result = evaluate_opcode(opcode, a, b);
                 push81u(result);
+                break;
+            }
+
+            case OP_T243_ADD: {
+                TernaryHandle b = stack_pop();
+                TernaryHandle a = stack_pop();
+                TernaryHandle r;
+                t243bigint_add(a, b, &r);
+                stack_push(r);
+                break;
+            }
+
+            case OP_T243_MUL: {
+                TernaryHandle b = stack_pop();
+                TernaryHandle a = stack_pop();
+                TernaryHandle r;
+                t243bigint_mul(a, b, &r);
+                stack_push(r);
+                break;
+            }
+
+            case OP_T243_PRINT: {
+                TernaryHandle a = stack_pop();
+                char* str;
+                t243bigint_to_string(a, &str);
+                printf("[T243] %s\n", str);
+                free(str);
+                stack_push(a);
                 break;
             }
 
