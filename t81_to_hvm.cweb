@@ -9,6 +9,11 @@
 #include "t81types.h"
 
 #define OP_HALT 0xFF
+#define OP_PUSH 0x01
+
+#define T81_TAG_BIGINT   0x01
+#define T81_TAG_FRACTION 0x02
+#define T81_TAG_FLOAT    0x03
 
 @<Opcode Map@>=
 typedef struct {
@@ -60,6 +65,32 @@ uint81_t parse_uint81(const char* str) {
     return result;
 }
 
+@<Write Fraction Operand@>=
+void write_fraction(FILE* out, const char* num, const char* denom) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_FRACTION, out);
+
+    uint8_t len_num = (uint8_t)strlen(num);
+    fputc(len_num, out);
+    for (int i = 0; i < len_num; i++) fputc(num[i] - '0', out);
+
+    uint8_t len_denom = (uint8_t)strlen(denom);
+    fputc(len_denom, out);
+    for (int i = 0; i < len_denom; i++) fputc(denom[i] - '0', out);
+}
+
+@<Write Float Operand@>=
+void write_float(FILE* out, const char* mantissa, int8_t exponent) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_FLOAT, out);
+
+    uint8_t len = (uint8_t)strlen(mantissa);
+    fputc(len, out);
+    for (int i = 0; i < len; i++) fputc(mantissa[i] - '0', out);
+
+    fwrite(&exponent, sizeof(int8_t), 1, out);
+}
+
 @<Main Entry@>=
 int main(int argc, char** argv) {
     if (argc != 3) {
@@ -78,6 +109,20 @@ int main(int argc, char** argv) {
     while (fgets(line, sizeof(line), in)) {
         char* token = strtok(line, " \t\n");
         if (!token || token[0] == '#') continue;
+
+        if (strcmp(token, "push_fraction") == 0) {
+            char* num = strtok(NULL, " \t\n");
+            char* denom = strtok(NULL, " \t\n");
+            write_fraction(out, num, denom);
+            continue;
+        }
+        if (strcmp(token, "push_float") == 0) {
+            char* mantissa = strtok(NULL, " \t\n");
+            char* expstr = strtok(NULL, " \t\n");
+            int8_t exp = (int8_t)atoi(expstr);
+            write_float(out, mantissa, exp);
+            continue;
+        }
 
         uint8_t opcode = lookup_opcode(token);
         fwrite(&opcode, 1, 1, out);
@@ -109,6 +154,8 @@ int main(int argc, char** argv) {
 @<Opcode Map@>
 @<Utility: Match Opcode@>
 @<Operand Parser: Base-81 Encoding Stub@>
+@<Write Fraction Operand@>
+@<Write Float Operand@>
 @<Main Entry@>
 
 @* End of t81_to_hvm.cweb *@
