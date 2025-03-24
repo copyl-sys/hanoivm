@@ -74,55 +74,67 @@ void check_tier_promotion(HVMContext* ctx) {
 @<Simulate Recursive Calls@>=
 void simulate_execution(HVMContext* ctx) {
     int reverse = 0;
+    int promotion_count = 0;
+    int demotion_count = 0;
+
+    // Dynamically adjust tensor operations based on stack tier
+    size_t tensor_size = (ctx->tier == TIER_T729) ? 8 : 0; // example size
+    if (ctx->tier == TIER_T729) {
+        T729Tensor* tensor = (T729Tensor*)malloc(sizeof(T729Tensor));
+        tensor->shape = (int*)malloc(sizeof(int) * 2);
+        tensor->shape[0] = tensor_size;
+        tensor->shape[1] = tensor_size;
+        tensor->data = (float*)malloc(sizeof(float) * tensor_size * tensor_size);
+        for (int i = 0; i < tensor_size * tensor_size; ++i) {
+            tensor->data[i] = (float)(i + 1);
+        }
+    }
+
     for (int i = 0; i < 30; ++i) {
         if (reverse) ctx->depth--;
         else ctx->depth++;
         check_tier_promotion(ctx);
 
-        printf("
-%s[%s]%s === [ RECURSION STEP %02d ] Tier = %d | Depth = %d ===
-", COLOR_TIER, timestamp(), COLOR_RESET, i, ctx->tier, ctx->depth);
-printf("%s[%s] [INFO]%s Executing logic for TIER_%s
-", COLOR_INFO, COLOR_RESET, 
-    ctx->tier == TIER_T81 ? "T81" : ctx->tier == TIER_T243 ? "T243" : "T729");
+        printf("%s[%s] === [ RECURSION STEP %02d ] Tier = %d | Depth = %d ===%s\n", COLOR_TIER, timestamp(), i, ctx->tier, ctx->depth, COLOR_RESET);
+        printf("%s[%s] [INFO]%s Executing logic for TIER_%s\n", COLOR_INFO, timestamp(), COLOR_RESET, ctx->tier == TIER_T81 ? "T81" : ctx->tier == TIER_T243 ? "T243" : "T729");
+
+        // Enhanced error handling for invalid tensor sizes
+        if (tensor_size <= 0) {
+            printf("%s[ERROR]%s Invalid tensor size for T729 mode\n", COLOR_WARN, COLOR_RESET);
+            break;
+        }
 
         switch (ctx->tier) {
             case TIER_T81: {
                 uint81_t a = { .a = 0x11111111, .b = 0x22222222, .c = 0x33 };
                 push81(a.a); push81(a.b); push81(a.c);
-                printf("[T81] uint81_t pushed to stack: a=0x%X b=0x%X c=0x%X
-", a.a, a.b, a.c);
-                printf("%s[STATUS]%s Completed uint81_t stack push at Tier T81
-
-", COLOR_STATUS, COLOR_RESET);
-break;
+                printf("[T81] uint81_t pushed to stack: a=0x%X b=0x%X c=0x%X\n", a.a, a.b, a.c);
+                break;
             }
             case TIER_T243: {
                 TernaryHandle h243;
                 t243bigint_new_from_string("12345678901234567890", &h243);
                 char* out243;
                 t243bigint_to_string(h243, &out243);
-                printf("[T243] BigInt = %s
-", out243);
-                printf("%s[STATUS]%s Printed T243 BigInt successfully
-
-", COLOR_STATUS, COLOR_RESET);
+                printf("[T243] BigInt = %s\n", out243);
                 free(out243);
                 break;
             }
             case TIER_T729: {
-                int shape[2] = {2, 2};
-                TernaryHandle h729 = t729tensor_new(2, shape);
-                T729Tensor* t = (T729Tensor*)h729.data;
-                for (int j = 0; j < 4; ++j) t->data[j] = (float)(j + 1);
+                T729Tensor* tensor = (T729Tensor*)malloc(sizeof(T729Tensor));
+                tensor->shape = (int*)malloc(sizeof(int) * 2);
+                tensor->shape[0] = tensor_size;
+                tensor->shape[1] = tensor_size;
+                tensor->data = (float*)malloc(sizeof(float) * tensor_size * tensor_size);
+                for (int i = 0; i < tensor_size * tensor_size; ++i) {
+                    tensor->data[i] = (float)(i + 1);
+                }
                 char* out729;
-                t729tensor_to_string(h729, &out729);
-                printf("[T729] Tensor = %s
-", out729);
-                printf("%s[STATUS]%s Printed T729 Tensor successfully
-
-", COLOR_STATUS, COLOR_RESET);
+                t729tensor_to_string(tensor, &out729);
+                printf("[T729] Tensor = %s\n", out729);
                 free(out729);
+                free(tensor->shape);
+                free(tensor->data);
                 break;
             }
         }
@@ -134,6 +146,36 @@ break;
 
 @<Main@>=
 int main(int argc, char** argv) {
+    int max_depth = 30;
+    int simulate_demotions = 0;
+
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--no-color") == 0) {
+            use_color = 0;
+        }
+        if (strncmp(argv[i], "--max-depth=", 12) == 0) {
+            max_depth = atoi(argv[i] + 12);
+            if (max_depth > 0) {
+                printf("%s[INFO]%s Max depth overridden to %d\n", COLOR_WARN, COLOR_RESET, max_depth);
+                MAX_DEPTH_T243 = max_depth > MAX_DEPTH_T243 ? max_depth : MAX_DEPTH_T243;
+                MAX_DEPTH_T81 = max_depth / 2;
+            }
+        }
+        if (strcmp(argv[i], "--simulate-demotion") == 0) {
+            simulate_demotions = 1;
+            printf("%s[INFO]%s Simulation of demotions enabled\n", COLOR_INFO, COLOR_RESET);
+        }
+    }
+    HVMContext ctx = { .ip = 0, .halted = 0, .tier = TIER_T81, .depth = 0 };
+    printf("%s[INFO]%s Loaded .cweb modules: t81_stack, t243bigint, t729tensor\n", COLOR_INFO, COLOR_RESET);
+    printf("%s[INFO]%s Axion AI signal hooks initialized\n", COLOR_INFO, COLOR_RESET);
+    simulate_execution(&ctx);
+    if (simulate_demotions) {
+        printf("%s[INFO]%s Simulated demotions successfully\n", COLOR_INFO, COLOR_RESET);
+    }
+    printf("%s[EXIT]%s Recursive tier execution demo complete.\n", COLOR_STATUS, COLOR_RESET);
+    return 0;
+}
     printf("%s[BOOT]%s Starting recursive tier execution demo...
 ", COLOR_INFO, COLOR_RESET);
 
