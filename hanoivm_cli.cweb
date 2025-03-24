@@ -1,20 +1,11 @@
-@* HanoiVM | Ternary Virtual Machine with CLI Interface
-
-This CWEB file contains the bootstrap logic for the HanoiVM project. It includes:
-- A CLI interface
-- Stack mode selection (T81, T243, T729)
-- A placeholder for VM runtime
-- Foundations for Axion AI interaction and ternary stack execution
-
-This VM is a recursive structure based on stack promotion logic:
-T81 ⟶ T243 ⟶ T729.
+@* HanoiVM | Ternary Virtual Machine with CLI Interface and Stack Promotion Awareness *@
 
 @c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-@*1 VM Modes and Configuration
+#include "hvm_context.h"
+#include "hvm_promotion.h"
 
 @<Define VM modes@>=
 typedef enum {
@@ -40,8 +31,6 @@ VMConfig vm_config = {
     .trace = 0,
     .benchmark = 0
 };
-
-@*1 CLI Usage and Argument Parsing
 
 @<Print CLI usage@>=
 void print_usage(const char* prog) {
@@ -86,15 +75,13 @@ void parse_args(int argc, char* argv[]) {
     }
 }
 
-@*1 Main Entry Point
-
 @<Main function@>=
 int main(int argc, char* argv[]) {
     parse_args(argc, argv);
 
     printf("[HanoiVM] Starting...\n");
     printf("Mode        : %s\n", vm_config.mode == MODE_T81 ? "T81" :
-                              vm_config.mode == MODE_T243 ? "T243" : "T729");
+                                     vm_config.mode == MODE_T243 ? "T243" : "T729");
     if (vm_config.exec_file)
         printf("Exec File   : %s\n", vm_config.exec_file);
     if (vm_config.debug)
@@ -110,14 +97,12 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-@*1 VM Core and Execution Logic
-
 @<Define ternary register bank@>=
-#define TERNARY_REGISTERS 28  // τ0–τ26 + τ27 reserved for Axion
+#define TERNARY_REGISTERS 28
 int τ[TERNARY_REGISTERS];
 
 @<Define T81 stack structure@>=
-#define STACK_SIZE 2187  // 3^7 for recursion buffer
+#define STACK_SIZE 2187
 int T81Stack[STACK_SIZE];
 int sp = -1;
 
@@ -131,10 +116,14 @@ sp = -1;
 @<Run VM@>=
 printf("[HanoiVM] Executing core loop (stub)...\n");
 
-// In the future, load binary from vm_config.exec_file
-// and interpret instructions by mode
+HVMContext ctx = { .ip = 0, .halted = 0, .mode = vm_config.mode, .mode_flags = 0, .call_depth = 0 };
 
-switch (vm_config.mode) {
+TRACE_MODE(&ctx);
+PROMOTE_T243(&ctx);
+PROMOTE_T729(&ctx);
+DEMOTE_STACK(&ctx);
+
+switch (ctx.mode) {
     case MODE_T81:
         printf("[HanoiVM] Executing in T81 mode...\n");
         @<Dispatch T81 instruction set (placeholder)@>;
@@ -163,13 +152,3 @@ int b = T81Stack[sp--];
 T81Stack[++sp] = a + b;
 
 printf("[T81] >> Result: %d\n", T81Stack[sp]);
-
-@*1 Future Extensions and AI Hooks
-
-- The `τ27` register will be reserved for Axion AI runtime control.
-- A `.hvm` binary loader will parse:
-  - Header
-  - Entry point
-  - Instruction sequence (TISC or encoded ternary ops)
-- Axion hooks will analyze instruction usage, recursion patterns, and suggest or inject optimizations.
-
