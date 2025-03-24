@@ -1,0 +1,148 @@
+@* T81 Test Suite Generator | Generates .hvm files for Ghidra Regression *@
+
+@c
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#define OP_PUSH 0x01
+#define OP_HALT 0xFF
+
+#define T81_TAG_BIGINT     0x01
+#define T81_TAG_FRACTION   0x02
+#define T81_TAG_FLOAT      0x03
+#define T81_TAG_MATRIX     0x04
+#define T81_TAG_VECTOR     0x05
+#define T81_TAG_TENSOR     0x06
+#define T81_TAG_POLYNOMIAL 0x07
+#define T81_TAG_GRAPH      0x08
+#define T81_TAG_QUATERNION 0x09
+#define T81_TAG_OPCODE     0x0A
+
+@<Write T81 BigInt@>=
+void write_bigint(FILE* out) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_BIGINT, out);
+    fputc(3, out);  // length
+    fputc(2, out);
+    fputc(1, out);
+    fputc(0, out);
+}
+
+@<Write T81 Fraction@>=
+void write_fraction(FILE* out) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_FRACTION, out);
+    fputc(2, out); fputc(3, out); fputc(4, out);  // numerator bigint [2,3,4]
+    fputc(2, out); fputc(1, out); fputc(5, out);  // denominator bigint [1,5]
+}
+
+@<Write T81 Float@>=
+void write_float(FILE* out) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_FLOAT, out);
+    fputc(2, out); fputc(4, out); fputc(1, out);  // mantissa bigint [2,4,1]
+    int8_t exp = 3;
+    fwrite(&exp, 1, 1, out);
+}
+
+@<Write T81 Matrix@>=
+void write_matrix(FILE* out) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_MATRIX, out);
+    fputc(2, out); fputc(2, out);  // 2x2
+    for (int i = 0; i < 4; ++i) {
+        fputc(T81_TAG_BIGINT, out);
+        fputc(1, out); fputc(i + 1, out);
+    }
+}
+
+@<Write T81 Vector@>=
+void write_vector(FILE* out) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_VECTOR, out);
+    fputc(3, out);  // len
+    for (int i = 0; i < 3; ++i) {
+        fputc(T81_TAG_BIGINT, out);
+        fputc(1, out); fputc(i + 1, out);
+    }
+}
+
+@<Write T81 Tensor@>=
+void write_tensor(FILE* out) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_TENSOR, out);
+    fputc(2, out);  // 2 dimensions
+    for (int d = 0; d < 2; ++d) {
+        fputc(2, out);  // 2 elements each
+        for (int i = 0; i < 2; ++i) {
+            fputc(T81_TAG_BIGINT, out);
+            fputc(1, out); fputc(i + 1, out);
+        }
+    }
+}
+
+@<Write T81 Graph@>=
+void write_graph(FILE* out) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_GRAPH, out);
+    fputc(2, out); // node count
+    const char* node1 = "A";
+    const char* node2 = "B";
+    fputc(strlen(node1), out); fwrite(node1, 1, strlen(node1), out);
+    fputc(strlen(node2), out); fwrite(node2, 1, strlen(node2), out);
+    fputc(1, out); // edge count
+    fputc(0, out); fputc(1, out);  // from 0 to 1
+}
+
+@<Write T81 Quaternion@>=
+void write_quaternion(FILE* out) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_QUATERNION, out);
+    float q[4] = {1.0, 0.0, 0.0, 0.0};
+    fwrite(q, sizeof(float), 4, out);
+}
+
+@<Write T81 Opcode@>=
+void write_opcode(FILE* out) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_OPCODE, out);
+    fputc(0x02, out);  // POP
+}
+
+@<Main Entry@>=
+int main(void) {
+    FILE* out = fopen("test_all_types.hvm", "wb");
+    if (!out) { perror("open"); return 1; }
+
+    write_bigint(out);
+    write_fraction(out);
+    write_float(out);
+    write_vector(out);
+    write_matrix(out);
+    write_tensor(out);
+    write_graph(out);
+    write_quaternion(out);
+    write_opcode(out);
+
+    fputc(OP_HALT, out);
+    fclose(out);
+    printf("[✓] Generated test_all_types.hvm\n");
+    return 0;
+}
+
+@h
+@<Write T81 BigInt@>
+@<Write T81 Fraction@>
+@<Write T81 Float@>
+@<Write T81 Matrix@>
+@<Write T81 Vector@>
+@<Write T81 Tensor@>
+@<Write T81 Graph@>
+@<Write T81 Quaternion@>
+@<Write T81 Opcode@>
+@<Main Entry@>
+
+@* End of t81_test_suite.cweb *@
