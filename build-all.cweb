@@ -6,7 +6,8 @@ and present in the working directory.
 
 @<Unified Kernel Module Build Rules@>=
 # List all kernel modules derived from tangled .c files
-obj-m += axion-ai.o hanoivm_vm.o hanoivm-core.o axion-gaia-interface.o
+obj-m += axion-ai.o hanoivm_vm.o hanoivm-core.o axion-gaia-interface.o \
+         t243bigint.o t729tensor_ops.o project_looking_glass.o
 
 # Kernel headers and current directory
 KDIR := /lib/modules/$(shell uname -r)/build
