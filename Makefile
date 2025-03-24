@@ -41,9 +41,12 @@ ghidra-test: t81_test_suite
 modules:
 	$(MAKE) -f build-all.cweb
 
+check: all run-test-suite ghidra-test
+	@echo "[✓] Full build + test + disasm check completed"
+
 clean:
 	rm -f *.c *.h *.tex *.log *.scn *.dvi *.pdf *.o \
 	      hanoivm write_simple_add t81_test_suite \
 	      simple_add.hvm test_all_types.hvm ghidra_output.log
 
-.PHONY: all clean run run-test-suite modules ghidra-test
+.PHONY: all clean run run-test-suite modules ghidra-test check
