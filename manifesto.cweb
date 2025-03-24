@@ -1,0 +1,199 @@
+@* HanoiVM File List and Manifesto *@
+
+This document serves as the official file listing and usage description for the **HanoiVM** project. Each file in the project has a specific role in building the virtual machine, providing essential functionality, and ensuring smooth operation across different components.
+
+---
+
+@<File List and Descriptions@>=
+## 🗂️ File List and Descriptions
+
+1. **README.md** / **README.cweb**
+   - **Purpose**: Provides an overview of the HanoiVM project, including its goals, installation instructions, and usage guidelines. The README.md is the main document for introducing the project, while README.cweb contains more detailed literate-style documentation for the source code.
+
+2. **LICENSE**
+   - **Purpose**: Contains licensing information (MIT License) for the HanoiVM project, outlining the terms under which the code can be used, modified, and distributed.
+
+3. **BUILD** / **Makefile**
+   - **Purpose**: Configuration files used to build the HanoiVM project. The Makefile defines how to compile the code, set up dependencies, and run the build process.
+
+4. **CHANGELOG.md**
+   - **Purpose**: Keeps track of the changes made to the project, detailing new features, bug fixes, and other modifications.
+
+5. **ROADMAP.md**
+   - **Purpose**: Provides a roadmap of planned features and future updates for the HanoiVM project, outlining the direction and goals for development.
+
+6. **hanoivm_tests.cweb**
+   - **Purpose**: A suite of tests designed to verify the correctness and stability of HanoiVM components. This includes tests for the arithmetic modules, VM execution, assembler behavior, and AI hooks.
+
+7. **hanoivm-runtime.cweb**
+   - **Purpose**: Defines the HanoiVM interpreter and runtime engine. It is responsible for executing ternary instructions encoded in Axion's ternary binary format (TBIN) and managing the execution flow.
+
+8. **hanoivm_cli.cweb**
+   - **Purpose**: A command-line interface for interacting with HanoiVM. Users can run tests, execute programs, and interact with the VM via the command line using this module.
+
+9. **axion-ai.cweb**
+   - **Purpose**: The AI integration module for HanoiVM. It handles dynamic optimizations, anomaly detection, and self-healing capabilities based on machine learning and AI algorithms.
+
+10. **axion-gaia-interface.cweb**
+    - **Purpose**: A GPU dispatch interface that bridges the HanoiVM ternary virtual machine with GPU backends, allowing for hardware-accelerated execution of ternary logic operations via the Axion system.
+
+11. **hvm_pcie_driver.cweb**
+    - **Purpose**: PCIe driver for hardware acceleration. This file enables the integration of a PCIe coprocessor into the HanoiVM system, allowing for ternary logic operations to be offloaded to hardware.
+
+12. **disassembler.cweb**
+    - **Purpose**: Tools and utilities for disassembling and analyzing HanoiVM bytecode. This module helps developers inspect and debug the ternary operations executed by the VM.
+
+13. **hanoivm-core.cweb**
+    - **Purpose**: Core components of the HanoiVM system, including memory management, instruction handling, and execution state management.
+
+14. **hanoivm-test.cweb**
+    - **Purpose**: Testing framework that includes individual test cases for different HanoiVM functionalities. These tests ensure that all core operations work as expected.
+
+15. **tisc_ir.cweb**
+    - **Purpose**: Intermediate representation (IR) for the TISC instruction set used by HanoiVM. It defines the structure of instructions and their format, which are used by the interpreter for execution.
+
+16. **tisc_compiler.cweb**
+    - **Purpose**: A compiler module for translating TISC source code into a bytecode format compatible with HanoiVM. This module performs parsing, optimization, and code generation tasks.
+
+17. **t81_to_hvm.cweb**
+    - **Purpose**: Handles the conversion of T81-based ternary logic operations into the HanoiVM instruction set. This module is responsible for translating T81 code into executable bytecode.
+
+18. **ghidra_hvm_plugin.cweb**
+    - **Purpose**: A plugin for Ghidra, which is a software reverse engineering framework. This plugin allows users to analyze and reverse-engineer HanoiVM bytecode within the Ghidra interface.
+
+19. **hvmcli.cweb**
+    - **Purpose**: The command-line interface implementation for interacting with HanoiVM, allowing for running scripts and interacting with the virtual machine from a terminal.
+
+20. **libt243.cweb**
+    - **Purpose**: A library for performing T243 ternary arithmetic, specifically for handling larger ternary values (e.g., T243BigInt). This library supports operations like addition, multiplication, and modular arithmetic on ternary data.
+
+21. **t729tensor_slice.cweb**
+    - **Purpose**: This module handles the slicing operations for T729 tensors, which are used in advanced ternary computations.
+
+22. **disasm_hvm.cweb**
+    - **Purpose**: Provides disassembly tools for HanoiVM bytecode. This is essential for debugging and understanding the bytecode-level instructions executed by the VM.
+
+23. **hvm-trit-util.cweb**
+    - **Purpose**: A utility module for handling and manipulating ternary trits (symbolic -1, 0, 1 values) used in HanoiVM.
+
+24. **test_controlflow_hvm.cweb**
+    - **Purpose**: A test case module that focuses on testing the control flow aspects of HanoiVM, ensuring that the stack, recursion, and instruction jumps work correctly.
+
+25. **t243_to_t729.cweb**
+    - **Purpose**: Handles the conversion between T243 and T729 ternary formats, facilitating operations across different ternary data structures.
+
+26. **simple_add.cweb**
+    - **Purpose**: A simple example program that demonstrates basic ternary addition using HanoiVM.
+
+27. **t81asm.cweb**
+    - **Purpose**: The assembler for T81-based ternary code. It converts high-level T81 assembly code into executable HanoiVM bytecode.
+
+28. **t81recursion.cweb**
+    - **Purpose**: Demonstrates recursive operations in T81-based ternary arithmetic.
+
+29. **axion_gpu_request.cweb**
+    - **Purpose**: This module handles requests to the GPU, enabling the execution of parallel ternary operations on supported hardware.
+
+30. **t729tensor_reshape.cweb**
+    - **Purpose**: Manages reshaping of T729 tensors, a critical operation for tensor manipulation and machine learning.
+
+31. **t729tensor_transpose.cweb**
+    - **Purpose**: Handles the transposition of T729 tensors.
+
+32. **telemetry-cli.cweb**
+    - **Purpose**: Command-line tool for viewing and interacting with HanoiVM telemetry data, helping developers monitor system performance and resource utilization.
+
+33. **build-all.cweb**
+    - **Purpose**: A script to build all components of the HanoiVM project, including dependencies and external libraries.
+
+34. **tisc_stdlib.cweb**
+    - **Purpose**: Provides standard library functions for TISC-based programming, including basic arithmetic and utility functions.
+
+35. **hvm_loader.cweb**
+    - **Purpose**: Module responsible for loading HanoiVM bytecode and managing its execution within the runtime environment.
+
+36. **libt729.cweb**
+    - **Purpose**: A library for handling T729 ternary data types and operations. It supports tensor manipulation and advanced ternary operations.
+
+37. **hvm_assembler.cweb**
+    - **Purpose**: The assembler for HanoiVM bytecode, used to convert high-level ternary source code into the bytecode format that the VM can execute.
+
+38. **nist_encryption.cweb**
+    - **Purpose**: Provides cryptographic functions based on NIST standards, such as AES and RSA encryption, for secure operations within HanoiVM.
+
+39. **test_advanced_hvm.cweb**
+    - **Purpose**: Advanced test cases for verifying complex functionalities and performance of HanoiVM, including large-scale operations and AI integrations.
+
+40. **ternary_arithmetic_optimization.cweb**
+    - **Purpose**: Focuses on optimizing ternary arithmetic operations for efficiency, especially in large-scale computations.
+
+41. **disassembler.cweb**
+    - **Purpose**: Contains tools for disassembling HanoiVM bytecode and inspecting individual instructions at a low level.
+
+42. **main_driver.cweb**
+    - **Purpose**: Main driver for executing HanoiVM, orchestrating the loading and execution of bytecode.
+
+43. **tisc_backend.cweb**
+    - **Purpose**: The backend module for TISC compilation, responsible for generating the machine code from high-level TISC instructions.
+
+44. **ai_hook.cweb**
+    - **Purpose**: Implements AI-driven optimization hooks, allowing HanoiVM to dynamically adjust operations based on AI feedback.
+
+45. **hanoivm-test.cweb**
+    - **Purpose**: A module for running various test cases to verify the behavior of the HanoiVM system.
+
+46. **t729tensor_to_string.cweb**
+    - **Purpose**: Converts T729 tensors into string representations for debugging and output purposes.
+
+47. **recursive_tier_execution.cweb**
+    - **Purpose**: Demonstrates recursive execution of ternary logic within the HanoiVM environment.
+
+48. **t729tensor.cweb**
+    - **Purpose**: Defines operations and structures for working with T729 tensors, supporting advanced data manipulation.
+
+49. **t81_patterns.cweb**
+    - **Purpose**: Defines common patterns and optimization techniques for T81-based ternary operations.
+
+50. **gaia_handle_request.cweb**
+    - **Purpose**: Handles requests to the **Gaia** system for GPU-based ternary logic dispatch.
+
+51. **t729tensor_loader.cweb**
+    - **Purpose**: Handles the loading of T729 tensor data into memory for use in computations.
+
+52. **t81_stack.cweb**
+    - **Purpose**: Manages the stack-based execution for T81 ternary operations.
+
+53. **write_simple_add.cweb**
+    - **Purpose**: Provides a simple example demonstrating basic addition using the T81 stack.
+
+54. **hvm_firmware_entry.cweb**
+    - **Purpose**: Entry point for the HanoiVM firmware, managing initial system setup and execution flow.
+
+55. **t81_test_suite.cweb**
+    - **Purpose**: Test suite for verifying the functionality and correctness of T81 operations.
+
+56. **advanced_ops.cweb**
+    - **Purpose**: Implements advanced ternary operations and optimizations for higher-level computations.
+
+57. **meta.cweb**
+    - **Purpose**: Contains metadata definitions and configurations for the HanoiVM system.
+
+58. **hanoivm_vm.cweb**
+    - **Purpose**: The core module for the HanoiVM virtual machine, handling execution, memory management, and instruction interpretation.
+
+59. **cuda_handle_request.cweb**
+    - **Purpose**: CUDA interface for handling GPU-accelerated requests in the HanoiVM system.
+
+60. **logviewer.cweb**
+    - **Purpose**: Provides a log viewer for inspecting system logs and telemetry data.
+
+61. **libt81.cweb**
+    - **Purpose**: Library for base-81 ternary operations, including data types and basic arithmetic functions.
+
+62. **t243bigint.cweb**
+    - **Purpose**: Handles large ternary integers (T243BigInt), supporting operations like addition, multiplication, and modular arithmetic.
+
+---
+
+This **manifesto.cweb** provides an overview of each file in the **HanoiVM** project, detailing its function and purpose. This document helps users and developers understand the role of each file in the overall architecture and provides guidance on where to focus for different tasks or features.
+
