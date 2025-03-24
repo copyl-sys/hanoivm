@@ -4,6 +4,12 @@
 #include "axion_signal.h"
 #include "log_trace.h"
 
+// Define pseudo-opcodes for tier control
+#define OP_PROMOTE_T243   0xF0
+#define OP_PROMOTE_T729   0xF1
+#define OP_DEMOTE_T243    0xF2
+#define OP_DEMOTE_T81     0xF3
+
 #define PROMOTE_T243(ctx)  do { \
   if ((ctx)->mode == MODE_T81 && (ctx)->call_depth > THRESHOLD_T243) { \
     (ctx)->mode = MODE_T243; \
@@ -61,8 +67,25 @@ void trace_mode_change(HVMContext* ctx) {
 
 void execute_instruction(HVMContext* ctx, T81Opcode op) {
   TRACE_MODE(ctx);
+
+  switch (op) {
+    case OP_PROMOTE_T243:
+      promote_to_t243(ctx);
+      return;
+    case OP_PROMOTE_T729:
+      promote_to_t729(ctx);
+      return;
+    case OP_DEMOTE_T243:
+    case OP_DEMOTE_T81:
+      demote_stack(ctx);
+      return;
+    default:
+      break;
+  }
+
   PROMOTE_T243(ctx);
   PROMOTE_T729(ctx);
   DEMOTE_STACK(ctx);
+
   dispatch_opcode(ctx, op);
 }
