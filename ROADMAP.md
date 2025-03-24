@@ -1,7 +1,3 @@
-Here is your fully updated `ROADMAP.md` reiterated for review:
-
----
-
 # **HanoiVM — Project Roadmap**
 
 HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T243**, and **T729** stack architectures. It is a cornerstone of the larger unified ternary computing ecosystem, including **T81Lang**, **Axion AI**, and **Alexis Linux**.
@@ -69,6 +65,8 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - [x] `τ[27]` signal feedback support  
 - [ ] JSON/XML metadata output for telemetry  
 - [ ] Axion symbolic trace export  
+- [x] Dynamic **AI optimizations** for ternary operations (via `axion_tbin_execute`)  
+- [x] **Rollback** mechanism triggered by Axion AI anomaly detection  
 
 ---
 
@@ -112,4 +110,12 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 
 ---
 
-Would you like to publish this to GitHub now or prepare a `CHANGELOG.md` entry to go with it?
+### Updates Summary:
+
+1. **Axion AI** integration has moved from **phase 4** into full AI optimizations for ternary operations and rollback capabilities.
+2. Updates have been made to **recursive stack modes** (T81 → T243 → T729) and the ability to **dynamically optimize** based on AI feedback.
+3. The **T729 Tensor Engine** and **T243BigInt** ops are implemented and will be part of the **next major milestone** for recursive tensor operations.
+
+### Next Steps:
+
+You can now move forward with the **CI testing**, **AI optimizations**, and the integration of the **`.cweb` modules** for continued development. The **AI feedback and rollback mechanisms** are actively tested and integrated into the VM.
