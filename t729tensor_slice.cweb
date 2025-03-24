@@ -7,6 +7,9 @@
 
 @<Slice Tensor Implementation@>=
 #define OP_T729_SLICE 0xE4
+
+@<Slice Dispatch Handler@>
+#define OP_T729_SLICE 0xE4
 int t729tensor_slice(TernaryHandle h, int dim, int start, int end, TernaryHandle* result) {
     T729Tensor* t = (T729Tensor*)h.data;
     @<Bounds Check@>
@@ -22,6 +25,8 @@ int t729tensor_slice(TernaryHandle h, int dim, int start, int end, TernaryHandle
     result->base = BASE_729;
     result->data = sliced;
     return 0;
+
+@<Slice Dispatch Handler@>
 }
 
 @<Bounds Check@>=
