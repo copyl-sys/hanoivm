@@ -1,30 +1,27 @@
-@* hanoivm-core.cweb: Recursive HanoiVM Runtime
-
-This file defines the core recursive virtual machine that interprets logic across
-three ternary layers: T81 (instructions), T243 (logic trees), and T729 (AI macros).
-
-The runtime recursively interprets, evaluates, and transforms ternary structures.
-Each base layer reflects a “dream level,” as described in the TYRNARY architecture.
+@* hanoivm-core.cweb: Recursive HanoiVM Runtime *@
 
 @c
 use crate::libt81::{T81Digit, T81Number};
 use crate::libt243::{T243Digit, T243LogicTree, T243Node};
 use crate::libt729::{T729Digit, T729MacroEngine};
+use crate::axion_ai::{axion_parse_command, axion_tbin_execute}; // New AI-based functions
 
 /// The recursive HanoiVM runtime instance
 pub struct HanoiVM {
     pub macro_engine: T729MacroEngine, // T729 executor and registry
     pub frame_stack: Vec<T243LogicTree>, // Active execution frames
     pub output_log: Vec<T81Number>,      // Output from each step
+    pub ai_enabled: bool,                // New field to control AI optimizations
 }
 
 impl HanoiVM {
-    /// Initialize the HanoiVM with a macro engine and empty stack
-    pub fn new() -> Self {
+    /// Initialize the HanoiVM with a macro engine, empty stack, and AI control
+    pub fn new(ai_enabled: bool) -> Self {
         HanoiVM {
             macro_engine: T729MacroEngine::new(),
             frame_stack: Vec::new(),
             output_log: Vec::new(),
+            ai_enabled,
         }
     }
 
@@ -36,7 +33,13 @@ impl HanoiVM {
     /// Execute the entire stack recursively
     pub fn run(&mut self) {
         while let Some(frame) = self.frame_stack.pop() {
-            let result = frame.evaluate(); // T243Node → T81Number
+            let mut result = frame.evaluate(); // T243Node → T81Number
+
+            // If AI is enabled, perform introspective optimizations
+            if self.ai_enabled {
+                result = axion_tbin_execute(result); // Execute with AI-driven optimization
+            }
+
             self.output_log.push(result);
         }
     }
@@ -62,11 +65,19 @@ impl HanoiVM {
             println!("Step {}: {}", i, out);
         }
     }
+
+    /// Interact with Axion AI through the NLP command interface (new function)
+    pub fn interact_with_ai(&mut self, cmd: &str) {
+        axion_parse_command(cmd); // Parse and execute AI commands like "optimize", "snapshot", etc.
+    }
 }
+
 @*
 This module defines the full HanoiVM lifecycle:
 - Stack-based recursive execution of T243 logic
 - Macro-instruction decoding through T729
 - Output monitoring and result tracing
+- Integration with Axion AI for introspective optimization and learning (new functionality)
 
-Next: Integration with Axion AI for introspective optimization and learning.
+Next: **Enhance the integration with Axion AI**, enabling dynamic AI-driven adjustments during runtime.
+@*
