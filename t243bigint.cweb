@@ -1,0 +1,49 @@
+// t243bigint.cweb — T243BigInt Implementation
+
+#include "ternary_base.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+typedef struct {
+    size_t length;
+    uint8_t* digits; // Base-243 digit array, LSB first
+} T243BigInt;
+
+TernaryHandle t243bigint_new_from_string(const char* str) {
+    size_t len = strlen(str);
+    T243BigInt* bigint = (T243BigInt*)malloc(sizeof(T243BigInt));
+    bigint->length = len;
+    bigint->digits = (uint8_t*)malloc(len);
+
+    for (size_t i = 0; i < len; ++i) {
+        bigint->digits[i] = (uint8_t)(str[i] % 243); // crude placeholder
+    }
+
+    TernaryHandle h = { .base = BASE_243, .data = bigint };
+    return h;
+}
+
+int t243bigint_add(TernaryHandle a, TernaryHandle b, TernaryHandle* result) {
+    // Placeholder: returns copy of A
+    T243BigInt* src = (T243BigInt*)a.data;
+    T243BigInt* out = (T243BigInt*)malloc(sizeof(T243BigInt));
+    out->length = src->length;
+    out->digits = (uint8_t*)malloc(out->length);
+    memcpy(out->digits, src->digits, out->length);
+    result->base = BASE_243;
+    result->data = out;
+    return 0;
+}
+
+int t243bigint_mul(TernaryHandle a, TernaryHandle b, TernaryHandle* result) {
+    return t243bigint_add(a, b, result); // same dummy
+}
+
+void t243bigint_free(TernaryHandle h) {
+    T243BigInt* bigint = (T243BigInt*)h.data;
+    if (bigint) {
+        free(bigint->digits);
+        free(bigint);
+    }
+}
