@@ -6,6 +6,7 @@
 #include <string.h>
 
 @<Transpose Tensor Implementation@>=
+#define OP_T729_TRANS 0xE3
 int t729tensor_transpose(TernaryHandle h, TernaryHandle* result) {
     T729Tensor* t = (T729Tensor*)h.data;
     if (t->rank != 2) return -1;
@@ -25,6 +26,8 @@ int t729tensor_transpose(TernaryHandle h, TernaryHandle* result) {
     result->base = BASE_729;
     result->data = out;
     return 0;
+
+@<Transpose Dispatch Handler@>
 }
 
 @<Transpose Loop@>=
