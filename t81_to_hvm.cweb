@@ -20,6 +20,7 @@
 #define T81_TAG_POLYNOMIAL 0x07
 #define T81_TAG_GRAPH      0x08
 #define T81_TAG_QUATERNION 0x09
+#define T81_TAG_OPCODE     0x0A
 
 @<Opcode Map@>=
 typedef struct {
@@ -51,6 +52,11 @@ static OpEntry opmap[] = {
     {"ack",   0x33},
     {"bp",    0x34},
     {"halt",  0xFF},
+    {"push_vector", 0x35},
+    {"push_polynomial", 0x36},
+    {"push_graph", 0x37},
+    {"push_quaternion", 0x38},
+    {"push_opcode", 0x39},
     {NULL,     0x00}
 };
 
@@ -127,18 +133,81 @@ void write_tensor(FILE* out, int dims, char** tags_and_vals) {
     }
 }
 
+@<Write Vector Operand@>=
+void write_vector(FILE* out, int len, char** values) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_VECTOR, out);
+    fputc((uint8_t)len, out);
+    for (int i = 0; i < len; i++) {
+        fputc(T81_TAG_BIGINT, out);
+        uint8_t len_elem = (uint8_t)strlen(values[i]);
+        fputc(len_elem, out);
+        for (int j = 0; j < len_elem; j++) fputc(values[i][j] - '0', out);
+    }
+}
+
+@<Write Polynomial Operand@>=
+void write_polynomial(FILE* out, int degree, char** coeffs) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_POLYNOMIAL, out);
+    fputc((uint8_t)degree, out);
+    for (int i = 0; i < degree; i++) {
+        fputc(T81_TAG_BIGINT, out);
+        uint8_t len = (uint8_t)strlen(coeffs[i]);
+        fputc(len, out);
+        for (int j = 0; j < len; j++) fputc(coeffs[i][j] - '0', out);
+    }
+}
+
+@<Write Graph Operand@>=
+void write_graph(FILE* out, int nodes, int edges, char** connections) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_GRAPH, out);
+    fputc((uint8_t)nodes, out);
+    fputc((uint8_t)edges, out);
+    for (int i = 0; i < edges; i++) {
+        uint8_t from = (uint8_t)atoi(connections[i * 2]);
+        uint8_t to = (uint8_t)atoi(connections[i * 2 + 1]);
+        fputc(from, out);
+        fputc(to, out);
+    }
+}
+
+@<Write Quaternion Operand@>=
+void write_quaternion(FILE* out, const char* x, const char* y, const char* z, const char* w) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_QUATERNION, out);
+    fputc((uint8_t)strlen(x), out);
+    for (int i = 0; i < strlen(x); i++) fputc(x[i] - '0', out);
+    fputc((uint8_t)strlen(y), out);
+    for (int i = 0; i < strlen(y); i++) fputc(y[i] - '0', out);
+    fputc((uint8_t)strlen(z), out);
+    for (int i = 0; i < strlen(z); i++) fputc(z[i] - '0', out);
+    fputc((uint8_t)strlen(w), out);
+    for (int i = 0; i < strlen(w); i++) fputc(w[i] - '0', out);
+}
+
+@<Write Opcode Operand@>=
+void write_opcode(FILE* out, uint8_t opcode) {
+    fputc(OP_PUSH, out);
+    fputc(T81_TAG_OPCODE, out);
+    fputc(opcode, out);
+}
+
 @<Main Entry@>=
 int main(int argc, char** argv) {
     if (argc != 3) {
         fprintf(stderr, "Usage: %s <input.t81> <output.hvm>\n", argv[0]);
         return 1;
     }
+
     FILE* in = fopen(argv[1], "r");
     FILE* out = fopen(argv[2], "wb");
     if (!in || !out) {
         perror("fopen");
         return 1;
     }
+
     char line[256];
     while (fgets(line, sizeof(line), in)) {
         char* token = strtok(line, " \t\n");
@@ -159,49 +228,4 @@ int main(int argc, char** argv) {
             char* rowstr = strtok(NULL, " \t\n");
             char* colstr = strtok(NULL, " \t\n");
             int rows = atoi(rowstr), cols = atoi(colstr);
-            char* values[256]; for (int i = 0; i < rows * cols; i++)
-                values[i] = strtok(NULL, " \t\n");
-            write_matrix(out, rows, cols, values); continue;
-        }
-        if (strcmp(token, "push_tensor") == 0) {
-            char* dimstr = strtok(NULL, " \t\n");
-            int dims = atoi(dimstr);
-            char* values[512]; int count = 0;
-            char* v; while ((v = strtok(NULL, " \t\n"))) values[count++] = v;
-            write_tensor(out, dims, values); continue;
-        }
-
-        uint8_t opcode = lookup_opcode(token);
-        fwrite(&opcode, 1, 1, out);
-
-        if (strcmp(token, "push") == 0 || strcmp(token, "jmp") == 0 ||
-            strcmp(token, "jz") == 0 || strcmp(token, "jnz") == 0 ||
-            strcmp(token, "tnn_accum") == 0 || strcmp(token, "matmul") == 0) {
-            char* op1 = strtok(NULL, " \t\n");
-            char* op2 = strtok(NULL, " \t\n");
-            uint81_t a = parse_uint81(op1);
-            fwrite(&a, sizeof(uint81_t), 1, out);
-            if (op2) {
-                uint81_t b = parse_uint81(op2);
-                fwrite(&b, sizeof(uint81_t), 1, out);
-            }
-        }
-    }
-    fputc(OP_HALT, out);
-    fclose(in);
-    fclose(out);
-    printf("[✓] Compiled %s → %s\n", argv[1], argv[2]);
-    return 0;
-}
-
-@h
-@<Opcode Map@>
-@<Utility: Match Opcode@>
-@<Operand Parser: Base-81 Encoding Stub@>
-@<Write Fraction Operand@>
-@<Write Float Operand@>
-@<Write Matrix Operand@>
-@<Write Tensor Operand@>
-@<Main Entry@>
-
-@* End of t81_to_hvm.cweb *@
+            char* values[
