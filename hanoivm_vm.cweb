@@ -1,4 +1,4 @@
-@* HanoiVM | VM Execution Engine with Advanced Ops Integration *@
+@* HanoiVM | VM Execution Engine with Advanced Ops Integration + Recursion + Axion AI *@
 
 @c
 #include <stdio.h>
@@ -8,18 +8,20 @@
 #include "t81_stack.h"
 #include "hvm_loader.h"
 #include "ai_hook.h"
-#include "advanced_ops.h"  // integrated opcodes and evaluation
-#include "disassembler.h"  // added disassembler linkage
-#include "ternary_base.h"   // for T243 integration
-#include "t243bigint.h"     // BigInt VM support
+#include "advanced_ops.h"
+#include "disassembler.h"
+#include "ternary_base.h"
+#include "t243bigint.h"
+#include "t81recursion.h"  // NEW: Recursion integration
 
 @<Extern τ-registers@>=
-extern int τ[28];  // τ0–τ26 + τ27 (Axion-reserved τ[27])
+extern int τ[28];  // τ0–τ26 + Axion-reserved τ27
 
 @<VM Context Definition@>=
 typedef struct {
-    size_t ip;           // Instruction pointer
-    int halted;          // Halt flag
+    size_t ip;
+    int halted;
+    int recursion_depth;  // NEW: Recursion state tracking
 } HVMContext;
 
 @<VM Execution API@>=
@@ -54,13 +56,15 @@ uint81_t pop81u(void) {
 @<VM Execution Function@>=
 #define OP_T729_DOT     0xE1
 #define OP_T729_PRINT   0xE2
+#define OP_RECURSE_FACT 0xF1  // NEW: Recursive factorial
+#define OP_RECURSE_FIB  0xF2  // NEW: Tail-recursive Fibonacci
 
 void execute_vm(void) {
-    HVMContext ctx = { .ip = 0, .halted = 0 };
+    HVMContext ctx = { .ip = 0, .halted = 0, .recursion_depth = 0 };
 
     while (!ctx.halted && ctx.ip < hvm_code_size) {
         uint8_t opcode = hvm_code[ctx.ip++];
-        axion_signal(opcode);  // Notify Axion of opcode execution
+        axion_signal(opcode);
         τ[AXION_REGISTER_INDEX] = axion_get_optimization();
 
         char trace_msg[128];
@@ -68,23 +72,45 @@ void execute_vm(void) {
         axion_log(trace_msg);
 
         switch (opcode) {
-
             case OP_T729_DOT: {
-    TernaryHandle b = stack_pop();
-    TernaryHandle a = stack_pop();
-    TernaryHandle r;
-    t729tensor_contract(a, b, &r);
-    stack_push(r);
-    break;
-}
+                TernaryHandle b = stack_pop();
+                TernaryHandle a = stack_pop();
+                TernaryHandle r;
+                t729tensor_contract(a, b, &r);
+                stack_push(r);
+                break;
+            }
 
-case OP_T729_PRINT: {
-    TernaryHandle a = stack_pop();
-    printf("[T729] Tensor @ %p
-", a.data);
-    stack_push(a);
-    break;
-}
+            case OP_T729_PRINT: {
+                TernaryHandle a = stack_pop();
+                printf("[T729] Tensor @ %p\n", a.data);
+                stack_push(a);
+                break;
+            }
+
+            case OP_RECURSE_FACT: {
+                T81BigIntHandle n = stack_pop();
+                T81BigIntHandle result;
+                if (t81bigint_factorial_recursive(n, &result) == TRIT_OK) {
+                    stack_push(result);
+                } else {
+                    fprintf(stderr, "[VM] RECURSE_FACT error\n");
+                }
+                t81bigint_free(n);
+                break;
+            }
+
+            case OP_RECURSE_FIB: {
+                T81BigIntHandle n = stack_pop();
+                T81BigIntHandle result;
+                if (t81bigint_fibonacci_tail(n, &result) == TRIT_OK) {
+                    stack_push(result);
+                } else {
+                    fprintf(stderr, "[VM] RECURSE_FIB error\n");
+                }
+                t81bigint_free(n);
+                break;
+            }
 
             case OP_NOP:
                 break;
@@ -118,7 +144,6 @@ case OP_T729_PRINT: {
                 uint81_t a = fetch_operand(&hvm_code[ctx.ip]);
                 uint81_t b = fetch_operand(&hvm_code[ctx.ip + 9]);
                 ctx.ip += 18;
-
                 uint81_t result = evaluate_opcode(opcode, a, b);
                 push81u(result);
                 break;
