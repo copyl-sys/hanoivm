@@ -1,0 +1,54 @@
+@* TISC Compiler Backend for HanoiVM *@
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "t81types.h"
+#include "tisc_ir.cweb"
+
+@* Initialize TISC Program Sequence *@
+@c
+void tisc_init(TISCProgram* prog) {
+    prog->count = 0;
+    prog->capacity = 16;
+    prog->instructions = malloc(sizeof(TISCInstruction) * prog->capacity);
+}
+
+void tisc_emit(TISCProgram* prog, TISCInstruction instr) {
+    if (prog->count >= prog->capacity) {
+        prog->capacity *= 2;
+        prog->instructions = realloc(prog->instructions, sizeof(TISCInstruction) * prog->capacity);
+    }
+    prog->instructions[prog->count++] = instr;
+}
+
+@* Example Symbolic Compiler Entry Point *@
+@c
+void compile_symbolic_fib(uint81_t input, TISCProgram* prog) {
+    uint81_t ops[1] = { input };
+    TISCInstruction instr = make_instruction(TISC_OP_FIB, 1, ops, 1);
+    tisc_emit(prog, instr);
+}
+
+@* Print TISC Program Sequence *@
+@c
+void print_tisc(const TISCProgram* prog) {
+    for (size_t i = 0; i < prog->count; ++i) {
+        printf("[%zu] OP=%d depth=%d\n", i, prog->instructions[i].op, prog->instructions[i].depth_hint);
+    }
+}
+
+@* Main Test Entry *@
+@c
+int main() {
+    TISCProgram program;
+    tisc_init(&program);
+
+    uint81_t input = { .a = 0, .b = 0, .c = 7 };  // fib(7)
+    compile_symbolic_fib(input, &program);
+    print_tisc(&program);
+
+    free(program.instructions);
+    return 0;
+}
