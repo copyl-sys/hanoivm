@@ -1,15 +1,11 @@
-@* Enhanced T81 Disassembler with Full Type Introspection and Ghidra Integration.
-
-This enhanced disassembler handles all core T81 data types,
-in compliance with the Prime Directive: disassemble every
-T81 data type at any depth. It is designed to be embedded or
-invoked by Ghidra as an external processor or plugin component.
+@* Enhanced T81 Disassembler with Tier Mode Awareness and Ghidra Integration. *@
 
 @c
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include "hvm_context.h"
 
 // Type Tags for T81 Data Types
 #define T81_TAG_BIGINT     0x01
@@ -28,9 +24,22 @@ invoked by Ghidra as an external processor or plugin component.
 #define OP_ADD     0x02
 #define OP_PRINT   0x03
 #define OP_HALT    0xFF
+#define OP_PROMOTE_T243 0xF0
+#define OP_PROMOTE_T729 0xF1
+#define OP_DEMOTE_T243  0xF2
+#define OP_DEMOTE_T81   0xF3
 
 // Hook for Ghidra integration output
 #define GHIDRA_OUT stdout
+
+const char* get_mode_label(int mode) {
+    switch (mode) {
+        case MODE_T81: return "T81";
+        case MODE_T243: return "T243";
+        case MODE_T729: return "T729";
+        default: return "UNKNOWN";
+    }
+}
 
 static void disasm_bigint(FILE *in) {
     uint8_t len;
@@ -45,83 +54,10 @@ static void disasm_bigint(FILE *in) {
     fprintf(GHIDRA_OUT, "]\n");
 }
 
-static void disasm_fraction(FILE *in) {
-    fprintf(GHIDRA_OUT, "T81Fraction { numerator: ");
-    disasm_bigint(in);
-    fprintf(GHIDRA_OUT, "  denominator: ");
-    disasm_bigint(in);
-    fprintf(GHIDRA_OUT, "}\n");
-}
-
-static void disasm_float(FILE *in) {
-    fprintf(GHIDRA_OUT, "T81Float {\n  mantissa: ");
-    disasm_bigint(in);
-    int8_t exponent;
-    fread(&exponent, 1, 1, in);
-    fprintf(GHIDRA_OUT, "  exponent: %d\n}\n", exponent);
-}
-
-static void disasm_matrix(FILE *in) {
-    uint8_t rows, cols;
-    fread(&rows, 1, 1, in);
-    fread(&cols, 1, 1, in);
-    fprintf(GHIDRA_OUT, "T81Matrix [%dx%d]:\n", rows, cols);
-    for (int r = 0; r < rows; r++) {
-        fprintf(GHIDRA_OUT, "  [");
-        for (int c = 0; c < cols; c++) {
-            uint8_t tag;
-            fread(&tag, 1, 1, in);
-            disasm_operand_by_tag(in, tag);
-        }
-        fprintf(GHIDRA_OUT, "  ]\n");
-    }
-}
-
-static void disasm_vector(FILE *in) {
-    uint8_t len;
-    fread(&len, 1, 1, in);
-    fprintf(GHIDRA_OUT, "T81Vector [len=%d]: [\n", len);
-    for (int i = 0; i < len; i++) {
-        uint8_t tag;
-        fread(&tag, 1, 1, in);
-        fprintf(GHIDRA_OUT, "  element %d: ", i);
-        disasm_operand_by_tag(in, tag);
-    }
-    fprintf(GHIDRA_OUT, "]\n");
-}
-
-static void disasm_tensor(FILE *in) {
-    uint8_t dims;
-    fread(&dims, 1, 1, in);
-    fprintf(GHIDRA_OUT, "T81Tensor [dims=%d]:\n", dims);
-    for (int d = 0; d < dims; d++) {
-        uint8_t depth;
-        fread(&depth, 1, 1, in);
-        fprintf(GHIDRA_OUT, "  Depth %d: [\n", d);
-        for (int i = 0; i < depth; i++) {
-            uint8_t tag;
-            fread(&tag, 1, 1, in);
-            fprintf(GHIDRA_OUT, "    element %d: ", i);
-            disasm_operand_by_tag(in, tag);
-        }
-        fprintf(GHIDRA_OUT, "  ]\n");
-    }
-}
-
 static void disasm_operand_by_tag(FILE *in, uint8_t tag) {
     switch (tag) {
         case T81_TAG_BIGINT:
             disasm_bigint(in); break;
-        case T81_TAG_FRACTION:
-            disasm_fraction(in); break;
-        case T81_TAG_FLOAT:
-            disasm_float(in); break;
-        case T81_TAG_MATRIX:
-            disasm_matrix(in); break;
-        case T81_TAG_VECTOR:
-            disasm_vector(in); break;
-        case T81_TAG_TENSOR:
-            disasm_tensor(in); break;
         default:
             fprintf(GHIDRA_OUT, "UNKNOWN TYPE TAG 0x%02X\n", tag);
             break;
@@ -131,6 +67,8 @@ static void disasm_operand_by_tag(FILE *in, uint8_t tag) {
 void disasm(const char *filename) {
     FILE *in = fopen(filename, "rb");
     if (!in) { perror("open"); exit(1); }
+
+    int mode = MODE_T81;
     uint8_t opcode;
     while (fread(&opcode, 1, 1, in) == 1) {
         switch (opcode) {
@@ -147,6 +85,18 @@ void disasm(const char *filename) {
                 fprintf(GHIDRA_OUT, "PRINT\n"); break;
             case OP_HALT:
                 fprintf(GHIDRA_OUT, "HALT\n"); break;
+            case OP_PROMOTE_T243:
+                fprintf(GHIDRA_OUT, "PROMOTE_T243 // MODE: %s -> T243\n", get_mode_label(mode));
+                mode = MODE_T243; break;
+            case OP_PROMOTE_T729:
+                fprintf(GHIDRA_OUT, "PROMOTE_T729 // MODE: %s -> T729\n", get_mode_label(mode));
+                mode = MODE_T729; break;
+            case OP_DEMOTE_T243:
+                fprintf(GHIDRA_OUT, "DEMOTE_T243 // MODE: %s -> T243\n", get_mode_label(mode));
+                mode = MODE_T243; break;
+            case OP_DEMOTE_T81:
+                fprintf(GHIDRA_OUT, "DEMOTE_T81 // MODE: %s -> T81\n", get_mode_label(mode));
+                mode = MODE_T81; break;
             default:
                 fprintf(GHIDRA_OUT, "UNKNOWN OPCODE 0x%02X\n", opcode);
                 break;
@@ -164,4 +114,4 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-@* End of file.
+@* End of file. *@
