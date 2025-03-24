@@ -1,10 +1,10 @@
-Here’s an updated and expanded version of your `README.md`, reflecting all of this morning’s work and HanoiVM's current capabilities:
+Here's an updated and expanded version of your `README.md` reflecting all of this morning's work and HanoiVM's current capabilities:
 
 ---
 
 # HanoiVM
 
-HanoiVM is a recursive ternary virtual machine built to explore symbolic computing using base-81 logic. Designed as part of the broader **Axion + T81Lang** ecosystem, HanoiVM simulates a **Ternary Instruction Set Computer (TISC)** with support for AI integration, ternary recursion, and future hardware acceleration.
+HanoiVM is a **recursive ternary virtual machine** built to explore symbolic computing using base-81 logic. Designed as part of the broader **Axion + T81Lang** ecosystem, HanoiVM simulates a **Ternary Instruction Set Computer (TISC)** with support for **AI integration**, **ternary recursion**, and **future hardware acceleration**.
 
 ---
 
@@ -77,15 +77,15 @@ bazel run //tests:t729tensor_loader
 
 ## Project Status
 
-✅ Core VM + stack ops integrated  
-✅ Symbolic AI opcodes implemented  
-✅ Disassembler + CI test suite active  
-✅ Base-243 BigInt ops supported  
-✅ Base-729 Tensor ops (`DOT`, `TRANS`, `SLICE`, `PRINT`) implemented  
-✅ `.cweb` literate modules for all features  
+✅ **Core VM + stack ops** integrated  
+✅ **Symbolic AI opcodes** implemented  
+✅ **Disassembler + CI test suite** active  
+✅ **Base-243 BigInt ops** supported  
+✅ **Base-729 Tensor ops** (`DOT`, `TRANS`, `SLICE`, `PRINT`) implemented  
+✅ **`.cweb` literate modules** for all features  
 🔄 `.hvm` bytecode test compiler for T729 ops in progress  
 🔜 `OP_T729_RESHAPE` + operand-bound slicing  
-🔜 Full T81Lang + `.t81` source-to-bytecode compiler
+🔜 Full **T81Lang** + `.t81` source-to-bytecode compiler
 
 ---
 
@@ -105,4 +105,4 @@ MIT License — see LICENSE file for details
 
 ---
 
-Would you like me to format and push a matching update to `ROADMAP.md` as well?
+This updated `README.md` includes the **Axion AI** integration, **ternary stack operations**, and **recursive execution logic** in HanoiVM. It's tailored to reflect the **AI-enhanced features**, the modular structure, and the current project milestones.
