@@ -51,6 +51,11 @@ int disassemble_hvm_binary(const char* path, GhidraContext* ctx) {
         const char* opname = decode_opcode(op);
         ghidra_create_instruction(ctx, addr, opname);
 
+        // Label symbolic macro entrypoints
+        if (strcmp(opname, "FIB") == 0 || strcmp(opname, "FACT") == 0 || strcmp(opname, "TOWER") == 0) {
+            ghidra_create_label(ctx, addr, opname);
+        }
+
         if (strcmp(opname, "PUSH") == 0) {
             uint8_t tag;
             fread(&tag, 1, 1, f);
