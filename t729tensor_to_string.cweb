@@ -1,0 +1,43 @@
+@* t729tensor_to_string.cweb — Converts a T729Tensor to a printable string *@
+
+@<Include Dependencies@>=
+#include "t729tensor.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+@<Tensor String Serialization@>=
+int t729tensor_to_string(TernaryHandle h, char** out) {
+    T729Tensor* t = (T729Tensor*)h.data;
+    if (!t || !out) return -1;
+
+    size_t bufsize = 1024;
+    char* buffer = (char*)malloc(bufsize);
+    size_t offset = 0;
+
+    @<Build shape string@>
+    @<Build values string@>
+
+    *out = buffer;
+    return 0;
+}
+
+@<Build shape string@>=
+offset += snprintf(buffer + offset, bufsize - offset,
+                   "T729Tensor rank=%d shape=", t->rank);
+
+for (int i = 0; i < t->rank; ++i) {
+    offset += snprintf(buffer + offset, bufsize - offset,
+                       "%s%d", (i == 0 ? "[" : ","), t->shape[i]);
+}
+offset += snprintf(buffer + offset, bufsize - offset, "]\nvalues=[");
+
+@<Build values string@>=
+size_t size = 1;
+for (int i = 0; i < t->rank; ++i) size *= t->shape[i];
+
+for (size_t i = 0; i < size; ++i) {
+    offset += snprintf(buffer + offset, bufsize - offset,
+                       "%s%.3f", (i == 0 ? "" : ","), t->data[i]);
+}
+snprintf(buffer + offset, bufsize - offset, "]\n");
