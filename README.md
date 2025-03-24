@@ -1,4 +1,4 @@
-Here's an updated and expanded version of your `README.md` reflecting all of this morning's work and HanoiVM's current capabilities:
+Here’s the updated `README.md` reflecting the latest developments and changes in the HanoiVM project:
 
 ---
 
@@ -19,10 +19,13 @@ HanoiVM is a **recursive ternary virtual machine** built to explore symbolic com
   - `OP_T729_DOT`, `OP_T729_TRANS`, `OP_T729_SLICE`, `OP_T729_PRINT`
 - 🔢 **T243BigInt arithmetic**:
   - `OP_T243_ADD`, `OP_T243_MUL`, `OP_T243_PRINT`
-- 📄 **`.cweb` literate programming format**
+- ⚙️ **AI integration** for dynamic optimizations, rollback mechanisms, and feedback loops via **Axion AI**
+- 📄 **`.cweb` literate programming format**:
   - Modular, readable source code + inline docs
 - 🧪 **CI-integrated test suite** with `.hvm` bytecode disassembler
-- ⚙️ Designed to connect with **Axion AI**, **T81Lang**, and **Project Looking Glass**
+- 🖥️ **T81Lang** integration for symbolic ternary language and **TISC Assembly** backend
+- 🛠️ **Project Looking Glass**: 3D visualization of ternary stack + operations (in development)
+- ⚡ Designed to connect with **Axion AI**, **T81Lang**, and **Project Looking Glass**
 
 ---
 
@@ -38,7 +41,7 @@ src/                    # Core VM engine and modules
 
 tests/                  
 ├── t729tensor_loader.cweb # Loader for test tensors
-├── test_tensor.hvm     # (coming soon) test vector for T729 stack ops
+├── test_tensor.hvm     # Test vector for T729 stack ops
 
 scripts/                # CI test validators
 ├── disasm_*.sh         # grep-based assertion tests
@@ -83,17 +86,21 @@ bazel run //tests:t729tensor_loader
 ✅ **Base-243 BigInt ops** supported  
 ✅ **Base-729 Tensor ops** (`DOT`, `TRANS`, `SLICE`, `PRINT`) implemented  
 ✅ **`.cweb` literate modules** for all features  
+✅ **Recursive stack promotion/demotion** (T81 ↔ T243 ↔ T729) fully implemented  
+✅ **Axion AI integration** for dynamic optimizations and rollback  
+✅ **T81Lang** → **TISC Assembly** compiler backend  
 🔄 `.hvm` bytecode test compiler for T729 ops in progress  
-🔜 `OP_T729_RESHAPE` + operand-bound slicing  
-🔜 Full **T81Lang** + `.t81` source-to-bytecode compiler
+🔜 Full **T81Lang** + `.t81` source-to-bytecode compiler  
+🔜 **Project Looking Glass** visualization export  
 
 ---
 
 ## Related Projects
 
 - [Axion AI](https://github.com/copyl-sys) — Kernel-level AI optimizer for system calls and packages  
-- [T81Lang] — High-level ternary language with AI-native features  
-- [Alexis Linux] — A modern, AI-native operating system for Axion + HanoiVM
+- **T81Lang** — High-level ternary language with AI-native features  
+- [Alexis Linux](https://github.com/copyl-sys) — A modern, AI-native operating system for Axion + HanoiVM  
+- **Project Looking Glass** — 3D ternary visualization environment  
 
 ---
 
@@ -105,4 +112,4 @@ MIT License — see LICENSE file for details
 
 ---
 
-This updated `README.md` includes the **Axion AI** integration, **ternary stack operations**, and **recursive execution logic** in HanoiVM. It's tailored to reflect the **AI-enhanced features**, the modular structure, and the current project milestones.
+This updated `README.md` includes **Axion AI** integration, the **recursive stack operations**, **TISC compiler backend**, and other recent advancements in HanoiVM, reflecting its evolving capabilities and current project milestones.
