@@ -7,7 +7,10 @@
 | **T81Lang**             | Language grammar, compiler backend, REPL, JIT           | ✅ Documented          | **90%**    |
 | **T81VM**               | Tiered ternary virtual machine for `.t81` / `.hvm`      | ✅ Symbolic Complete   | **85%**    |
 | **T81 Data Types**      | BigInt, Float, Fraction, Graph, Tensor, etc.            | ✅ Extended + Ops      | **95–100%**|
-| **T81 Compiler**        | Lexer → AST → Optimizer → TISC                          | 🔄 Parser Progress     | **50%**    |
+| **T81 Compiler**        | Full pipeline: Lexer → AST → Semantic → IR → HVM        | ✅ Working End-to-End  | **95%**    |
+| **IR Generation**       | Emit IR from AST with symbolic ops                        | ✅ Complete             | **100%**   |
+| **HVM Emitter**         | Convert IR to `.hvm` bytecode                             | ✅ Functional           | **100%**   |
+| **HVM Interpreter**     | Execute `.hvm` with register map + RETURN                 | ✅ Interactive          | **100%**   |
 | **T81TISC**             | Instruction Set (AI/Crypto/Physics)                     | ✅ Complete Spec       | **100%**   |
 | **Axion AI**            | AI kernel module for rollback + optimization            | ✅ Complete            | **100%**   |
 | **Axion Package Format**| `.cweb`-based AI package system                         | ✅ Functional + Logging| **90%**    |
