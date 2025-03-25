@@ -40,6 +40,18 @@ HanoiVM fuses:
 - **As a driver prototype**: Simulate future hardware logic units
 - **As a security experiment**: Use rollback hooks, entropy monitors, and AI-guided ops
 
+
+---
+
+## 🧠 T81Lang Compiler Stack (Phase 3)
+
+T81Lang is now a fully recursive ternary language and compiler targeting `.hvm` bytecode:
+
+- ✒️ Literate syntax (`.t81`) defined via `t81lang_grammar.ebnf`
+- ⚙️ Full pipeline: Lexer → AST → Semantic → IR → `.hvm`
+- 🧮 IR encodes symbolic ternary ops aligned to T81 data types
+- 📤 `.hvm` output executed via `hvm_interpreter.cweb`
+- 🧠 Compiler driven by Axion-compatible architecture
 ---
 
 ## 🤝 AI Co-development Note
