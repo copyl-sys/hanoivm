@@ -42,6 +42,16 @@
   - Includes compiler, VM, disassembler, recursive tier runner, and pattern engine
   - Ready for developer testing, research deployment, and symbolic hacking
 
+- **🌀 Recursive Export Pipeline:**
+  - Introduced `recursion_exporter.cweb` for exporting `.t81viz` recursion trace files
+  - Includes Axion annotations, τ[27] entropy state, symbolic intent, and ternary stack traces
+
+- **🖼️ Project Looking Glass (Initial):**
+  - Created `FrameSceneBuilder.cweb`, a jMonkeyEngine-based 3D visualizer
+  - Visualizes `.t81viz` files using geometry per tier (box, box, sphere for T81, T243, T729)
+  - Includes color-coded ternary state rendering, Axion overlays, and HUD labels
+  - Added `PulseControl` animation for entropy hotspots (Δτ > 0.5)
+
 ---
 
 ### 🔧 Changed
@@ -82,9 +92,9 @@
 ### 🔮 Notes
 
 - This version introduces full symbolic stack tiers (T243, T729) and establishes the foundation for HanoiVM as a **literate recursive virtual machine with AI-first logic**.
-- Future versions will expand `.t81` → `.hvm` REPL, 3D recursion visualizer (`Project Looking Glass`), and LLVM/IR backends.
+- Looking Glass now has a visual foundation via `FrameSceneBuilder.cweb`.
+- Future versions will expand `.t81` → `.hvm` REPL, mouse-hover introspection, optimization timeline overlays, and Axion streaming.
 
 ---
 
 > _“This is not perfect. It is recursive.”_ — `manifesto.cweb`
-
