@@ -1,0 +1,77 @@
+@* advanced_ops_ext.cweb — T243 and T729 Logical Extensions for HanoiVM *@
+
+@c
+#include "t81types.h"
+#include "hvm_context.h"
+#include "t243_ops.h"
+#include "t729_intent.h"
+#include "t729_holotensor.h"
+
+@* New Opcode Enum Extensions *@
+@c
+typedef enum {
+    OP_T243_STATE_ADV  = 0x30,  // Advance state machine
+    OP_T729_INTENT     = 0x31,  // Dispatch intent-based logic
+    OP_T729_HOLO_FFT   = 0x32,  // Fourier transform on ternary holotensor
+    OP_T729_META_EXEC  = 0x33   // Meta-opcode execution
+} ExtendedOpcode;
+
+@* Opcode Evaluation Extension *@
+@c
+uint81_t evaluate_extended_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext* ctx) {
+    switch (op) {
+        case OP_T243_STATE_ADV: {
+            if (ctx->mode < MODE_T243) {
+                fprintf(stderr, "[ERROR] OP_T243_STATE_ADV requires T243 or higher\n");
+                return (uint81_t){0};
+            }
+            T243StateVector* sv = ctx->state_vector;
+            t243_state_advance(sv, t81_to_int(a));
+            return t81_from_int(sv->current_state);
+        }
+
+        case OP_T729_INTENT: {
+            if (ctx->mode < MODE_T729) {
+                fprintf(stderr, "[ERROR] OP_T729_INTENT requires T729 mode\n");
+                return (uint81_t){0};
+            }
+            T729Intent intent = {
+                .opcode = OP_ADD,
+                .modifiers = ctx->ai_flags,
+                .entropy_weight = ctx->entropy
+            };
+            t729_intent_dispatch(&intent);
+            return t81_from_int(1);  // Success
+        }
+
+        case OP_T729_HOLO_FFT: {
+            if (ctx->mode < MODE_T729) {
+                fprintf(stderr, "[ERROR] OP_T729_HOLO_FFT requires T729 mode\n");
+                return (uint81_t){0};
+            }
+            T729HoloTensor* input = ctx->holo_input;
+            T729HoloTensor* result = NULL;
+            t729_holo_fft(input, &result);
+            ctx->holo_output = result;
+            return t81_from_int(1);  // Success
+        }
+
+        case OP_T729_META_EXEC: {
+            if (ctx->mode < MODE_T729) {
+                fprintf(stderr, "[ERROR] OP_T729_META_EXEC requires T729 mode\n");
+                return (uint81_t){0};
+            }
+            T729MetaOpcode mop = {
+                .base_opcode = OP_ADD,
+                .condition_mask = ctx->entropy,
+                .state_fingerprint = *ctx->state_vector
+            };
+            t729_meta_execute(&mop);
+            return t81_from_int(1);  // Placeholder return
+        }
+
+        default:
+            fprintf(stderr, "[EXT] Unknown extended opcode 0x%02X\n", op);
+            return (uint81_t){0};
+    }
+}
