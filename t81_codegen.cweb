@@ -10,6 +10,7 @@ and build system integration for CMake.
 @<T81TargetMachine.cpp@>
 @<T81ISelLowering.cpp@>
 @<T81DAGISel.cpp@>
+@<T81InstrPatterns.td@>
 @<T81.td@>
 @<CMakeLists.txt@>
 
@@ -71,10 +72,14 @@ T81TargetLowering::T81TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::ADD, MVT::i32, Legal);
   setOperationAction(ISD::SUB, MVT::i32, Legal);
   setOperationAction(ISD::MUL, MVT::i32, Legal);
+  setOperationAction(ISD::LOAD, MVT::i32, Legal);
+  setOperationAction(ISD::STORE, MVT::i32, Legal);
 
-  // Conditional branch mapping
-  setOperationAction(ISD::BR_CC, MVT::Other, Expand);
+  // Conditional and unconditional branches
+  setOperationAction(ISD::BR_CC, MVT::i32, Expand);
   setOperationAction(ISD::BR, MVT::Other, Legal);
+  setOperationAction(ISD::SELECT, MVT::i32, Legal);
+  setOperationAction(ISD::PHI, MVT::i32, Expand);
 }
 
 SDValue T81TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
@@ -117,6 +122,49 @@ public:
 FunctionPass *createT81ISelDag(T81TargetMachine &TM) {
   return new T81DAGISel(TM);
 }
+
+@*1 T81InstrPatterns.td - Instruction Selection Patterns.
+@<T81InstrPatterns.td@>=
+include "T81InstrInfo.td"
+include "llvm/Target/TargetSelectionDAG.td"
+
+// Pattern to select tadd from ISD::ADD
+def : Pat<(add T81GPR:$lhs, T81GPR:$rhs),
+          (TADD T81GPR:$lhs, T81GPR:$rhs)>;
+
+// Pattern to select tsub from ISD::SUB
+def : Pat<(sub T81GPR:$lhs, T81GPR:$rhs),
+          (TSUB T81GPR:$lhs, T81GPR:$rhs)>;
+
+// Pattern to select tmul from ISD::MUL
+def : Pat<(mul T81GPR:$lhs, T81GPR:$rhs),
+          (TMUL T81GPR:$lhs, T81GPR:$rhs)>;
+
+// Pattern to select tld from ISD::LOAD
+def : Pat<(load T81GPR:$addr),
+          (TLD T81GPR:$addr)>;
+
+// Pattern to select tst from ISD::STORE
+def : Pat<(store T81GPR:$val, T81GPR:$addr),
+          (TST T81GPR:$val, T81GPR:$addr)>;
+
+// Pattern to select tbr from ISD::BR
+def : Pat<(br bb:$dst),
+          (TBR bb:$dst)>;
+
+// Pattern to select tbrz conditional branch (x == 0)
+def : Pat<(brcond (i32 (seteq T81GPR:$cond, 0)), bb:$dst),
+          (TBRZ T81GPR:$cond, bb:$dst)>;
+
+// Pattern to select tbrnz conditional branch (x != 0)
+def : Pat<(brcond (i32 (setne T81GPR:$cond, 0)), bb:$dst),
+          (TBRNZ T81GPR:$cond, bb:$dst)>;
+
+// Pattern to select ternary select
+// select cond ? a : b
+
+def : Pat<(select T81GPR:$cond, T81GPR:$if_true, T81GPR:$if_false),
+          (TSEL T81GPR:$cond, T81GPR:$if_true, T81GPR:$if_false)>;
 
 @*1 T81.td - Top-Level Target Definition.
 @<T81.td@>=
