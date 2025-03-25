@@ -1,3 +1,10 @@
+Here’s the updated **`ROADMAP.md`** with all the recent additions for v0.7:
+
+---
+
+### ✅ `ROADMAP.md`
+
+```markdown
 # **HanoiVM — Project Roadmap**
 
 HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T243**, and **T729** stack architectures. It is a cornerstone of the broader unified ternary computing ecosystem, including **T81Lang**, **Axion AI**, and **Alexis Linux**.
@@ -81,6 +88,8 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - [x] Recursive tier demo: visual console simulation  
 - [x] DebugFS test kernel module: `hanoivm-test.ko`  
 - [x] T729/T243 introspection with Axion AI hooks  
+- [x] T81 recursion support: `t81recursion.cweb`, `t81recursion.h`  
+- [x] Axion runtime log viewer: `logviewer.cweb`  
 
 ---
 
@@ -89,8 +98,8 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - [x] Axion ↔ GAIA symbolic GPU backend (HIP)  
   - [x] `gaia_handle_request()` dispatch  
   - [x] ROCm `entropy_delta()` and ternary transform  
-- [x] CUDA backend for symbolic transformation (in progress)  
-- [ ] Symbolic disassembly runtime with recursive type inspection  
+- [x] CUDA backend for symbolic transformation  
+- [x] Symbolic disassembly runtime with recursive type inspection  
 - [ ] Project Looking Glass: export recursive runtime + AI patterns to 3D  
 - [ ] `hipGraphLaunch` or `cuGraphExec` support for macro pipelines  
 - [ ] VM metadata blockchain + AI mode logs  
@@ -127,5 +136,10 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - ✅ **Pattern dispatcher** integrated (`t81_patterns.cweb`) with AI signal awareness  
 - ✅ **Recursive tier execution simulation** supports T81 → T243 → T729 transitions  
 - ✅ **Kernel-space test module** logs performance + entropy behavior (via debugfs)  
-- 🔜 **Symbolic disassembler with recursive T81 type introspection**  
+- ✅ **Symbolic disassembler** now supports full T81 type introspection  
+- ✅ **T81Recursion library** added: canonical AI-aware symbolic logic  
+- ✅ **Log viewer** implemented for Axion + HanoiVM logs with timestamped filtering  
 - 🔜 **T81Lang REPL → bytecode pipeline** under compiler test integration  
+```
+
+Let me know if you'd like all these updates written back to the original `.md` files in your project.
