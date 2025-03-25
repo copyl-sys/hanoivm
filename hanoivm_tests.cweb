@@ -2,13 +2,13 @@
 This test suite verifies correctness and stability across HanoiVM components,
 including arithmetic modules, VM execution, assembler behavior, and AI hooks.
 
-Test results should be logged and benchmarked for further AI optimizations.
-
+Test results are logged with execution times for benchmarking future AI optimizations.
 @c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
 
 #include "libt81.h"
 #include "libt243.h"
@@ -27,10 +27,18 @@ These macros help validate output and isolate test failures.
 #define FAIL(msg) { fprintf(stderr, "✗ Failed: %s\n", msg); exit(EXIT_FAILURE); }
 @#
 
+@* Benchmark macros.
+Measure execution time for each test.
+@c
+#define TIME_START clock_t start = clock();
+#define TIME_END { clock_t end = clock(); double elapsed = (double)(end - start) / CLOCKS_PER_SEC; printf("Test completed in %.3f seconds\n\n", elapsed); }
+@#
+
 @* Test T81 Arithmetic.
 @c
 void test_t81_arithmetic() {
     TEST_CASE("T81 Arithmetic")
+    TIME_START
 
     T81BigInt a = t81_from_string("40");
     T81BigInt b = t81_from_string("41");
@@ -39,6 +47,8 @@ void test_t81_arithmetic() {
     if (strcmp(t81_to_string(sum), "81") != 0) FAIL("T81 addition failed");
 
     t81_free(a); t81_free(b); t81_free(sum);
+
+    TIME_END
     PASS();
 }
 @#
@@ -47,6 +57,7 @@ void test_t81_arithmetic() {
 @c
 void test_t243_arithmetic() {
     TEST_CASE("T243 Arithmetic")
+    TIME_START
 
     T243 a = t243_from_int(243);
     T243 b = t243_from_int(1);
@@ -54,6 +65,7 @@ void test_t243_arithmetic() {
     T243 sum = t243_add(a, b);
     if (t243_to_int(sum) != 244) FAIL("T243 addition failed");
 
+    TIME_END
     PASS();
 }
 @#
@@ -62,6 +74,7 @@ void test_t243_arithmetic() {
 @c
 void test_t729_arithmetic() {
     TEST_CASE("T729 Arithmetic")
+    TIME_START
 
     T729 x = t729_from_int(365);
     T729 y = t729_from_int(364);
@@ -69,6 +82,7 @@ void test_t729_arithmetic() {
     T729 total = t729_add(x, y);
     if (t729_to_int(total) != 729) FAIL("T729 addition failed");
 
+    TIME_END
     PASS();
 }
 @#
@@ -77,27 +91,49 @@ void test_t729_arithmetic() {
 @c
 void test_stack_push_pop() {
     TEST_CASE("Stack Push/Pop")
+    TIME_START
 
     Stack* s = stack_init(10);
     stack_push(s, 81);
     int value = stack_pop(s);
-
     if (value != 81) FAIL("Stack push/pop failed");
     stack_free(s);
+
+    TIME_END
     PASS();
 }
 @#
 
-@* Test VM Instruction Execution.
+@* Test VM NOP Instruction Execution.
 @c
 void test_vm_exec_nop() {
     TEST_CASE("VM NOP Execution")
+    TIME_START
 
     HanoiVM* vm = vm_init();
     Opcode nop = { .code = OP_NOP };
     vm_exec(vm, &nop);
-
     vm_free(vm);
+
+    TIME_END
+    PASS();
+}
+@#
+
+@* Test VM Multiple Instructions Execution.
+@c
+void test_vm_exec_multiple() {
+    TEST_CASE("VM Multiple Instructions Execution")
+    TIME_START
+
+    HanoiVM* vm = vm_init();
+    Opcode nop = { .code = OP_NOP };
+    for (int i = 0; i < 5; i++) {
+        vm_exec(vm, &nop);
+    }
+    vm_free(vm);
+
+    TIME_END
     PASS();
 }
 @#
@@ -106,41 +142,62 @@ void test_vm_exec_nop() {
 @c
 void test_assembler_compile() {
     TEST_CASE("Assembler Compilation")
+    TIME_START
 
     const char* code = "NOP\nHALT\n";
     Bytecode* bc = t81asm_compile(code);
-
     if (bc->length != 2) FAIL("Assembler output incorrect");
     t81asm_free(bc);
+
+    TIME_END
     PASS();
 }
 @#
 
-@* Test AI Hook Return.
+@* Test AI Hook Ping.
 @c
 void test_ai_hook_ping() {
     TEST_CASE("AI Hook Ping")
+    TIME_START
 
     const char* reply = ai_hook_eval("PING");
     if (strcmp(reply, "PONG") != 0) FAIL("AI hook did not return PONG");
 
+    TIME_END
+    PASS();
+}
+@#
+
+@* Test AI Hook with Invalid Command.
+Assumes that an invalid command returns "ERROR".
+@c
+void test_ai_hook_invalid() {
+    TEST_CASE("AI Hook Invalid Command")
+    TIME_START
+
+    const char* reply = ai_hook_eval("INVALID");
+    if (strcmp(reply, "ERROR") != 0) FAIL("AI hook did not return ERROR for invalid command");
+
+    TIME_END
     PASS();
 }
 @#
 
 @* Entry Point.
-Run all registered tests. Later versions may implement parallel testing or benchmarking.
+Run all registered tests.
 @c
 int main() {
-    printf("=== HanoiVM Test Suite ===\n\n");
+    printf("=== HanoiVM Comprehensive Test Suite ===\n\n");
 
     test_t81_arithmetic();
     test_t243_arithmetic();
     test_t729_arithmetic();
     test_stack_push_pop();
     test_vm_exec_nop();
+    test_vm_exec_multiple();
     test_assembler_compile();
     test_ai_hook_ping();
+    test_ai_hook_invalid();
 
     printf("All tests passed.\n");
     return 0;
