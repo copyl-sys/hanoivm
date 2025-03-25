@@ -98,6 +98,7 @@ advanced_ops.cweb              — T81-level extended operations
 advanced_ops_ext.cweb          — T243 + T729 symbolic logic ops
 ai_hook.cweb                   — AI symbolic pattern feedback hook
 axion-ai.cweb                  — Axion kernel AI logic integration
+axion-api.cweb                 — Gives Recursion Exporter full Axion context integration
 axion_gpu_request.cweb         — GPU request abstraction for Axion AI
 axion-gaia-interface.cweb      — HIP dispatch bridge for GPU execution
 build-all.cweb                 — Build orchestration script
