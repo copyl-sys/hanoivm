@@ -1,4 +1,4 @@
-# BUILD file for HanoiVM disassembler CI test
+# BUILD file for HanoiVM disassembler and symbolic ternary CI test
 
 # ----------------------------- ADVANCED TESTS -----------------------------
 
@@ -77,7 +77,6 @@ cc_binary(
 
 # ---------------------------- TENSOR & BIGINT TESTS -----------------------------
 
-# T729 Tensor Operations Test
 genrule(
     name = "generate_test_t729tensor_hvm",
     srcs = ["test_t729tensor_hvm.cweb"],
@@ -101,7 +100,6 @@ cc_binary(
     deps = [],
 )
 
-# T243 BigInt Operations Test
 genrule(
     name = "generate_test_t243bigint_hvm",
     srcs = ["test_t243bigint_hvm.cweb"],
@@ -125,9 +123,8 @@ cc_binary(
     deps = [],
 )
 
-# --------------------------- AXION AI TESTS ---------------------------
+# --------------------------- AXION AI + GPU BACKEND TESTS ---------------------------
 
-# Axion AI Integration Test
 genrule(
     name = "generate_test_axion_ai_hvm",
     srcs = ["test_axion_ai_hvm.cweb"],
@@ -149,6 +146,50 @@ cc_binary(
     name = "test_axion_ai_hvm",
     srcs = ["test_axion_ai_hvm.cweb"],
     deps = [],
+)
+
+# ---------------------------- GAIA/CUDA GPU BACKEND TEST ----------------------------
+
+cc_binary(
+    name = "test_gaia_transform",
+    srcs = ["gaia_handle_request.cweb"],
+    deps = [
+        "//ai_hook:ai_hook",
+        "//t81_patterns:t81_patterns",
+    ],
+)
+
+cc_binary(
+    name = "test_cuda_transform",
+    srcs = ["cuda_handle_request.cu"],
+    deps = [
+        "//ai_hook:ai_hook",
+        "//t81_patterns:t81_patterns",
+    ],
+)
+
+# ---------------------------- T81 PATTERN TEST ----------------------------
+
+cc_binary(
+    name = "t81_patterns_test",
+    srcs = ["t81_patterns.cweb"],
+    deps = [
+        "//ai_hook:ai_hook",
+        "//gaia_handle_request:gaia_handle_request",
+    ],
+)
+
+# --------------------------- SIMULATION + TIER PROMOTION ---------------------------
+
+cc_binary(
+    name = "recursive_tier_demo",
+    srcs = ["recursive_tier_execution.cweb"],
+    deps = [
+        "//t81_stack:t81_stack",
+        "//t243bigint:t243bigint",
+        "//t729tensor:t729tensor",
+        "//ai_hook:ai_hook",
+    ],
 )
 
 # ----------------------------- CLEANUP -----------------------------
