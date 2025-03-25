@@ -69,6 +69,7 @@ uint81_t pop81u(void) {
 
 void execute_vm(void) {
     HVMContext ctx = { .ip = 0, .halted = 0, .recursion_depth = 0, .mode = MODE_T81, .mode_flags = 0, .call_depth = 0 };
+    t81_vm_init();  // Register advanced T81 type opcodes once
 
     while (!ctx.halted && ctx.ip < hvm_code_size) {
         uint8_t opcode = hvm_code[ctx.ip++];
