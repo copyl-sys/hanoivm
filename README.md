@@ -172,6 +172,4 @@ Use `t81_apply_pattern_by_name()` or `t81_dispatch_pattern()` for AI-driven cont
 MIT License — see `LICENSE` for full terms.
 
 > 🧠 “Recursion is not just a structure—it’s the soul of ternary.”
-```
 
-Let me know when you're ready for the updated `ROADMAP.md`.
