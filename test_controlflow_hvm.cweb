@@ -1,10 +1,19 @@
-@* test_controlflow_hvm.cweb — Generates a .hvm test for control flow opcodes *@
+@* test_controlflow_hvm.cweb — Generates a .hvm test for control flow opcodes (Enhanced Version)
+   This module produces a binary .hvm file to exercise various control flow opcodes.
+   Enhancements include modular macros for opcode/operand writing, configurable output file,
+   and a dedicated test generation function for easy extension.
+@#
 
-@c
+@<Include Dependencies@>=
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+@#
 
+@<Macros for Writing Operands and Opcodes@>=
+/* Write a 9-byte operand from 32-bit values a, b and an 8-bit value c */
 void write_operand(FILE* f, uint32_t a, uint32_t b, uint8_t c) {
     fputc((a >> 24) & 0xFF, f);
     fputc((a >> 16) & 0xFF, f);
@@ -17,41 +26,66 @@ void write_operand(FILE* f, uint32_t a, uint32_t b, uint8_t c) {
     fputc(c, f);
 }
 
+/* Write an opcode followed immediately by an operand */
+void write_opcode_operand(FILE* f, uint8_t opcode, uint32_t a, uint32_t b, uint8_t c) {
+    fputc(opcode, f);
+    write_operand(f, a, b, c);
+}
+@#
+
+@<Generate Control Flow Test@>=
+/* Generates a test that exercises control flow opcodes:
+   - PUSH 0
+   - JZ (jump if zero) to address 0x0015
+   - PUSH 42 (should be skipped if the condition holds)
+   - JMP (unconditional jump) to address 0x001E
+   - CALL to address 0x0020
+   - RET (return from call)
+   - HALT
+*/
+void generate_controlflow_test(FILE* out) {
+    /* PUSH 0 */
+    write_opcode_operand(out, 0x01, 0, 0, 0);
+
+    /* JZ to address 0x0015 */
+    write_opcode_operand(out, 0x11, 0, 0, 0x15);
+
+    /* PUSH 42 (this instruction should be skipped if the JZ condition is met) */
+    write_opcode_operand(out, 0x01, 0, 0, 42);
+
+    /* JMP to address 0x001E (skip over the CALL block) */
+    write_opcode_operand(out, 0x10, 0, 0, 0x1E);
+
+    /* CALL to address 0x0020 */
+    write_opcode_operand(out, 0x13, 0, 0, 0x20);
+
+    /* RET */
+    fputc(0x14, out);
+
+    /* HALT */
+    fputc(0xFF, out);
+}
+@#
+
+@<Main Function@>=
 int main(int argc, char* argv[]) {
     const char* filename = "tests/test_controlflow.hvm";
-    if (argc > 1) filename = argv[1];
+    if (argc > 1) {
+        filename = argv[1];
+    }
     FILE* out = fopen(filename, "wb");
     if (!out) {
         perror("fopen");
         return 1;
     }
-
-    // PUSH 0
-    fputc(0x01, out);
-    write_operand(out, 0, 0, 0);
-
-    // JZ to 0x0015
-    fputc(0x11, out);
-    write_operand(out, 0, 0, 0x15);
-
-    // PUSH 42 (will be skipped)
-    fputc(0x01, out);
-    write_operand(out, 0, 0, 42);
-
-    // JMP to 0x001E (past CALL)
-    fputc(0x10, out);
-    write_operand(out, 0, 0, 0x1E);
-
-    // CALL to 0x0020
-    fputc(0x13, out);
-    write_operand(out, 0, 0, 0x20);
-
-    // RET
-    fputc(0x14, out);
-
-    // HALT
-    fputc(0xFF, out);
-
+    generate_controlflow_test(out);
     fclose(out);
+    printf("Control flow test written to %s\n", filename);
     return 0;
 }
+@#
+
+@* End of test_controlflow_hvm.cweb
+   This enhanced test generator supports modular opcode/operand writing and configurable
+   output, enabling easy extension of control flow tests for the HanoiVM accelerator.
+@*
