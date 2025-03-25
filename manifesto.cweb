@@ -136,6 +136,7 @@ recursive_exporter.cweb        — Extended recursion support with AxionAI annot
 recursive_tier_execution.cweb  — Simulates VM promotion/demotion
 simple_add.cweb                — Basic ternary addition sample
 telemetry-cli.cweb             — CLI for introspection and profiling
+
 ternary_arithmetic_optimization.cweb — Optimized ternary logic routines
 
 test_advanced_hvm.cweb         — Test suite for symbolic + AI instructions
@@ -160,6 +161,8 @@ tisc_backend.cweb              — Backend IR emitter for `.tisc` → `.hvm`
 tisc_compiler.cweb             — Compiler frontend
 tisc_ir.cweb                   — Instruction representation (IR)
 tisc_stdlib.cweb               — TISC standard library for high-level logic
+
+t81lang.cweb                   — T81Lang Grammer Specification
 
 write_simple_add.cweb          — Basic example with source + output
 
