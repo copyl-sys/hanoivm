@@ -3,7 +3,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "t81lang_lexer.cweb"
+
+// Note: The lexer should be linked externally via a separate compilation unit (e.g., t81lang_lexer.o).
+// Declare the lexer API as extern functions and types here for compatibility.
+
+#define MAX_TOKEN_LEN 256
+
+typedef enum {
+    TOKEN_EOF,
+    TOKEN_IDENTIFIER,
+    TOKEN_INTEGER_LITERAL,
+    TOKEN_FLOAT_LITERAL,
+    TOKEN_TERNARY_LITERAL,
+    TOKEN_STRING_LITERAL,
+    TOKEN_KEYWORD,
+    TOKEN_OPERATOR,
+    TOKEN_SYMBOL
+} TokenType;
+
+typedef struct {
+    TokenType type;
+    char lexeme[MAX_TOKEN_LEN];
+    int line;
+    int column;
+} Token;
+
+extern void set_source(const char* code);
+extern Token next_token();
 
 // AST Node Types
 typedef enum {
@@ -16,7 +42,9 @@ typedef enum {
     AST_LITERAL,
     AST_BINARY_EXPR,
     AST_CALL,
-    AST_TYPE
+    AST_TYPE,
+    AST_PARAM,
+    AST_TYPE_ANNOTATION
 } ASTNodeType;
 
 // AST Node Structure
@@ -61,6 +89,44 @@ ASTNode* parse_identifier() {
     return NULL;
 }
 
+ASTNode* parse_type() {
+    if (current.type == TOKEN_IDENTIFIER) {
+        ASTNode* type = create_node(AST_TYPE, current.lexeme);
+        advance_token();
+        return type;
+    }
+    return NULL;
+}
+
+ASTNode* parse_param() {
+    ASTNode* param = NULL;
+    ASTNode* id = parse_identifier();
+    if (id && match_token(TOKEN_SYMBOL) && strcmp(current.lexeme, ":") == 0) {
+        advance_token();
+        ASTNode* type = parse_type();
+        param = create_node(AST_PARAM, "param");
+        param->left = id;
+        param->right = type;
+    }
+    return param;
+}
+
+ASTNode* parse_param_list() {
+    if (!match_token(TOKEN_SYMBOL) || strcmp(current.lexeme, "(") != 0) return NULL;
+    advance_token();
+    ASTNode* head = NULL, *tail = NULL;
+    while (current.type != TOKEN_SYMBOL || strcmp(current.lexeme, ")") != 0) {
+        ASTNode* param = parse_param();
+        if (!param) break;
+        if (tail) tail->next = param;
+        else head = param;
+        tail = param;
+        if (current.type == TOKEN_SYMBOL && strcmp(current.lexeme, ",") == 0) advance_token();
+    }
+    match_token(TOKEN_SYMBOL); // consume ')'
+    return head;
+}
+
 ASTNode* parse_literal() {
     if (current.type == TOKEN_INTEGER_LITERAL ||
         current.type == TOKEN_FLOAT_LITERAL ||
@@ -100,7 +166,7 @@ ASTNode* parse_expression() {
 }
 
 ASTNode* parse_return() {
-    if (match_token(TOKEN_KEYWORD) && strcmp(current.lexeme, "return") == 0) {
+    if (current.type == TOKEN_KEYWORD && strcmp(current.lexeme, "return") == 0) {
         ASTNode* ret = create_node(AST_RETURN, "return");
         advance_token();
         ret->left = parse_expression();
@@ -116,14 +182,29 @@ ASTNode* parse_statement() {
 }
 
 ASTNode* parse_function() {
-    if (match_token(TOKEN_KEYWORD) && strcmp(current.lexeme, "fn") == 0) {
+    if (current.type == TOKEN_KEYWORD && strcmp(current.lexeme, "fn") == 0) {
         advance_token();
+        if (current.type != TOKEN_IDENTIFIER) return NULL;
         ASTNode* func = create_node(AST_FUNCTION, current.lexeme);
-        if (match_token(TOKEN_IDENTIFIER)) {
-            strncpy(func->name, current.lexeme, MAX_TOKEN_LEN);
+        advance_token();
+        func->left = parse_param_list();
+        if (match_token(TOKEN_OPERATOR) && strcmp(current.lexeme, "->") == 0) {
             advance_token();
+            func->right = parse_type();
         }
-        // TODO: parse parameters, return type, body
+        if (match_token(TOKEN_SYMBOL) && strcmp(current.lexeme, "{") == 0) {
+            advance_token();
+            ASTNode* stmt_list = NULL, *last = NULL;
+            while (current.type != TOKEN_SYMBOL || strcmp(current.lexeme, "}") != 0) {
+                ASTNode* stmt = parse_statement();
+                if (!stmt) break;
+                if (last) last->next = stmt;
+                else stmt_list = stmt;
+                last = stmt;
+            }
+            func->body = stmt_list;
+            match_token(TOKEN_SYMBOL); // consume '}'
+        }
         return func;
     }
     return NULL;
@@ -153,7 +234,7 @@ void print_ast(ASTNode* node, int depth) {
 
 // Example usage
 int main() {
-    const char* code = "fn main() -> T81BigInt { return 123t81; }";
+    const char* code = "fn main(x: T81BigInt) -> T81BigInt { return 123t81; }";
     set_source(code);
     advance_token();
     ASTNode* ast = parse_program();
