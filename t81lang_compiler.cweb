@@ -13,6 +13,7 @@ extern void analyze_program(struct ASTNode* root);
 extern void generate_program(struct ASTNode* root);
 extern void print_ir();
 extern void export_ir(const char* filename);
+extern void emit_hvm(const char* ir_file, const char* out_file);
 
 @d ASTNodeType Reference
 typedef enum {
@@ -59,16 +60,18 @@ void print_timestamp() {
 @d Compiler Pipeline
 int main(int argc, char** argv) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <source-file.t81> [--emit-ir] [--no-analysis]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <source-file.t81> [--emit-ir] [--no-analysis] [--emit-hvm]\n", argv[0]);
         return 1;
     }
 
     int emit_ir_flag = 0;
     int skip_analysis = 0;
+    int emit_hvm_flag = 0;
 
     for (int i = 2; i < argc; ++i) {
         if (strcmp(argv[i], "--emit-ir") == 0) emit_ir_flag = 1;
         if (strcmp(argv[i], "--no-analysis") == 0) skip_analysis = 1;
+        if (strcmp(argv[i], "--emit-hvm") == 0) emit_hvm_flag = 1;
     }
 
     FILE* f = fopen(argv[1], "r");
@@ -110,6 +113,12 @@ int main(int argc, char** argv) {
 
     export_ir("output.ir");
     printf("[Output] IR written to output.ir\n");
+
+    if (emit_hvm_flag) {
+        print_banner("HanoiVM Emission");
+        emit_hvm("output.ir", "output.hvm");
+        printf("[Output] HVM bytecode written to output.hvm\n");
+    }
 
     print_timestamp();
     free(code);
