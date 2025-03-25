@@ -1,8 +1,3 @@
-Here's your **reiterated `README.md`** for **HanoiVM**, updated and polished for public `v0.8` alpha release:
-
----
-
-```markdown
 # 🚀 HanoiVM — Recursive Ternary Virtual Machine
 
 **HanoiVM** is a recursive, AI-augmented **ternary virtual machine** built on a symbolic base-81 architecture. It is the execution core of the **Axion + T81Lang** ecosystem, enabling stack-tier promotion, symbolic AI opcodes, and entropy-aware transformations across three levels of logic:
@@ -171,9 +166,3 @@ bazel run //:recursive_tier_execution -- --max-depth=36
 ---
 
 > 🧠 “Recursion is not just a structure — it’s the soul of ternary.”
-```
-
----
-
-Would you like a `.html` or `.pdf` version generated for use in the GitHub release or docs viewer?  
-We could also render this into a banner or infographic to showcase in a tweet thread!
