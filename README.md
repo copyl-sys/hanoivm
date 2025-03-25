@@ -1,5 +1,3 @@
-Here’s the updated **`README.md`** reflecting the recent v0.7 updates:
-
 ---
 
 ### ✅ `README.md`
@@ -16,17 +14,18 @@ Here’s the updated **`README.md`** reflecting the recent v0.7 updates:
 - 🔺 **81-bit ternary operand architecture** (`uint81_t`)
 - 🔁 **Recursive tiered stacks**:
   - `T81` — register logic
-  - `T243` — BigInt symbolic math
-  - `T729` — tensor AI macros
+  - `T243` — BigInt symbolic math + FSM vector logic
+  - `T729` — tensor AI macros + symbolic intent dispatch
 - 🧠 **Symbolic & AI-aware opcodes**:
-  - `TNN_ACCUM`, `T81_MATMUL`, `RECURSE_FIB`, `RECURSE_FACT`
+  - `TNN_ACCUM`, `T81_MATMUL`, `T243_STATE_ADV`, `T729_INTENT`, `T729_META_EXEC`
   - Axion signal hooks for real-time optimization & rollback
-- 🎨 **T729Tensor engine**:
-  - Operations: `DOT`, `TRANS`, `SLICE`, `RESHAPE`, `CLONE`, `PRINT`
+- 🎨 **T729Tensor & HoloTensor engine**:
+  - Operations: `DOT`, `TRANS`, `SLICE`, `RESHAPE`, `CLONE`, `PRINT`, `FFT`
 - 🔢 **T243BigInt arithmetic**:
   - `ADD`, `MUL`, `TO_STRING`
 - ⚙️ **Axion AI** integration:
   - NLP commands (`optimize`, `rollback`, `snapshot`)
+  - AI-powered `T729Intent` & `T729MetaOpcode` dispatch
   - GPU offload using CUDA/HIP for symbolic macros
 - ⚡ **GAIA GPU backend**:
   - ROCm/HIP kernel `gaia_handle_request.cweb` for AMD GPUs
@@ -50,36 +49,38 @@ Here’s the updated **`README.md`** reflecting the recent v0.7 updates:
 
 ```bash
 src/
-├── hanoivm_vm.cweb           # Main interpreter
-├── advanced_ops.cweb         # TNN + matrix ops + AI macros
-├── t243bigint.cweb           # Recursive BigInt arithmetic
-├── t729tensor.cweb           # Base-729 tensor engine
-├── t81_patterns.cweb         # Symbolic transformation patterns (AI + GAIA aware)
-├── t81recursion.cweb         # Recursive computation primitives
-├── gaia_handle_request.cweb  # HIP backend for symbolic GPU ops
-├── cuda_handle_request.cu    # CUDA backend (if enabled)
-├── axion-ai.cweb             # Kernel AI logic + rollback
-├── disassembler.cweb         # Bytecode disassembler
-├── logviewer.cweb            # Log inspector for Axion + runtime metadata
+├── hanoivm_vm.cweb               # Main interpreter
+├── advanced_ops.cweb             # TNN + matrix ops + AI macros
+├── advanced_ops_ext.cweb         # T243/T729 symbolic logic, intent, FFT, meta
+├── t243bigint.cweb               # Recursive BigInt arithmetic
+├── t729tensor.cweb               # Base-729 tensor engine
+├── t81_patterns.cweb             # Symbolic transformation patterns (AI + GAIA aware)
+├── t81recursion.cweb             # Recursive computation primitives
+├── gaia_handle_request.cweb      # HIP backend for symbolic GPU ops
+├── cuda_handle_request.cu        # CUDA backend (if enabled)
+├── axion-ai.cweb                 # Kernel AI logic + rollback
+├── disassembler.cweb             # Bytecode disassembler
+├── logviewer.cweb                # Log inspector for Axion + runtime metadata
 ├── recursive_tier_execution.cweb # Demo driver for tier transitions
-├── tisc_backend.cweb         # TISC IR compiler and entropy analyzer
+├── tisc_backend.cweb             # TISC IR compiler and entropy analyzer
 
 tests/
-├── hanoivm-test.cweb         # Kernel module test suite via debugfs
-├── test_advanced_hvm.cweb    # Generator for AI-annotated bytecode
-├── t729tensor_to_string.cweb # Tensor serializer for logs/debug
+├── hanoivm-test.cweb             # Kernel module test suite via debugfs
+├── test_advanced_hvm.cweb        # Generator for AI-annotated bytecode
+├── t729tensor_to_string.cweb     # Tensor serializer for logs/debug
 
 scripts/
-├── disasm_*.sh               # Disassembler test cases
+├── disasm_*.sh                   # Disassembler test cases
 
 docs/
 ├── ROADMAP.md
 ├── CHANGELOG.md
+├── t243_t729.md                  # New: Documentation for FSM and symbolic AI layers
 
 bazel/
-├── BUILD                     # Bazel rules for VM, tests, and examples
+├── BUILD                         # Bazel rules for VM, tests, and examples
 
-README.md                     # You are here
+README.md                         # You are here
 ```
 
 ---
@@ -124,20 +125,20 @@ bazel run //:recursive_tier_execution -- --max-depth=36 --simulate-demotion
   - Pattern transformations
   - Rollback on entropy spikes
   - Promotion to higher tiers (T243, T729)
+  - Intent and symbolic dispatch via `T729Intent` & `T729MetaOpcode`
 
 ---
 
-## 🧠 Symbolic Pattern Registry
+## 🧠 Symbolic Pattern & Intent Registry
 
-Pattern logic is registered in `t81_patterns.cweb` and can be dynamically dispatched:
+- `t81_patterns.cweb` defines symbolic macros
+- `advanced_ops_ext.cweb` adds:
+  - `OP_T243_STATE_ADV`: FSM logic
+  - `OP_T729_INTENT`: entropy-weighted AI intent
+  - `OP_T729_HOLO_FFT`: tensor FFT engine
+  - `OP_T729_META_EXEC`: conditional symbolic opcode executor
 
-- `identity`
-- `negate`
-- `rotate`
-- `zero`
-- `gaia` — uses GPU for symbolic shift
-
-Use `t81_apply_pattern_by_name()` or `t81_dispatch_pattern()` for AI-driven control.
+Use `evaluate_extended_opcode()` from `advanced_ops_ext.cweb` for advanced symbolic logic.
 
 ---
 
@@ -145,16 +146,14 @@ Use `t81_apply_pattern_by_name()` or `t81_dispatch_pattern()` for AI-driven cont
 
 ✅ Recursive execution loop  
 ✅ Full T81/T243/T729 stack promotion logic  
-✅ Axion AI integration and feedback signals  
-✅ Tensor macro engine (T729Tensor) with slicing, transpose  
-✅ T243BigInt arithmetic and stringification  
-✅ Disassembler with T81-level verbosity and type introspection  
-✅ GPU symbolic backends: CUDA + HIP  
-✅ Symbolic recursion via `t81recursion.cweb`  
-✅ Log viewer (`logviewer.cweb`) for AI event search  
-✅ CI pipeline for AI macros, rollback, and validation  
-🔜 T81Lang-to-TISC compiler toolchain  
-🔜 Project Looking Glass 3D visualization
+✅ Axion AI integration and entropy feedback  
+✅ T729Tensor + HoloTensor with FFT  
+✅ T243 BigInt + FSM symbolic execution  
+✅ GPU symbolic backends (CUDA/HIP)  
+✅ `.hvm` disassembler and introspector  
+✅ Log viewer, rollback, snapshot support  
+🔜 T81Lang compiler backend to `.hvm`  
+🔜 T729 neural symbolic inference + Project Looking Glass UI  
 
 ---
 
@@ -172,4 +171,6 @@ Use `t81_apply_pattern_by_name()` or `t81_dispatch_pattern()` for AI-driven cont
 MIT License — see `LICENSE` for full terms.
 
 > 🧠 “Recursion is not just a structure—it’s the soul of ternary.”
+```
 
+---
