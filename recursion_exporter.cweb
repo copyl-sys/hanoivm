@@ -6,10 +6,20 @@
 #include "hanoivm_vm.h"
 #include "axion_api.h"
 #include "json_export.h"
-#include "t243_symbolic.h"      // New: T243 / T729 symbolic types
-#include "entropy.h"             // New: τ[27] entropy analysis interface
 
 #define MAX_JSON_DEPTH 729
+
+@d detect_active_tier(ctx)
+  ((ctx)->tier_mode == 729 ? "T729" : ((ctx)->tier_mode == 243 ? "T243" : "T81"))
+
+@d get_symbolic_opcode(ctx)
+  ((ctx)->symbolic_opcode ? (ctx)->symbolic_opcode : "NOP")
+
+@d get_symbolic_intent(ctx)
+  ((ctx)->intent_label ? (ctx)->intent_label : "None")
+
+@d measure_entropy_delta(ctx)
+  ((ctx)->tau[27] - (ctx)->tau_prev[27])
 
 typedef struct {
     char function_name[81];
@@ -60,12 +70,10 @@ void capture_recursive_frame(HVMContext* ctx, const char* func_name, int depth) 
         frame->locals[i] = ctx->stack[ctx->stack_ptr].locals[i];
     }
 
-    // Axion annotations
     axion_frame_optimize(ctx, frame->axion_annotation, sizeof(frame->axion_annotation));
     frame->axion_optimization_score = axion_predict_score(ctx);
     frame->axion_suggested_collapse = axion_suggest_tail_collapse(ctx);
 
-    // Tier and symbolic data
     strncpy(frame->active_tier, detect_active_tier(ctx), 15);
     strncpy(frame->symbolic_opcode, get_symbolic_opcode(ctx), 80);
     strncpy(frame->intent_label, get_symbolic_intent(ctx), 80);
@@ -87,14 +95,12 @@ void export_recursion_trace(const char* output_path) {
         fprintf(f, "      \"depth\": %d,\n", frame->depth_level);
         fprintf(f, "      \"ternaryState\": \"%s\",\n", ternary_state_symbol(frame->ternary_state));
 
-        // Axion metadata
         fprintf(f, "      \"axion\": {\n");
         fprintf(f, "        \"annotation\": \"%s\",\n", frame->axion_annotation);
         fprintf(f, "        \"optimizationScore\": %.4f,\n", frame->axion_optimization_score);
         fprintf(f, "        \"suggestedCollapse\": %s\n", frame->axion_suggested_collapse ? "true" : "false");
         fprintf(f, "      },\n");
 
-        // Symbolic tier metadata
         fprintf(f, "      \"tier\": {\n");
         fprintf(f, "        \"activeTier\": \"%s\",\n", frame->active_tier);
         fprintf(f, "        \"symbolicOpcode\": \"%s\",\n", frame->symbolic_opcode);
