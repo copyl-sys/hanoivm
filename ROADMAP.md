@@ -1,10 +1,3 @@
-Here’s the updated **`ROADMAP.md`** with all the recent additions for v0.7:
-
----
-
-### ✅ `ROADMAP.md`
-
-```markdown
 # **HanoiVM — Project Roadmap**
 
 HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T243**, and **T729** stack architectures. It is a cornerstone of the broader unified ternary computing ecosystem, including **T81Lang**, **Axion AI**, and **Alexis Linux**.
@@ -43,15 +36,17 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 ## 🧬 Phase 2: Recursive Expansion (T243 & T729)
 
 - [x] Implement `T243BigInt` logic and VM opcodes  
-  - [x] `OP_T243_ADD`, `OP_T243_MUL`, `OP_T243_PRINT`  
 - [x] Implement `T729Tensor` engine and VM opcodes  
-  - [x] `OP_T729_DOT`, `OP_T729_TRANS`, `OP_T729_SLICE`, `OP_T729_PRINT`  
 - [x] Literate `.cweb` modules for tensor ops and transformation  
-  - [x] `t729tensor_to_string`, `reshape`, `transpose`, `slice`, `contract`  
 - [x] Tensor cloning, printing, validation  
 - [x] Recursive tier logic with demotion/promotion handlers  
-  - [x] `simulate_execution()` and depth-controlled tier switching  
-  - [x] Axion tier logs for entropy-based decisions  
+- [x] Axion tier logs for entropy-based decisions  
+- [x] **T243 FSM Support** via `T243StateVector`  
+- [x] **T729 Symbolic Execution** via `T729Intent`, `T729MetaOpcode`  
+- [x] **T729 HoloTensor** + FFT dispatch logic  
+- [x] `advanced_ops_ext.cweb` module with symbolic opcodes:
+  - [x] `OP_T243_STATE_ADV`, `OP_T729_INTENT`
+  - [x] `OP_T729_HOLO_FFT`, `OP_T729_META_EXEC`
 
 ---
 
@@ -72,10 +67,9 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - [x] JSON metadata telemetry via `axion_log_event_json()`  
 - [x] Anomaly-triggered rollback routines  
 - [x] NLP-based runtime command hooks: `optimize`, `rollback`, `snapshot`  
-- [x] Symbolic logic introspection and entropy detection  
 - [x] Pattern dispatcher via `t81_patterns.cweb`  
-  - [x] Patterns: `identity`, `negate`, `rotate`, `zero`, `gaia` (GPU)  
-  - [x] `t81_dispatch_pattern()` linked to Axion AI signal  
+- [x] Symbolic opcodes for AI-driven execution via `T729Intent`, `MetaOpcode`  
+- [x] Logging of symbolic entropy transformations in `axion.meta.json`  
 
 ---
 
@@ -90,19 +84,19 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 - [x] T729/T243 introspection with Axion AI hooks  
 - [x] T81 recursion support: `t81recursion.cweb`, `t81recursion.h`  
 - [x] Axion runtime log viewer: `logviewer.cweb`  
+- [x] Markdown documentation for symbolic execution (`t243_t729.md`)  
 
 ---
 
 ## 🔮 Phase 6: Advanced Features
 
 - [x] Axion ↔ GAIA symbolic GPU backend (HIP)  
-  - [x] `gaia_handle_request()` dispatch  
-  - [x] ROCm `entropy_delta()` and ternary transform  
 - [x] CUDA backend for symbolic transformation  
 - [x] Symbolic disassembly runtime with recursive type inspection  
 - [ ] Project Looking Glass: export recursive runtime + AI patterns to 3D  
 - [ ] `hipGraphLaunch` or `cuGraphExec` support for macro pipelines  
 - [ ] VM metadata blockchain + AI mode logs  
+- [ ] T729LogicGraph / symbolic AI graph IR backend  
 
 ---
 
@@ -130,16 +124,11 @@ HanoiVM is a recursive ternary virtual machine designed to support **T81**, **T2
 
 ---
 
-### 🔄 Updates Summary (March 2025)
+### 🔄 Updates Summary (v0.8 — March 2025)
 
-- ✅ **Axion ↔ GAIA ROCm GPU backend** implemented with entropy-aware transformation  
-- ✅ **Pattern dispatcher** integrated (`t81_patterns.cweb`) with AI signal awareness  
-- ✅ **Recursive tier execution simulation** supports T81 → T243 → T729 transitions  
-- ✅ **Kernel-space test module** logs performance + entropy behavior (via debugfs)  
-- ✅ **Symbolic disassembler** now supports full T81 type introspection  
-- ✅ **T81Recursion library** added: canonical AI-aware symbolic logic  
-- ✅ **Log viewer** implemented for Axion + HanoiVM logs with timestamped filtering  
-- 🔜 **T81Lang REPL → bytecode pipeline** under compiler test integration  
-```
-
-Let me know if you'd like all these updates written back to the original `.md` files in your project.
+- ✅ `advanced_ops_ext.cweb` added with symbolic opcode support for T243 and T729 tiers  
+- ✅ New data types: `T243StateVector`, `T729Intent`, `T729MetaOpcode`, `T729HoloTensor`  
+- ✅ FFT support for ternary HoloTensors via Axion symbolic dispatch  
+- ✅ Opcode dispatch updated with tier-aware symbolic execution paths  
+- ✅ Full header embedding for T243/T729 types in literate `.cweb` modules  
+- ✅ Updated `README.md`, `STATUS.md`, `CHANGELOG.md`, and added `t243_t729.md`  
