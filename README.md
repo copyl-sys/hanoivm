@@ -1,68 +1,85 @@
-Here’s the updated `README.md` reflecting the latest developments and changes in the HanoiVM project:
+# **HanoiVM**
+
+**HanoiVM** is a recursive, AI-augmented **ternary virtual machine** built on a symbolic base-81 logic architecture. It forms the execution core of the **Axion + T81Lang** ecosystem, supporting **recursive stack tiers**, **TISC instruction dispatch**, and **GPU-accelerated symbolic macros**. Designed for both research and future hardware acceleration, it demonstrates a full-stack ternary computing platform.
 
 ---
 
-# HanoiVM
-
-HanoiVM is a **recursive ternary virtual machine** built to explore symbolic computing using base-81 logic. Designed as part of the broader **Axion + T81Lang** ecosystem, HanoiVM simulates a **Ternary Instruction Set Computer (TISC)** with support for **AI integration**, **ternary recursion**, and **future hardware acceleration**.
-
----
-
-## Features
+## 🔍 Features
 
 - 🔺 **81-bit ternary operand architecture** (`uint81_t`)
-- 🔁 **Recursive stack modes** for `T81`, `T243`, and `T729`
-- 🧠 **Symbolic opcodes for AI**, including:
-  - `TNN_ACCUM` — ternary neural accumulation
-  - `T81_MATMUL` — ternary matrix multiply
-- 🧩 **T729Tensor engine** for base-729 tensor manipulation:
-  - `OP_T729_DOT`, `OP_T729_TRANS`, `OP_T729_SLICE`, `OP_T729_PRINT`
+- 🔁 **Recursive tiered stacks**:
+  - `T81` — register logic
+  - `T243` — BigInt symbolic math
+  - `T729` — tensor AI macros
+- 🧠 **Symbolic & AI-aware opcodes**:
+  - `TNN_ACCUM`, `T81_MATMUL`, `RECURSE_FIB`, `RECURSE_FACT`
+  - Axion signal hooks for real-time optimization & rollback
+- 🎨 **T729Tensor engine**:
+  - Operations: `DOT`, `TRANS`, `SLICE`, `RESHAPE`, `CLONE`, `PRINT`
 - 🔢 **T243BigInt arithmetic**:
-  - `OP_T243_ADD`, `OP_T243_MUL`, `OP_T243_PRINT`
-- ⚙️ **AI integration** for dynamic optimizations, rollback mechanisms, and feedback loops via **Axion AI**
-- 📄 **`.cweb` literate programming format**:
-  - Modular, readable source code + inline docs
-- 🧪 **CI-integrated test suite** with `.hvm` bytecode disassembler
-- 🖥️ **T81Lang** integration for symbolic ternary language and **TISC Assembly** backend
-- 🛠️ **Project Looking Glass**: 3D visualization of ternary stack + operations (in development)
-- ⚡ Designed to connect with **Axion AI**, **T81Lang**, and **Project Looking Glass**
+  - `ADD`, `MUL`, `TO_STRING`
+- ⚙️ **Axion AI** integration:
+  - NLP commands (`optimize`, `rollback`, `snapshot`)
+  - GPU offload using CUDA/HIP for symbolic macros
+- ⚡ **GAIA GPU backend**:
+  - ROCm/HIP kernel `gaia_handle_request.cweb` for AMD GPUs
+  - CUDA mirror for NVIDIA
+- 🧬 **Symbolic pattern engine**:
+  - Defined in `t81_patterns.cweb`, supports GAIA-based transformation
+- 📄 **`.cweb` literate programming**:
+  - Inline documentation + modular architecture
+- 🧪 **Kernel-mode test harness** (`hanoivm-test.cweb`) via `debugfs`
+- 📦 **CI-integrated** test and disassembly for `.hvm` bytecode
+- 🧠 Full **TISC backend** support via `tisc_backend.cweb`
+- 🔍 **Disassembler** with verbose T81 decoding and operand introspection
 
 ---
 
-## Repository Structure
+## 🗂️ Repository Structure
 
 ```bash
-src/                    # Core VM engine and modules
-├── hanoivm_vm.cweb     # Main VM execution loop
-├── advanced_ops.cweb   # AI + symbolic opcode definitions
-├── t243bigint.cweb     # Base-243 BigInt logic
-├── t729tensor_*.cweb   # Base-729 tensor ops (dot, trans, reshape, slice)
-├── disassembler.cweb   # Pretty-print .hvm bytecode
+src/
+├── hanoivm_vm.cweb           # Main interpreter
+├── advanced_ops.cweb         # TNN + matrix ops + AI macros
+├── t243bigint.cweb           # Recursive BigInt arithmetic
+├── t729tensor.cweb           # Base-729 tensor engine
+├── t81_patterns.cweb         # Symbolic transformation patterns (AI + GAIA aware)
+├── gaia_handle_request.cweb  # HIP backend for symbolic GPU ops
+├── cuda_handle_request.cu    # CUDA backend (if enabled)
+├── axion-ai.cweb             # Kernel AI logic + rollback
+├── disassembler.cweb         # Bytecode disassembler
+├── recursive_tier_execution.cweb # Demo driver for tier transitions
+├── tisc_backend.cweb         # TISC IR compiler and entropy analyzer
 
-tests/                  
-├── t729tensor_loader.cweb # Loader for test tensors
-├── test_tensor.hvm     # Test vector for T729 stack ops
+tests/
+├── hanoivm-test.cweb         # Kernel module test suite via debugfs
+├── test_advanced_hvm.cweb    # Generator for AI-annotated bytecode
+├── t729tensor_to_string.cweb # Tensor serializer for logs/debug
 
-scripts/                # CI test validators
-├── disasm_*.sh         # grep-based assertion tests
+scripts/
+├── disasm_*.sh               # Disassembler test cases
 
-BUILD                   # Bazel build + test logic
-ci.yaml                 # GitHub Actions CI config
-README.md               # This file
-ROADMAP.md              # Project roadmap & milestones
+docs/
+├── ROADMAP.md
+├── CHANGELOG.md
+
+bazel/
+├── BUILD                     # Bazel rules for VM, tests, and examples
+
+README.md                     # You are here
 ```
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
-### Build VM + Tools
+### 🔧 Build
 
 ```bash
 bazel build //...
 ```
 
-### Run All Tests
+### ✅ Run Tests
 
 ```bash
 bazel test //:disasm_advanced_test
@@ -70,46 +87,73 @@ bazel test //:disasm_controlflow_test
 bazel test //:disasm_logic_test
 ```
 
-### Manual Tensor Test
+### 🧠 Kernel Module Test Harness
 
 ```bash
-bazel run //tests:t729tensor_loader
+sudo insmod hanoivm-test.ko
+cat /sys/kernel/debug/hanoivm-test
+```
+
+### 🔬 Tensor & Tier Demo
+
+```bash
+bazel run //:recursive_tier_execution -- --max-depth=36 --simulate-demotion
 ```
 
 ---
 
-## Project Status
+## 🧩 Axion AI + GAIA GPU Integration
 
-✅ **Core VM + stack ops** integrated  
-✅ **Symbolic AI opcodes** implemented  
-✅ **Disassembler + CI test suite** active  
-✅ **Base-243 BigInt ops** supported  
-✅ **Base-729 Tensor ops** (`DOT`, `TRANS`, `SLICE`, `PRINT`) implemented  
-✅ **`.cweb` literate modules** for all features  
-✅ **Recursive stack promotion/demotion** (T81 ↔ T243 ↔ T729) fully implemented  
-✅ **Axion AI integration** for dynamic optimizations and rollback  
-✅ **T81Lang** → **TISC Assembly** compiler backend  
-🔄 `.hvm` bytecode test compiler for T729 ops in progress  
-🔜 Full **T81Lang** + `.t81` source-to-bytecode compiler  
-🔜 **Project Looking Glass** visualization export  
+- Send ternary macros to GPU via:
+  - `cuda_handle_request.cu` for NVIDIA
+  - `gaia_handle_request.cweb` via HIP for AMD
+- Axion signals determine:
+  - Pattern transformations
+  - Rollback on entropy spikes
+  - Promotion to higher tiers (T243, T729)
 
 ---
 
-## Related Projects
+## 🧠 Symbolic Pattern Registry
 
-- [Axion AI](https://github.com/copyl-sys) — Kernel-level AI optimizer for system calls and packages  
-- **T81Lang** — High-level ternary language with AI-native features  
-- [Alexis Linux](https://github.com/copyl-sys) — A modern, AI-native operating system for Axion + HanoiVM  
-- **Project Looking Glass** — 3D ternary visualization environment  
+Pattern logic is registered in `t81_patterns.cweb` and can be dynamically dispatched:
+
+- `identity`
+- `negate`
+- `rotate`
+- `zero`
+- `gaia` — uses GPU for symbolic shift
+
+Use `t81_apply_pattern_by_name()` or `t81_dispatch_pattern()` for AI-driven control.
 
 ---
 
-## License
+## 📈 Project Status
 
-MIT License — see LICENSE file for details
+✅ Recursive execution loop  
+✅ Full T81/T243/T729 stack promotion logic  
+✅ Axion AI integration and feedback signals  
+✅ Tensor macro engine (T729Tensor) with slicing, transpose  
+✅ T243BigInt arithmetic and stringification  
+✅ Disassembler with T81-level verbosity  
+✅ GPU symbolic backends: CUDA + HIP  
+✅ CI pipeline for AI macros, rollback, and validation  
+🔜 T81Lang-to-TISC compiler toolchain  
+🔜 Project Looking Glass 3D visualization
+
+---
+
+## 🔗 Related Projects
+
+- [**Axion AI**](https://github.com/copyl-sys) — AI optimization kernel + rollback logic  
+- **T81Lang** — Ternary-native language with JIT + AI patterns  
+- [**Alexis Linux**](https://github.com/copyl-sys) — AI-native Linux distro for Axion/T81  
+- **Project Looking Glass** — Future GUI: visual recursion and ternary stack views
+
+---
+
+## 📜 License
+
+MIT License — see `LICENSE` for full terms.
 
 > 🧠 “Recursion is not just a structure—it’s the soul of ternary.”
-
----
-
-This updated `README.md` includes **Axion AI** integration, the **recursive stack operations**, **TISC compiler backend**, and other recent advancements in HanoiVM, reflecting its evolving capabilities and current project milestones.
