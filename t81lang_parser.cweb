@@ -46,7 +46,8 @@ typedef enum {
     AST_PARAM,
     AST_TYPE_ANNOTATION,
     AST_IF,
-    AST_WHILE
+    AST_WHILE,
+    AST_ELSE
 } ASTNodeType;
 
 // AST Node Structure
@@ -82,6 +83,11 @@ ASTNode* create_node(ASTNodeType type, const char* name) {
     return node;
 }
 
+ASTNode* parse_identifier();
+ASTNode* parse_type();
+ASTNode* parse_expression();
+ASTNode* parse_statement();
+
 ASTNode* parse_identifier() {
     if (current.type == TOKEN_IDENTIFIER) {
         ASTNode* id = create_node(AST_IDENTIFIER, current.lexeme);
@@ -101,16 +107,16 @@ ASTNode* parse_type() {
 }
 
 ASTNode* parse_param() {
-    ASTNode* param = NULL;
     ASTNode* id = parse_identifier();
     if (id && match_token(TOKEN_SYMBOL) && strcmp(current.lexeme, ":") == 0) {
         advance_token();
         ASTNode* type = parse_type();
-        param = create_node(AST_PARAM, "param");
+        ASTNode* param = create_node(AST_PARAM, "param");
         param->left = id;
         param->right = type;
+        return param;
     }
-    return param;
+    return NULL;
 }
 
 ASTNode* parse_param_list() {
@@ -140,8 +146,6 @@ ASTNode* parse_literal() {
     }
     return NULL;
 }
-
-ASTNode* parse_expression();
 
 ASTNode* parse_term() {
     if (current.type == TOKEN_IDENTIFIER) return parse_identifier();
@@ -188,23 +192,36 @@ ASTNode* parse_assignment() {
     return NULL;
 }
 
+ASTNode* parse_block() {
+    if (match_token(TOKEN_SYMBOL) && strcmp(current.lexeme, "{") == 0) {
+        advance_token();
+        ASTNode* block = NULL, *last = NULL;
+        while (current.type != TOKEN_SYMBOL || strcmp(current.lexeme, "}") != 0) {
+            ASTNode* stmt = parse_statement();
+            if (!stmt) break;
+            if (last) last->next = stmt;
+            else block = stmt;
+            last = stmt;
+        }
+        match_token(TOKEN_SYMBOL); // consume '}'
+        return block;
+    }
+    return NULL;
+}
+
 ASTNode* parse_if() {
     if (current.type == TOKEN_KEYWORD && strcmp(current.lexeme, "if") == 0) {
         ASTNode* if_node = create_node(AST_IF, "if");
         advance_token();
         if_node->left = parse_expression();
-        if (match_token(TOKEN_SYMBOL) && strcmp(current.lexeme, "{") == 0) {
+        ASTNode* if_body = parse_block();
+        if_node->right = if_body;
+
+        if (current.type == TOKEN_KEYWORD && strcmp(current.lexeme, "else") == 0) {
             advance_token();
-            ASTNode* body = NULL, *last = NULL;
-            while (current.type != TOKEN_SYMBOL || strcmp(current.lexeme, "}") != 0) {
-                ASTNode* stmt = parse_statement();
-                if (!stmt) break;
-                if (last) last->next = stmt;
-                else body = stmt;
-                last = stmt;
-            }
-            match_token(TOKEN_SYMBOL);
-            if_node->right = body;
+            ASTNode* else_node = create_node(AST_ELSE, "else");
+            else_node->body = parse_block();
+            if_node->next = else_node;
         }
         return if_node;
     }
@@ -216,19 +233,7 @@ ASTNode* parse_while() {
         ASTNode* while_node = create_node(AST_WHILE, "while");
         advance_token();
         while_node->left = parse_expression();
-        if (match_token(TOKEN_SYMBOL) && strcmp(current.lexeme, "{") == 0) {
-            advance_token();
-            ASTNode* body = NULL, *last = NULL;
-            while (current.type != TOKEN_SYMBOL || strcmp(current.lexeme, "}") != 0) {
-                ASTNode* stmt = parse_statement();
-                if (!stmt) break;
-                if (last) last->next = stmt;
-                else body = stmt;
-                last = stmt;
-            }
-            match_token(TOKEN_SYMBOL);
-            while_node->right = body;
-        }
+        while_node->right = parse_block();
         return while_node;
     }
     return NULL;
@@ -264,19 +269,7 @@ ASTNode* parse_function() {
             advance_token();
             func->right = parse_type();
         }
-        if (match_token(TOKEN_SYMBOL) && strcmp(current.lexeme, "{") == 0) {
-            advance_token();
-            ASTNode* stmt_list = NULL, *last = NULL;
-            while (current.type != TOKEN_SYMBOL || strcmp(current.lexeme, "}") != 0) {
-                ASTNode* stmt = parse_statement();
-                if (!stmt) break;
-                if (last) last->next = stmt;
-                else stmt_list = stmt;
-                last = stmt;
-            }
-            func->body = stmt_list;
-            match_token(TOKEN_SYMBOL); // consume '}'
-        }
+        func->body = parse_block();
         return func;
     }
     return NULL;
