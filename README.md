@@ -27,6 +27,9 @@ Designed for research, language development, and future ternary hardware acceler
 - ⚡ **GPU Acceleration via GAIA**:
   - AMD: `gaia_handle_request.cweb` (HIP)
   - NVIDIA: `cuda_handle_request.cu` (CUDA)
+- 🖼️ **3D Visualization via Looking Glass**:
+  - `FrameSceneBuilder.cweb` renders recursion traces in jMonkeyEngine
+  - Axion overlays, ternary geometry, and entropy pulse animation
 - 📄 **Literate Codebase (`.cweb`)**:
   - Every module is self-documenting and extractable via `cweave`/`ctangle`
 - 🧪 **Disassembler + Test Infrastructure**:
@@ -51,6 +54,8 @@ src/
 ├── axion-ai.cweb                 # Kernel AI optimizer and rollback hooks
 ├── disassembler.cweb             # Human-readable `.hvm` introspector
 ├── recursive_tier_execution.cweb # Tier transition driver (T81 → T729)
+├── recursion_exporter.cweb       # Export symbolic trace to `.t81viz`
+├── FrameSceneBuilder.cweb        # 3D recursion visualizer with jMonkeyEngine
 ├── tisc_backend.cweb             # TISC backend compiler
 
 tests/
@@ -144,9 +149,12 @@ bazel run //:recursive_tier_execution -- --max-depth=36
 ✅ GPU offload (HIP + CUDA) for symbolic macros  
 ✅ Verbose `.hvm` disassembler and type introspection  
 ✅ Kernel-level testing (`debugfs`)  
+✅ `.t81viz` recursion trace export  
+✅ 3D visualizer: `FrameSceneBuilder.cweb` + `PulseControl`  
 🔜 Live REPL for `.t81` to `.hvm`  
 🔜 LLVM IR export for hybrid backend  
-🔜 Project Looking Glass 3D recursion visualization  
+🔜 Mouse-hover tooltips + optimization timeline overlay  
+🔜 Axion live log streaming in visualization mode  
 
 ---
 
