@@ -3,6 +3,17 @@
  */
 
 @c
+
+#define OP_TFADD    0xC0
+#define OP_TFSUB    0xC1
+#define OP_TFLADD   0xC2
+#define OP_TFCOS    0xC3
+#define OP_TMMUL    0xC4
+#define OP_TVDOT    0xC5
+#define OP_TQMUL    0xC6
+#define OP_TPMUL    0xC7
+#define OP_TTCON    0xC8
+#define OP_TGBFS    0xC9
 #include "t81.h"
 #include "hanoivm_stack.h"
 #include "hanoivm_opcode.h"
