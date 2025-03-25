@@ -1,44 +1,104 @@
-@* test_advanced_hvm.cweb — Generates a test .hvm binary with AI opcodes *@
+@* test_advanced_hvm.cweb — Generates a test .hvm binary with AI opcodes (Enhanced Version)
+   This program generates an advanced test .hvm binary for HanoiVM, which includes:
+   - T81_MATMUL: multiplies two matrices with operands [1 2 3] and [3 2 1]
+   - TNN_ACCUM: accumulates two operands [6 3 0] and [2 1 1]
+   - HALT: stops the VM
+   
+   Enhancements include:
+   - Modular macros for writing opcodes and operands.
+   - Verbose debugging via VERBOSE_TEST.
+   - Configurable output file via command-line argument.
+   - Future extension hooks for additional AI opcodes.
+@#
 
-@c
+@<Include Dependencies@>=
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+@#
 
-void write_operand(FILE* f, uint32_t a, uint32_t b, uint8_t c) {
-    fputc((a >> 24) & 0xFF, f);
-    fputc((a >> 16) & 0xFF, f);
-    fputc((a >> 8)  & 0xFF, f);
-    fputc(a & 0xFF, f);
-    fputc((b >> 24) & 0xFF, f);
-    fputc((b >> 16) & 0xFF, f);
-    fputc((b >> 8)  & 0xFF, f);
-    fputc(b & 0xFF, f);
-    fputc(c, f);
+@<Define Macros for Writing Operands and Opcodes@>=
+/* Write a 9-byte operand from two 32-bit values and one 8-bit value */
+#define WRITE_OPERAND(f, a, b, c)          \
+    do {                                   \
+        fputc(((a) >> 24) & 0xFF, f);       \
+        fputc(((a) >> 16) & 0xFF, f);       \
+        fputc(((a) >> 8)  & 0xFF, f);       \
+        fputc((a) & 0xFF, f);               \
+        fputc(((b) >> 24) & 0xFF, f);       \
+        fputc(((b) >> 16) & 0xFF, f);       \
+        fputc(((b) >> 8)  & 0xFF, f);       \
+        fputc((b) & 0xFF, f);               \
+        fputc((c), f);                     \
+    } while(0)
+
+/* Write a single opcode to a file stream */
+#define WRITE_OPCODE(f, op)              \
+    do {                                 \
+        if (fputc((op), f) == EOF) {     \
+            fprintf(stderr, "Error writing opcode\n"); \
+            exit(1);                     \
+        }                                \
+    } while(0)
+@#
+
+@<Verbose Debug Macro@>=
+#ifndef VERBOSE_TEST
+  #define VERBOSE_TEST 0
+#endif
+#if VERBOSE_TEST
+  #define DEBUG_PRINT(fmt, ...) fprintf(stderr, "[TEST DEBUG] " fmt, ##__VA_ARGS__)
+#else
+  #define DEBUG_PRINT(fmt, ...) 
+#endif
+@#
+
+@<Generate Test Program@>=
+/* Generates a test .hvm binary with AI opcodes */
+void generate_test_program(FILE* out) {
+    /* T81_MATMUL: opcode 0x21 with two operands */
+    DEBUG_PRINT("Writing T81_MATMUL opcode and operands\n");
+    WRITE_OPCODE(out, 0x21);
+    WRITE_OPERAND(out, 1, 2, 3);
+    WRITE_OPERAND(out, 3, 2, 1);
+
+    /* TNN_ACCUM: opcode 0x20 with two operands */
+    DEBUG_PRINT("Writing TNN_ACCUM opcode and operands\n");
+    WRITE_OPCODE(out, 0x20);
+    WRITE_OPERAND(out, 6, 3, 0);
+    WRITE_OPERAND(out, 2, 1, 1);
+
+    /* HALT: opcode 0xFF */
+    DEBUG_PRINT("Writing HALT opcode\n");
+    WRITE_OPCODE(out, 0xFF);
 }
+@#
 
+@<Main Function@>=
 int main(int argc, char* argv[]) {
     const char* filename = "tests/test_advanced.hvm";
-    if (argc > 1) filename = argv[1];
+    if (argc > 1) {
+        filename = argv[1];
+    }
     FILE* out = fopen(filename, "wb");
     if (!out) {
-        perror("fopen");
+        fprintf(stderr, "Error opening %s: %s\n", filename, strerror(errno));
         return 1;
     }
+    DEBUG_PRINT("Opened output file %s successfully\n", filename);
 
-    // T81_MATMUL [1 2 3] × [3 2 1]
-    fputc(0x21, out);
-    write_operand(out, 1, 2, 3);
-    write_operand(out, 3, 2, 1);
-
-    // TNN_ACCUM [6 3 0] + [2 1 1]
-    fputc(0x20, out);
-    write_operand(out, 6, 3, 0);
-    write_operand(out, 2, 1, 1);
-
-    // HALT
-    fputc(0xFF, out);
-
+    generate_test_program(out);
+    
     fclose(out);
+    printf("Test .hvm file written to %s\n", filename);
     return 0;
 }
+@#
+
+@* End of test_advanced_hvm.cweb
+   This enhanced test generator provides modular opcode and operand writing macros,
+   optional verbose debugging, and configurable output file naming.
+   It serves as a test harness for advanced AI opcodes in the HanoiVM subsystem.
+@*
