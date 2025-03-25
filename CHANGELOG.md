@@ -1,76 +1,55 @@
-# **CHANGELOG.md**
-
-## [Unreleased] - 2025-03-24
+## [v0.6] - 2025-03-25
 
 ### Added
-- **Axion AI Integration**:
-  - Introduced **Axion AI** for dynamic optimization of ternary operations via `axion_tbin_execute`.
-  - Added **rollback mechanism** triggered by Axion AI anomaly detection, ensuring system stability in case of high entropy or unexpected results.
+- **T81 Symbolic Pattern Engine**:
+  - Introduced `t81_patterns.cweb` with symbolic transformations: `identity`, `negate`, `rotate`, `zero`, and `gaia`.
+  - Implemented Axion-aware pattern dispatch via `t81_dispatch_pattern` using AI signal code.
+  - Integrated GPU-accelerated `t81_pattern_gaia_transform()` using GAIA/ROCm backend.
 
-- **AI-Driven Execution**:
-  - The **HanoiVM** now supports **real-time introspective AI optimizations** for ternary operations.
-  - Enabled **NLP Command Interface** for Axion AI, allowing commands like "optimize", "rollback", and "snapshot" to control the VM's execution flow.
+- **GAIA HIP Backend**:
+  - Added `gaia_handle_request.cweb`, mirroring CUDA symbolic transformation logic for AMD GPUs via HIP.
+  - Unified symbolic logic transformations via `GaiaRequest`/`GaiaResponse` for AI-guided GPU processing.
 
-- **T729 Tensor Engine**:
-  - Full support for **T729** tensor operations (`DOT`, `TRANS`, `SLICE`, `PRINT`) integrated into the VM.
+- **T729Tensor Enhancements**:
+  - Full-featured tensor API now supports `clone`, `print`, and detailed `reshape`, `slice`, `contract`, `transpose`.
+  - Improved error handling, debug logging via `VERBOSE_T729TENSOR`.
 
-- **Modular `.cweb` Documentation**:
-  - Introduced modular `.cweb` documentation format for all major operations (tensor manipulation, symbolic AI opcodes, disassembly).
-  - Enhanced readability and maintainability of the codebase.
+- **Recursive Tier Execution Simulation**:
+  - Introduced `recursive_tier_execution.cweb` for visual tier promotion/demotion across T81 → T243 → T729.
+  - Included Axion AI signal logging and tensor rendering at each recursive step.
 
-- **Recursive Stack Logic**:
-  - Implemented recursive stack modes for **T81**, **T243**, and **T729**.
-  - Support for **stack promotion** and **demotion** between the different recursion levels.
+- **Kernel Test Harness (`hanoivm-test.cweb`)**:
+  - Modularized test cases with debugfs output and runtime toggle via module params.
+  - Expanded coverage for Axion anomaly detection, entropy scoring, and recursive VM tests.
 
-### Changed
-- **Project Roadmap**:
-  - **Phase 4** (Axion AI Integration) has been updated to include full **AI optimizations** for ternary operations and **rollback** support.
-  - **Phase 6** (Advanced Features) now includes the **Axion-GAIA GPU Bridge** and **Project Looking Glass** visualization.
+- **Disassembler Extensions**:
+  - Enhanced `disassembler.cweb` with `VERBOSE_DISASSEMBLE` support and T81 operand introspection.
+  - Shows symbolic operand values and alignment for AI-injected `.hvm` binaries.
 
-- **T243 and T729 Instruction Handling**:
-  - Enhanced the VM's instruction set to support higher-order ternary operations with **T243BigInt** and **T729Tensor** engines.
-  - Instructions for **T729** tensor manipulation (`DOT`, `TRANS`, `SLICE`) are now handled by the VM.
-
-- **CI and Testing**:
-  - CI pipeline updated to include tests for **AI optimizations** and **rollback functionality**.
-  - **Disassembler** integration improved for `.hvm` bytecode validation, including tests for tensor operations and symbolic AI instructions.
-
-### Fixed
-- **Debugging and Trace Logs**:
-  - Improved logging for **AI-driven execution** and **ternary stack operations**, ensuring easier debugging and traceability of system changes.
-  - Added enhanced **debugfs interfaces** for interacting with the AI and VM during runtime.
-
----
-
-## [v0.5] - 2025-03-23
-
-### Added
-- **Axion AI Support**: Initial hooks and logging for **Axion AI** integration.
-- **T243BigInt Operations**: Full support for **T243** BigInt arithmetic (`ADD`, `MUL`, `PRINT`).
-- **CI Pipeline**: Initial test suite integration for recursive stack operations.
+- **Pattern Debug Utilities**:
+  - Added `t81_pattern_debug()` for live introspection of `uint81_t` values in test and runtime logs.
 
 ### Changed
-- **Instruction Set**: Expanded support for **T243** and **T729** operations.
-- **Test Suite**: Improved `.hvm` bytecode validation for tensor operations and recursion modes.
+- **Axion-GAIA Interface**:
+  - Refactored GPU request logic to dynamically route through CUDA or HIP backends.
+  - Introduced `GAIA_ANALYZE`, `GAIA_TRANSFORM`, `GAIA_RECONSTRUCT`, `GAIA_EMIT_VECTOR` intents for semantic GPU operation.
+
+- **T81Lang + TISC Synergy**:
+  - Enhanced TISC macros (`FIB`, `FACT`, `MATMUL`, `TNN`) to leverage T81-based symbolic patterns for VM execution.
+  - Hooked entropy-aware macros into Axion AI to allow rollback or promotion logic.
+
+- **Axion Metadata Logging**:
+  - Log events from symbolic GPU dispatch (`gaia_transform`) and pattern applications (`pattern_applied`).
+  - Expanded log types and structure in `axion.meta.json`.
+
+- **Tensor Stringification**:
+  - Added `t729tensor_to_string.cweb` for printable debug output of high-dimensional tensor states.
 
 ### Fixed
-- **Stack Operations**: Corrected issues with stack pointer handling during recursive executions.
+- **Memory Management**:
+  - Resolved heap safety and alignment issues in tensor cloning, slicing, and reshaping.
+  - Ensured all tensor operations validate shape and size consistency before allocation.
 
----
-
-## [v0.1] - 2025-02-28
-
-### Added
-- **Core VM Structure**: Initial implementation of recursive stack logic for **T81** operations.
-- **Disassembler**: First iteration of the bytecode disassembler for `.hvm` files.
-- **CI Setup**: Basic CI pipeline with testing for stack operations.
-
-### Changed
-- **Base-81 Operand Architecture**: Enhanced the handling of `uint81_t` operands for ternary operations.
-
-### Fixed
-- **Stack Overflow Handling**: Fixed issues with stack overflow during deep recursion.
-
----
-
-This **`CHANGELOG.md`** now includes all recent updates regarding the **Axion AI** integration, **recursive expansion**, and new features like **tensor operations** and **rollback mechanisms**. It also tracks the progress from **Phase 4** of the roadmap.
+- **Edge Case Behavior**:
+  - Corrected VM crash in T729 demotion cycle when depth did not decrement on error state.
+  - Improved GPU error checking in `gaia_handle_request()` for buffer overflows and invalid lengths.
