@@ -1,11 +1,13 @@
-@* recursion_exporter.cweb -- Extended recursion export with Axion AI annotations and ternary insight.
+@* recursion_exporter.cweb -- Extended recursion export with Axion AI annotations, ternary insight, and symbolic tier awareness.
 
 @c
 #include "t81_core.h"
 #include "hanoivm_stack.h"
 #include "hanoivm_vm.h"
-#include "axion_api.h"          // New: Axion AI interface
+#include "axion_api.h"
 #include "json_export.h"
+#include "t243_symbolic.h"      // New: T243 / T729 symbolic types
+#include "entropy.h"             // New: τ[27] entropy analysis interface
 
 #define MAX_JSON_DEPTH 729
 
@@ -16,10 +18,16 @@ typedef struct {
     T81Datum locals[MAX_LOCALS];
     int ternary_state;  // 1 = T+, 0 = T0, -1 = T−
 
-    // New Axion metadata
+    // Axion metadata
     char axion_annotation[243];
     double axion_optimization_score;
     bool axion_suggested_collapse;
+
+    // Symbolic tier metadata
+    char active_tier[16];               // "T81", "T243", "T729"
+    char symbolic_opcode[81];          // e.g. "OP_T729_META_EXEC"
+    char intent_label[81];             // e.g. "Forecast\PhaseShift"
+    double entropy_delta;              // Δτ[27] across this frame
 } RecursiveFrame;
 
 typedef struct {
@@ -29,7 +37,6 @@ typedef struct {
 
 static RecursionTrace global_trace;
 
-/* Translate ternary state to symbol for easier HUD rendering */
 const char* ternary_state_symbol(int state) {
     switch (state) {
         case 1:  return "T+";
@@ -39,7 +46,7 @@ const char* ternary_state_symbol(int state) {
     }
 }
 
-/* Capture a single frame with Axion enrichment */
+/* Capture a single frame with Axion + Symbolic T243/T729 tier enrichment */
 void capture_recursive_frame(HVMContext* ctx, const char* func_name, int depth) {
     if (depth >= MAX_JSON_DEPTH) return;
 
@@ -53,21 +60,25 @@ void capture_recursive_frame(HVMContext* ctx, const char* func_name, int depth) 
         frame->locals[i] = ctx->stack[ctx->stack_ptr].locals[i];
     }
 
-    // Query Axion for runtime guidance
+    // Axion annotations
     axion_frame_optimize(ctx, frame->axion_annotation, sizeof(frame->axion_annotation));
     frame->axion_optimization_score = axion_predict_score(ctx);
     frame->axion_suggested_collapse = axion_suggest_tail_collapse(ctx);
 
+    // Tier and symbolic data
+    strncpy(frame->active_tier, detect_active_tier(ctx), 15);
+    strncpy(frame->symbolic_opcode, get_symbolic_opcode(ctx), 80);
+    strncpy(frame->intent_label, get_symbolic_intent(ctx), 80);
+    frame->entropy_delta = measure_entropy_delta(ctx);
+
     global_trace.total_depth = depth + 1;
 }
 
-/* Export entire trace to JSON for Looking Glass 3D render pipeline */
 void export_recursion_trace(const char* output_path) {
     FILE* f = fopen(output_path, "w");
     if (!f) return;
 
     fprintf(f, "{\n  \"recursionTrace\": [\n");
-
     for (int i = 0; i < global_trace.total_depth; i++) {
         RecursiveFrame* frame = &global_trace.frames[i];
         fprintf(f, "    {\n");
@@ -75,15 +86,22 @@ void export_recursion_trace(const char* output_path) {
         fprintf(f, "      \"frameIndex\": %d,\n", frame->frame_index);
         fprintf(f, "      \"depth\": %d,\n", frame->depth_level);
         fprintf(f, "      \"ternaryState\": \"%s\",\n", ternary_state_symbol(frame->ternary_state));
-        
-        // Axion annotations
+
+        // Axion metadata
         fprintf(f, "      \"axion\": {\n");
         fprintf(f, "        \"annotation\": \"%s\",\n", frame->axion_annotation);
         fprintf(f, "        \"optimizationScore\": %.4f,\n", frame->axion_optimization_score);
         fprintf(f, "        \"suggestedCollapse\": %s\n", frame->axion_suggested_collapse ? "true" : "false");
         fprintf(f, "      },\n");
 
-        // T81 Locals
+        // Symbolic tier metadata
+        fprintf(f, "      \"tier\": {\n");
+        fprintf(f, "        \"activeTier\": \"%s\",\n", frame->active_tier);
+        fprintf(f, "        \"symbolicOpcode\": \"%s\",\n", frame->symbolic_opcode);
+        fprintf(f, "        \"intent\": \"%s\",\n", frame->intent_label);
+        fprintf(f, "        \"entropyDelta\": %.6f\n", frame->entropy_delta);
+        fprintf(f, "      },\n");
+
         fprintf(f, "      \"locals\": [\n");
         for (int j = 0; j < MAX_LOCALS; j++) {
             T81Datum d = frame->locals[j];
@@ -92,10 +110,8 @@ void export_recursion_trace(const char* output_path) {
                 (j == MAX_LOCALS - 1 ? "" : ","));
         }
         fprintf(f, "      ]\n");
-
         fprintf(f, "    }%s\n", (i == global_trace.total_depth - 1 ? "" : ","));
     }
-
     fprintf(f, "  ]\n}\n");
     fclose(f);
 }
