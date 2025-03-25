@@ -36,6 +36,19 @@ Designed for research, language development, and future ternary hardware acceler
   - Disassembles `.hvm` with symbolic introspection
   - CI-compatible tests + kernel-mode driver for system-level validation
 
+
+---
+
+## 📦 New: T81Lang Compiler Stack
+
+The T81Lang toolchain is now fully integrated with HanoiVM:
+
+- ✅ **Lexer + Parser** → AST via `t81lang_parser.cweb`
+- ✅ **Semantic Analyzer** with scope/symbol resolution
+- ✅ **Intermediate Representation (IR)** with symbolic ops
+- ✅ **.hvm Emitter** for virtual machine execution
+- ✅ **HVM Interpreter** with register-based runtime
+- ✅ **CLI Compiler** via `t81lang_compiler.cweb`
 ---
 
 ## 🗂️ Repository Overview
