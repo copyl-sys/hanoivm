@@ -1,25 +1,24 @@
-@* HanoiVM | HVM Bytecode Loader
+@* HanoiVM | HVM Bytecode Loader (Enhanced)
+   This module defines the binary file loader for the HanoiVM virtual machine.
+   It handles reading `.hvm` files, verifying their format, loading bytecode into memory,
+   and exposing the buffer for execution by the VM core.
 
-This literate CWEB module defines the binary file loader for the HanoiVM virtual machine.
-It handles reading `.hvm` files, verifying their format, loading bytecode into memory, and
-exposing the buffer for execution by the VM core.
+   Enhancements include:
+   - Verbose debug logging (via VERBOSE_HVM_LOADER macro)
+   - A function to clear the loaded code buffer
+   - Additional file size checks for robust file reading
+   - A symbolic bytecode dump for debugging purposes
+@#
 
-This module includes:
-- `.hvm` file header validation (magic + version)
-- Bytecode loading into `hvm_code[]`
-- Opcode enum definitions
-- Bytecode printing for debugging
-- Clean export of function declarations (no `.c` includes)
-
-@c
+@<Include Dependencies@>=
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+@#
 
-@*1 Constants and Global Buffers
-
-@<HVM Loader Constants@>=
+@<Define Constants and Macros@>=
 #define HVM_MAGIC_0 0x48  // 'H'
 #define HVM_MAGIC_1 0x56  // 'V'
 #define HVM_MAGIC_2 0x4D  // 'M'
@@ -27,14 +26,22 @@ This module includes:
 
 #define HVM_MAX_CODE_SIZE 8192
 
+/* Verbose flag for loader debugging */
+#ifndef VERBOSE_HVM_LOADER
+  #define VERBOSE_HVM_LOADER 0
+#endif
+
+#if VERBOSE_HVM_LOADER
+  #define DEBUG_PRINT(fmt, ...) fprintf(stderr, "[HVM_LOADER DEBUG] " fmt, ##__VA_ARGS__)
+#else
+  #define DEBUG_PRINT(fmt, ...) 
+#endif
+@#
+
 @<HVM Loader Globals@>=
 uint8_t hvm_code[HVM_MAX_CODE_SIZE];
 size_t hvm_code_size = 0;
-
-@*1 Opcode Enum
-
-The VM will interpret 1-byte opcodes defined in this enum. These correspond to stack,
-arithmetic, and control instructions.
+@#
 
 @<Opcode Enum@>=
 typedef enum {
@@ -49,23 +56,23 @@ typedef enum {
     OP_DROP  = 0x08,
     OP_HALT  = 0xFF
 } Opcode;
-
-@*1 Loader Function Declarations
+@#
 
 @<HVM Loader API@>=
-int  load_hvm_file(const char* path);
+int load_hvm_file(const char* path);
 void print_hvm_code(void);
-
-@*1 Function Implementations
+void clear_hvm_code(void);
+void print_hvm_symbolic(void);
+@#
 
 @<HVM Loader Functions@>=
-
 int load_hvm_file(const char* path) {
     FILE* file = fopen(path, "rb");
     if (!file) {
         fprintf(stderr, "[HVM] Error: Cannot open %s\n", path);
         return 0;
     }
+    DEBUG_PRINT("Opened file %s\n", path);
 
     uint8_t header[4];
     if (fread(header, 1, 4, file) != 4) {
@@ -80,6 +87,7 @@ int load_hvm_file(const char* path) {
         fclose(file);
         return 0;
     }
+    DEBUG_PRINT("Header validation passed\n");
 
     uint32_t code_len = 0;
     if (fread(&code_len, sizeof(uint32_t), 1, file) != 1) {
@@ -87,12 +95,24 @@ int load_hvm_file(const char* path) {
         fclose(file);
         return 0;
     }
+    DEBUG_PRINT("Code length read: %u bytes\n", code_len);
 
     if (code_len > HVM_MAX_CODE_SIZE) {
         fprintf(stderr, "[HVM] Error: Code too large (%u bytes)\n", code_len);
         fclose(file);
         return 0;
     }
+
+    /* Verify that file size matches expected length */
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    if ((long)(4 + sizeof(uint32_t) + code_len) != file_size) {
+        fprintf(stderr, "[HVM] Error: File size mismatch (expected %u bytes, got %ld bytes)\n",
+                4 + sizeof(uint32_t) + code_len, file_size);
+        fclose(file);
+        return 0;
+    }
+    fseek(file, 4 + sizeof(uint32_t), SEEK_SET);
 
     if (fread(hvm_code, 1, code_len, file) != code_len) {
         fprintf(stderr, "[HVM] Error: Incomplete bytecode read\n");
@@ -115,12 +135,48 @@ void print_hvm_code(void) {
     if (hvm_code_size % 16 != 0) printf("\n");
 }
 
-@*1 Header Export for External Modules
+/* Clears the loaded code buffer and resets size */
+void clear_hvm_code(void) {
+    memset(hvm_code, 0, HVM_MAX_CODE_SIZE);
+    hvm_code_size = 0;
+    DEBUG_PRINT("Cleared HVM code buffer\n");
+}
 
-Other modules (such as `hanoivm_cli.cweb` or a future VM dispatcher) may include
-this file's `.h` output to access the `load_hvm_file()` and `print_hvm_code()` functions,
-as well as the `Opcode` enum.
+/* Optional: Print symbolic opcodes for debugging */
+void print_hvm_symbolic(void) {
+    printf("[HVM] Symbolic Disassembly (%zu bytes):\n", hvm_code_size);
+    for (size_t i = 0; i < hvm_code_size; i++) {
+        uint8_t op = hvm_code[i];
+        const char* opname = "UNKNOWN";
+        switch(op) {
+            case OP_NOP:   opname = "NOP"; break;
+            case OP_PUSH:  opname = "PUSH"; break;
+            case OP_ADD:   opname = "ADD"; break;
+            case OP_SUB:   opname = "SUB"; break;
+            case OP_MOD:   opname = "MOD"; break;
+            case OP_NEG:   opname = "NEG"; break;
+            case OP_DUP:   opname = "DUP"; break;
+            case OP_SWAP:  opname = "SWAP"; break;
+            case OP_DROP:  opname = "DROP"; break;
+            case OP_HALT:  opname = "HALT"; break;
+        }
+        printf("%s ", opname);
+    }
+    printf("\n");
+}
+@#
 
+@* Header Export for External Modules
+   Other modules (such as hanoivm_cli.cweb or the VM dispatcher) may include
+   this file's header to access the load_hvm_file(), print_hvm_code(), and clear_hvm_code() functions,
+   as well as the Opcode enum.
 @h
 @<Opcode Enum@>
 @<HVM Loader API@>
+@#
+
+@* End of hvm_loader.cweb
+   This module robustly loads an HVM bytecode file, verifying its header, size,
+   and content. It provides debug-friendly routines for dumping bytecode in both hex
+   and symbolic forms and includes a helper to clear the loaded code.
+@*
