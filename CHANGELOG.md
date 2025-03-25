@@ -1,4 +1,31 @@
-## [v0.6] - 2025-03-25
+
+---
+
+## [v0.7] - 2025-03-25
+
+### Added
+- **T81 Recursion Library**:
+  - Introduced `t81recursion.cweb` and `t81recursion.h` to support ternary-aware recursive computation models.
+  - Implements canonical ternary recursion patterns optimized for T81 logic layers.
+
+- **Advanced Disassembler Introspection**:
+  - Upgraded `disasm_hvm.cweb` and related tools to output all T81 data types, including deeply nested composite structures.
+  - Supports full introspection at any execution state for primitive and compound types.
+
+- **Log Viewer Utility**:
+  - Added `logviewer.cweb` for interactive viewing of Axion and HanoiVM logs.
+  - Includes timestamped filtering, event-type search, and verbosity-level inspection for AI-driven analysis.
+
+- **T81 Pattern Enhancements**:
+  - Expanded symbolic dispatch macros in `t81_patterns.cweb` with support for AI feedback and intent-based transformation cycles.
+
+- **Miscellaneous**:
+  - Added test coverage for recursion and advanced control flow in `test_advanced_hvm.cweb` and `test_controlflow_hvm.cweb`.
+  - Updated Makefile and `.cwebpkg` for smoother integration of newly added modules.
+
+---
+
+## [v0.6] - 2025-03-24
 
 ### Added
 - **T81 Symbolic Pattern Engine**:
