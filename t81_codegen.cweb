@@ -12,6 +12,7 @@ a refined `DataLayout`, top-level `.td` definitions, and build system integratio
 @<T81DAGISel.cpp@>
 @<T81InstrPatterns.td@>
 @<T81AsmPrinter.cpp@>
+@<T81MCInstLower.cpp@>
 @<T81TargetInfo.cpp@>
 @<T81.td@>
 @<CMakeLists.txt@>
@@ -23,6 +24,7 @@ a refined `DataLayout`, top-level `.td` definitions, and build system integratio
 #include "T81ISelLowering.h"
 #include "T81DAGISel.h"
 #include "T81AsmPrinter.h"
+#include "T81MCInstLower.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Target/TargetMachine.h"
@@ -57,6 +59,7 @@ TargetPassConfig *T81TargetMachine::createPassConfig(PassManagerBase &PM) {
 @<T81AsmPrinter.cpp@>=
 #include "T81AsmPrinter.h"
 #include "T81.h"
+#include "T81MCInstLower.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetMachine.h"
@@ -83,6 +86,27 @@ public:
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeT81AsmPrinter() {
   RegisterAsmPrinter<T81AsmPrinter> X(getTheT81Target());
+}
+
+@*1 T81MCInstLower.cpp - Convert MachineInstr to MCInst.
+@<T81MCInstLower.cpp@>=
+#include "T81MCInstLower.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCOperand.h"
+
+using namespace llvm;
+
+void LowerT81MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI, const AsmPrinter &AP) {
+  OutMI.setOpcode(MI->getOpcode());
+  for (const MachineOperand &MO : MI->operands()) {
+    if (MO.isReg()) {
+      OutMI.addOperand(MCOperand::createReg(MO.getReg()));
+    } else if (MO.isImm()) {
+      OutMI.addOperand(MCOperand::createImm(MO.getImm()));
+    }
+    // Extend here for other operand types (FPImm, GlobalAddress, etc.)
+  }
 }
 
 @*1 T81TargetInfo.cpp - Target Triple Registration.
@@ -114,6 +138,7 @@ add_llvm_target(T81CodeGen
   T81TargetMachine.cpp
   T81DAGISel.cpp
   T81AsmPrinter.cpp
+  T81MCInstLower.cpp
   T81TargetInfo.cpp
   )
 
