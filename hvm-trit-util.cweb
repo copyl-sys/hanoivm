@@ -1,26 +1,39 @@
-/*
- * hvm-trit-util.cweb - Core Ternary Utility Library for HanoiVM Ecosystem
- *
- * This module provides base-81 optimized ternary arithmetic, parsing, and logical operations.
- * Designed for use across HanoiVM, Axion, Guardian AI, and associated subsystems.
- *
- * Author: Copyleft Systems
- * License: GPLv3
- */
+@* hvm-trit-util.cweb - Core Ternary Utility Library for the HanoiVM Ecosystem (Enhanced Version)
+   This module provides base-81 optimized ternary arithmetic, parsing, and logical operations.
+   Enhancements include:
+   - Safe memory allocation macros.
+   - Additional utility functions for comparing and normalizing T81BigInt values.
+   - Optional debug logging (controlled via DEBUG_TRIT_UTIL).
+   - Robust error checking and integration hooks.
+   
+   Designed for use across HanoiVM, Axion, Guardian AI, and associated subsystems.
+   Author: Copyleft Systems
+   License: GPLv3
+@#
 
-#ifndef HVM_TRIT_UTIL_H
-#define HVM_TRIT_UTIL_H
-
+@<Include Dependencies@>=
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+@#
 
+@<Define Constants and Error Codes@>=
 #define BASE_81 81
 #define T81_MMAP_THRESHOLD (500 * 1024)
 
-/* Error Codes */
+/* Debug logging flag */
+#ifdef DEBUG_TRIT_UTIL
+  #define TRIT_DEBUG(...) fprintf(stderr, __VA_ARGS__)
+#else
+  #define TRIT_DEBUG(...) 
+#endif
+
 typedef enum {
     TRIT_OK = 0,
     TRIT_ERR_ALLOC,
@@ -33,18 +46,25 @@ typedef enum {
     TRIT_ERR_MMAP,
     TRIT_ERR_SCRIPT
 } TritError;
+@#
 
-/* Big Integer Ternary */
+@<Define Safe Memory Allocation Macro@>=
+#define SAFE_MALLOC(type, count) ((type*)calloc((count), sizeof(type)))
+@#
+
+@<T81BigInt Structure Definition@>=
+/* Big Integer Ternary representation */
 typedef struct {
-    int sign;
-    uint8_t* digits;
-    size_t len;
-    int is_mapped;
-    int fd;
-    char tmp_path[32];
+    int sign;          /* 0 for positive, 1 for negative */
+    uint8_t* digits;   /* Array of digits in base 81 */
+    size_t len;        /* Number of digits allocated */
+    int is_mapped;     /* True if digits are memory-mapped */
+    int fd;            /* File descriptor for mmap */
+    char tmp_path[32]; /* Temporary file path for mmap */
 } T81BigInt;
+@#
 
-/* Function Prototypes */
+@<Function Prototypes@>=
 TritError parse_trit_string(const char* s, T81BigInt** out);
 TritError t81bigint_to_trit_string(const T81BigInt* in, char** out);
 TritError binary_to_trit(int num, T81BigInt** out);
@@ -59,27 +79,36 @@ TritError tritjs_logical_not(T81BigInt* A, T81BigInt** result);
 TritError tritjs_logical_xor(T81BigInt* A, T81BigInt* B, T81BigInt** result);
 void tritbig_free(T81BigInt* x);
 
+/* Additional synergy functions */
+int tritbig_compare(const T81BigInt* A, const T81BigInt* B);
+TritError tritbig_normalize(T81BigInt* x);
+
 /* Initialization */
 void init_trit_util();
-
-#endif /* HVM_TRIT_UTIL_H */
+@#
 
 #ifdef HVM_TRIT_UTIL_IMPL
 
+@<Include Additional Dependencies@>=
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+@#
 
+@<Function: allocate_digits@>=
 static TritError allocate_digits(T81BigInt *x, size_t lengthNeeded) {
     size_t bytesNeeded = (lengthNeeded == 0 ? 1 : lengthNeeded);
     x->len = lengthNeeded;
     x->is_mapped = 0;
     x->fd = -1;
     if (bytesNeeded < T81_MMAP_THRESHOLD) {
-        x->digits = (uint8_t*)calloc(bytesNeeded, 1);
-        if (!x->digits) return TRIT_ERR_ALLOC;
+        x->digits = SAFE_MALLOC(uint8_t, bytesNeeded);
+        if (!x->digits) {
+            TRIT_DEBUG("[ERROR] Allocation failed for %zu bytes\n", bytesNeeded);
+            return TRIT_ERR_ALLOC;
+        }
         return TRIT_OK;
     }
     strcpy(x->tmp_path, "/tmp/hvm_trit_util_XXXXXX");
@@ -98,7 +127,9 @@ static TritError allocate_digits(T81BigInt *x, size_t lengthNeeded) {
     x->is_mapped = 1;
     return TRIT_OK;
 }
+@#
 
+@<Function: tritbig_free@>=
 void tritbig_free(T81BigInt* x) {
     if (!x) return;
     if (x->is_mapped && x->digits && x->digits != MAP_FAILED) {
@@ -109,7 +140,9 @@ void tritbig_free(T81BigInt* x) {
     }
     free(x);
 }
+@#
 
+@<Function: parse_trit_string@>=
 TritError parse_trit_string(const char* s, T81BigInt** out) {
     if (!s || !out) return TRIT_ERR_INPUT;
     size_t len = strlen(s);
@@ -148,7 +181,9 @@ TritError parse_trit_string(const char* s, T81BigInt** out) {
     }
     return TRIT_OK;
 }
+@#
 
+@<Function: t81bigint_to_trit_string@>=
 TritError t81bigint_to_trit_string(const T81BigInt* in, char** out) {
     if (!in || !out) return TRIT_ERR_INPUT;
     T81BigInt tmp = *in;
@@ -183,7 +218,9 @@ TritError t81bigint_to_trit_string(const T81BigInt* in, char** out) {
     *out = buf;
     return TRIT_OK;
 }
+@#
 
+@<Function: binary_to_trit@>=
 TritError binary_to_trit(int num, T81BigInt** out) {
     char buffer[128];
     int sign = 0;
@@ -203,7 +240,9 @@ TritError binary_to_trit(int num, T81BigInt** out) {
     }
     return parse_trit_string(buffer, out);
 }
+@#
 
+@<Function: trit_to_binary@>=
 TritError trit_to_binary(T81BigInt* x, int* outVal) {
     if (!x || !outVal) return TRIT_ERR_INPUT;
     char* trit_str = NULL;
@@ -222,10 +261,52 @@ TritError trit_to_binary(T81BigInt* x, int* outVal) {
     free(trit_str);
     return TRIT_OK;
 }
+@#
 
+@<Additional Synergy Functions: Comparison and Normalization@>=
+/* Compare two T81BigInt values.
+   Returns -1 if A < B, 0 if equal, 1 if A > B.
+*/
+int tritbig_compare(const T81BigInt* A, const T81BigInt* B) {
+    if (A->sign != B->sign) return (A->sign) ? -1 : 1;
+    if (A->len != B->len) {
+        if (A->len < B->len) return (A->sign) ? 1 : -1;
+        else return (A->sign) ? -1 : 1;
+    }
+    for (size_t i = A->len; i > 0; i--) {
+        if (A->digits[i-1] != B->digits[i-1]) {
+            if (A->digits[i-1] < B->digits[i-1])
+                return (A->sign) ? 1 : -1;
+            else
+                return (A->sign) ? -1 : 1;
+        }
+    }
+    return 0;
+}
+
+/* Normalize T81BigInt by removing leading zero digits */
+TritError tritbig_normalize(T81BigInt* x) {
+    if (!x) return TRIT_ERR_INPUT;
+    while (x->len > 1 && x->digits[x->len - 1] == 0) {
+        x->len--;
+    }
+    return TRIT_OK;
+}
+@#
+
+@<Function: init_trit_util@>=
 void init_trit_util() {
     /* Future hooks for runtime context registration or debug tracing */
     fprintf(stderr, "[HanoiVM] Trit Utility Initialized.\n");
 }
+@#
 
 #endif /* HVM_TRIT_UTIL_IMPL */
+@*
+
+End of hvm-trit-util.cweb
+
+This enhanced module now supports robust ternary arithmetic operations with additional synergy functions
+for comparing and normalizing T81BigInt values. It includes safe memory allocation, detailed error checking,
+and optional debug logging for deeper insight into its operations.
+@*
