@@ -3,8 +3,8 @@
 @* 
 This module extends the HanoiVM runtime to support advanced ternary-aware 
 logic structures (T243, T729) including symbolic AI logic via T729Intent,
-state machines with T243StateVector, and complex transformations like 
-FFT on ternary holotensors. Header files are embedded for extraction.
+state machines with T243StateVector, entropy capture via T729EntropyBlob,
+and holomorphic tensor transforms. Header files are embedded for extraction.
 *@
 
 @*== Header: t243_ops.h ==*@
@@ -22,6 +22,39 @@ typedef struct {
 TritError t243_state_advance(T243StateVector* sv, int signal);
 
 #endif /* T243_OPS_H */
+
+@*== Header: t243_markov.h ==*@
+@h
+#ifndef T243_MARKOV_H
+#define T243_MARKOV_H
+
+#include "t81fraction.h"
+
+#define T243_MAX 243
+
+typedef struct {
+    T81Fraction matrix[T243_MAX][T243_MAX];
+} T243MarkovMatrix;
+
+TritError t243_markov_train(T243MarkovMatrix* mm, uint8_t from, uint8_t to);
+TritError t243_markov_step(T243MarkovMatrix* mm, uint8_t current, uint8_t* next_state);
+
+#endif /* T243_MARKOV_H */
+
+@*== Header: t243_symbol.h ==*@
+@h
+#ifndef T243_SYMBOL_H
+#define T243_SYMBOL_H
+
+typedef struct {
+    uint8_t symbol_id;
+    char utf8_repr[5];  // UTF-8 encoded representation
+} T243Symbol;
+
+TritError t243_symbol_from_id(uint8_t id, T243Symbol* out);
+TritError t243_symbol_to_string(T243Symbol* sym, char* buf, int buflen);
+
+#endif /* T243_SYMBOL_H */
 
 @*== Header: t729_intent.h ==*@
 @h
@@ -79,6 +112,25 @@ TritError t729_meta_execute(const T729MetaOpcode* mop);
 
 #endif /* T729_METAOPCODE_H */
 
+@*== Header: t729_entropy_blob.h ==*@
+@h
+#ifndef T729_ENTROPY_BLOB_H
+#define T729_ENTROPY_BLOB_H
+
+#include "t81bigint.h"
+#include "t81vector.h"
+
+typedef struct {
+    T81BigIntHandle entropy_scalar;
+    T81VectorHandle entropy_window;
+    T81VectorHandle ai_feedback;
+} T729EntropyBlob;
+
+TritError t729_entropy_snapshot(T729EntropyBlob* blob, HVMContext* ctx);
+TritError t729_entropy_dump(T729EntropyBlob* blob, char* out_json, int max_len);
+
+#endif /* T729_ENTROPY_BLOB_H */
+
 @*== Implementation: Extended Opcode Logic ==*@
 @c
 #include <stdio.h>
@@ -86,17 +138,23 @@ TritError t729_meta_execute(const T729MetaOpcode* mop);
 #include "t81types.h"
 #include "hvm_context.h"
 #include "t243_ops.h"
+#include "t243_markov.h"
+#include "t243_symbol.h"
 #include "t729_intent.h"
 #include "t729_holotensor.h"
 #include "t729_metaopcode.h"
+#include "t729_entropy_blob.h"
 
 @* Extended Opcode Enum *@
 @c
 typedef enum {
-    OP_T243_STATE_ADV  = 0x30,  // Advance T243 state machine
-    OP_T729_INTENT     = 0x31,  // Dispatch symbolic AI intent
-    OP_T729_HOLO_FFT   = 0x32,  // HoloTensor FFT
-    OP_T729_META_EXEC  = 0x33   // MetaOpcode Execution Layer
+    OP_T243_STATE_ADV   = 0x30,
+    OP_T729_INTENT      = 0x31,
+    OP_T729_HOLO_FFT    = 0x32,
+    OP_T729_META_EXEC   = 0x33,
+    OP_T243_MARKOV_STEP = 0x34,
+    OP_T243_SYMBOL_OUT  = 0x35,
+    OP_T729_ENTROPY_SNAP = 0x36
 } ExtendedOpcode;
 
 @* Opcode Handler for T243/T729 *@
@@ -104,52 +162,65 @@ typedef enum {
 uint81_t evaluate_extended_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext* ctx) {
     switch (op) {
         case OP_T243_STATE_ADV: {
-            if (ctx->mode < MODE_T243) {
-                fprintf(stderr, "[ERROR] OP_T243_STATE_ADV requires T243 or higher\n");
-                return (uint81_t){0};
-            }
-            T243StateVector* sv = ctx->state_vector;
-            t243_state_advance(sv, t81_to_int(a));
-            return t81_from_int(sv->current_state);
+            if (ctx->mode < MODE_T243) return (uint81_t){0};
+            t243_state_advance(ctx->state_vector, t81_to_int(a));
+            return t81_from_int(ctx->state_vector->current_state);
         }
 
         case OP_T729_INTENT: {
-            if (ctx->mode < MODE_T729) {
-                fprintf(stderr, "[ERROR] OP_T729_INTENT requires T729 mode\n");
-                return (uint81_t){0};
-            }
+            if (ctx->mode < MODE_T729) return (uint81_t){0};
             T729Intent intent = {
                 .opcode = (uint8_t)t81_to_int(a),
                 .modifiers = ctx->ai_flags,
                 .entropy_weight = ctx->entropy
             };
             t729_intent_dispatch(&intent);
-            return t81_from_int(1);  // Success
+            return t81_from_int(1);
         }
 
         case OP_T729_HOLO_FFT: {
-            if (ctx->mode < MODE_T729) {
-                fprintf(stderr, "[ERROR] OP_T729_HOLO_FFT requires T729 mode\n");
-                return (uint81_t){0};
-            }
-            T729HoloTensor* input = ctx->holo_input;
+            if (ctx->mode < MODE_T729) return (uint81_t){0};
             T729HoloTensor* result = NULL;
-            t729_holo_fft(input, &result);
+            t729_holo_fft(ctx->holo_input, &result);
             ctx->holo_output = result;
-            return t81_from_int(1);  // FFT complete
+            return t81_from_int(1);
         }
 
         case OP_T729_META_EXEC: {
-            if (ctx->mode < MODE_T729) {
-                fprintf(stderr, "[ERROR] OP_T729_META_EXEC requires T729 mode\n");
-                return (uint81_t){0};
-            }
+            if (ctx->mode < MODE_T729) return (uint81_t){0};
             T729MetaOpcode mop = {
                 .base_opcode = (uint8_t)t81_to_int(a),
                 .condition_mask = ctx->entropy,
                 .state_fingerprint = *ctx->state_vector
             };
             t729_meta_execute(&mop);
+            return t81_from_int(1);
+        }
+
+        case OP_T243_MARKOV_STEP: {
+            if (ctx->mode < MODE_T243) return (uint81_t){0};
+            uint8_t next = 0;
+            t243_markov_step(ctx->markov_matrix, t81_to_int(a), &next);
+            return t81_from_int(next);
+        }
+
+        case OP_T243_SYMBOL_OUT: {
+            if (ctx->mode < MODE_T243) return (uint81_t){0};
+            T243Symbol sym;
+            char out[8] = {0};
+            t243_symbol_from_id(t81_to_int(a), &sym);
+            t243_symbol_to_string(&sym, out, sizeof(out));
+            printf("SYM[%d] → %s\n", sym.symbol_id, out);
+            return t81_from_int(sym.symbol_id);
+        }
+
+        case OP_T729_ENTROPY_SNAP: {
+            if (ctx->mode < MODE_T729) return (uint81_t){0};
+            T729EntropyBlob blob = {0};
+            char json[512] = {0};
+            t729_entropy_snapshot(&blob, ctx);
+            t729_entropy_dump(&blob, json, sizeof(json));
+            printf("Entropy Snapshot: %s\n", json);
             return t81_from_int(1);
         }
 
