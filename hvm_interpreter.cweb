@@ -1,0 +1,84 @@
+@* T81Lang HVM Interpreter (hvm_interpreter.cweb) *@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_REGS 256
+#define MAX_LABELS 128
+
+typedef struct {
+    char name[64];
+    char value[256];
+} Register;
+
+typedef struct {
+    char label[64];
+    long file_offset;
+} Label;
+
+Register registers[MAX_REGS];
+int reg_count = 0;
+Label labels[MAX_LABELS];
+int label_count = 0;
+
+char* get_reg(const char* name) {
+    for (int i = 0; i < reg_count; ++i) {
+        if (strcmp(registers[i].name, name) == 0) return registers[i].value;
+    }
+    strcpy(registers[reg_count].name, name);
+    registers[reg_count].value[0] = '\0';
+    return registers[reg_count++].value;
+}
+
+void interpret_hvm(const char* hvm_file) {
+    FILE* f = fopen(hvm_file, "r");
+    if (!f) {
+        perror("Error opening HVM file");
+        return;
+    }
+
+    char line[256];
+    long pos;
+
+    // Pass 1: Index labels
+    while ((pos = ftell(f)), fgets(line, sizeof(line), f)) {
+        if (strncmp(line, "LABEL ", 6) == 0) {
+            char label[64];
+            sscanf(line, "LABEL %63[^:]:", label);
+            strcpy(labels[label_count].label, label);
+            labels[label_count++].file_offset = pos;
+        }
+    }
+
+    rewind(f);
+
+    // Pass 2: Interpret
+    while (fgets(line, sizeof(line), f)) {
+        char op[16], a1[64], a2[64], dst[64];
+        if (sscanf(line, "%15s %63s %63s -> %63s", op, a1, a2, dst) >= 1) {
+            if (strcmp(op, "LOAD") == 0) {
+                strcpy(get_reg(dst), a1);
+            } else if (strcmp(op, "STORE") == 0) {
+                strcpy(get_reg(dst), get_reg(a1));
+            } else if (strcmp(op, "ADD") == 0) {
+                double x = atof(get_reg(a1));
+                double y = atof(get_reg(a2));
+                sprintf(get_reg(dst), "%f", x + y);
+            } else if (strcmp(op, "SUB") == 0) {
+                double x = atof(get_reg(a1));
+                double y = atof(get_reg(a2));
+                sprintf(get_reg(dst), "%f", x - y);
+            } else if (strcmp(op, "MUL") == 0) {
+                double x = atof(get_reg(a1));
+                double y = atof(get_reg(a2));
+                sprintf(get_reg(dst), "%f", x * y);
+            } else if (strcmp(op, "DIV") == 0) {
+                double x = atof(get_reg(a1));
+                double y = atof(get_reg(a2));
+                sprintf(get_reg(dst), "%f", y != 0 ? x / y : 0);
+            } else if (strcmp(op, "RETURN") == 0) {
+                printf("[HVM RETURN] %s\n", get_reg(a1));
+                break;
+            } else if (strcmp(op, "JUMP") == 0) {
+                for (int i = 0; i < label_count; ++i) {
