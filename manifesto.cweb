@@ -163,7 +163,9 @@ tisc_ir.cweb                   — Instruction representation (IR)
 tisc_stdlib.cweb               — TISC standard library for high-level logic
 
 t81lang.cweb                   — T81Lang Grammer Specification
-tlang_lexer.cweb               — T81Lang Lexer
+t81lang_lexer.cweb             — T81Lang Lexer
+t81lang_parser.cweb            — T81Lang Parser
+
 write_simple_add.cweb          — Basic example with source + output
 
 */
