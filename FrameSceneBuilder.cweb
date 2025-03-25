@@ -1,0 +1,112 @@
+@* FrameSceneBuilder.cweb -- Visualize RecursionFrame objects using jMonkeyEngine
+   Recommended Extensions:
+   - Floating HUD labels with Axion annotations
+   - Entropy-based glow/pulse animations
+   - Tail-recursion collapse visual effects
+   - Recursive frame depth camera flythrough
+   - Tooltip or mouse-hover overlays with tier/intent data
+*@
+
+@c
+package com.hanoivm.visualizer;
+
+import com.jme3.app.SimpleApplication;
+import com.jme3.material.Material;
+import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector3f;
+import com.jme3.scene.Geometry;
+import com.jme3.scene.Node;
+import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Sphere;
+import com.jme3.scene.control.BillboardControl;
+import com.jme3.font.BitmapText;
+import com.jme3.font.BitmapFont;
+
+/**
+ * Utility class to convert RecursionFrame objects into jMonkeyEngine 3D scene nodes.
+ */
+public class FrameSceneBuilder extends SimpleApplication {
+
+    private RecursionVisualizer visualizer;
+    private BitmapFont guiFont;
+
+    public FrameSceneBuilder(RecursionVisualizer visualizer) {
+        this.visualizer = visualizer;
+    }
+
+    public static void main(String[] args) {
+        RecursionVisualizer vis = new RecursionVisualizer();
+        try {
+            vis.loadFromFile("sample.t81viz");
+            FrameSceneBuilder app = new FrameSceneBuilder(vis);
+            app.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void simpleInitApp() {
+        guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
+        Node root = buildSceneGraph();
+        rootNode.attachChild(root);
+        flyCam.setMoveSpeed(10f);
+        cam.setLocation(new Vector3f(0, 10, 40));
+        cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
+    }
+
+    private Node buildSceneGraph() {
+        Node parent = new Node("RecursionTrace");
+        int i = 0;
+        for (RecursionFrame frame : visualizer.getFrames()) {
+            Geometry geom = createFrameGeometry(frame, i);
+            geom.setLocalTranslation(i * 2.5f, frame.depth * -1.5f, 0);
+            parent.attachChild(geom);
+            parent.attachChild(createHUDLabel(frame, i));
+            i++;
+        }
+        return parent;
+    }
+
+    private Geometry createFrameGeometry(RecursionFrame frame, int index) {
+        Geometry geom;
+        if ("T729".equals(frame.tier.activeTier)) {
+            geom = new Geometry("Frame" + index, new Sphere(12, 12, 0.7f));
+        } else if ("T243".equals(frame.tier.activeTier)) {
+            geom = new Geometry("Frame" + index, new Box(0.8f, 0.5f, 0.3f));
+        } else {
+            geom = new Geometry("Frame" + index, new Box(0.5f, 0.5f, 0.5f));
+        }
+
+        Material mat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        mat.setBoolean("UseMaterialColors", true);
+
+        switch (frame.ternaryState) {
+            case "T+": mat.setColor("Diffuse", ColorRGBA.Green); break;
+            case "T0": mat.setColor("Diffuse", ColorRGBA.Blue); break;
+            case "T−": mat.setColor("Diffuse", ColorRGBA.Red); break;
+            default:   mat.setColor("Diffuse", ColorRGBA.White); break;
+        }
+
+        if (frame.axion.suggestedCollapse) {
+            mat.setColor("Emissive", ColorRGBA.Orange); // visual cue for collapse
+        }
+
+        geom.setMaterial(mat);
+        return geom;
+    }
+
+    private Node createHUDLabel(RecursionFrame frame, int index) {
+        BitmapText text = new BitmapText(guiFont);
+        text.setText(frame.function + "\nΔτ=" + String.format("%.2f", frame.tier.entropyDelta));
+        text.setSize(0.3f);
+        text.setColor(ColorRGBA.White);
+        BillboardControl bb = new BillboardControl();
+        text.addControl(bb);
+
+        Node labelNode = new Node("Label" + index);
+        labelNode.attachChild(text);
+        labelNode.setLocalTranslation(index * 2.5f, frame.depth * -1.5f + 1.0f, 0);
+        return labelNode;
+    }
+}
