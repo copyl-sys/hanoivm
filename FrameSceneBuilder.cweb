@@ -16,19 +16,23 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Sphere;
 import com.jme3.scene.control.BillboardControl;
 import com.jme3.font.BitmapText;
 import com.jme3.font.BitmapFont;
+import com.jme3.light.PointLight;
+import com.jme3.light.AmbientLight;
+import com.jme3.input.controls.ActionListener;
+import com.jme3.input.KeyInput;
+import com.jme3.input.controls.KeyTrigger;
 
-/**
- * Utility class to convert RecursionFrame objects into jMonkeyEngine 3D scene nodes.
- */
 public class FrameSceneBuilder extends SimpleApplication {
 
     private RecursionVisualizer visualizer;
     private BitmapFont guiFont;
+    private BitmapText tooltip;
 
     public FrameSceneBuilder(RecursionVisualizer visualizer) {
         this.visualizer = visualizer;
@@ -48,11 +52,37 @@ public class FrameSceneBuilder extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
+        tooltip = new BitmapText(guiFont);
+        tooltip.setSize(0.5f);
+        tooltip.setColor(ColorRGBA.Yellow);
+        tooltip.setLocalTranslation(10, cam.getHeight() - 10, 0);
+        guiNode.attachChild(tooltip);
+
         Node root = buildSceneGraph();
         rootNode.attachChild(root);
         flyCam.setMoveSpeed(10f);
         cam.setLocation(new Vector3f(0, 10, 40));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
+
+        AmbientLight ambient = new AmbientLight();
+        ambient.setColor(ColorRGBA.White.mult(0.7f));
+        rootNode.addLight(ambient);
+
+        PointLight point = new PointLight();
+        point.setPosition(new Vector3f(10, 10, 10));
+        point.setColor(ColorRGBA.White);
+        rootNode.addLight(point);
+
+        initKeys();
+    }
+
+    private void initKeys() {
+        inputManager.addMapping("ShowTooltip", new KeyTrigger(KeyInput.KEY_T));
+        inputManager.addListener((ActionListener) (name, isPressed, tpf) -> {
+            if (name.equals("ShowTooltip") && isPressed) {
+                tooltip.setText("Tier/Intent Hotkeys Enabled\n(Coming soon)");
+            }
+        }, "ShowTooltip");
     }
 
     private Node buildSceneGraph() {
@@ -61,6 +91,12 @@ public class FrameSceneBuilder extends SimpleApplication {
         for (RecursionFrame frame : visualizer.getFrames()) {
             Geometry geom = createFrameGeometry(frame, i);
             geom.setLocalTranslation(i * 2.5f, frame.depth * -1.5f, 0);
+
+            if (frame.tier.entropyDelta > 0.5f) {
+                pulseHighlight(geom);
+            }
+
+            geom.setUserData("tooltip", frame.tier.intent + " | " + frame.tier.symbolicOpcode);
             parent.attachChild(geom);
             parent.attachChild(createHUDLabel(frame, i));
             i++;
@@ -89,7 +125,7 @@ public class FrameSceneBuilder extends SimpleApplication {
         }
 
         if (frame.axion.suggestedCollapse) {
-            mat.setColor("Emissive", ColorRGBA.Orange); // visual cue for collapse
+            mat.setColor("Emissive", ColorRGBA.Orange);
         }
 
         geom.setMaterial(mat);
@@ -108,5 +144,9 @@ public class FrameSceneBuilder extends SimpleApplication {
         labelNode.attachChild(text);
         labelNode.setLocalTranslation(index * 2.5f, frame.depth * -1.5f + 1.0f, 0);
         return labelNode;
+    }
+
+    private void pulseHighlight(Spatial spatial) {
+        spatial.setUserData("pulse", true);
     }
 }
