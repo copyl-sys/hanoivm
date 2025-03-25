@@ -101,6 +101,7 @@ axion-ai.cweb                  — Axion kernel AI logic integration
 axion-api.cweb                 — Gives Recursion Exporter full Axion context integration
 axion_gpu_request.cweb         — GPU request abstraction for Axion AI
 axion-gaia-interface.cweb      — HIP dispatch bridge for GPU execution
+
 build-all.cweb                 — Build orchestration script
 
 config.cweb                    — System configuration definitions
@@ -108,16 +109,18 @@ cuda_handle_request.cweb       — CUDA backend dispatch logic
 
 disassembler.cweb              — HVM bytecode decoder
 disasm_hvm.cweb                — Recursive and symbolic disassembler
-gaia_handle_request.cweb       — ROCm GPU kernel dispatcher
 
+emit_hvm.cweb                  — T81Lang HVM Emitter
+
+gaia_handle_request.cweb       — ROCm GPU kernel dispatcher
 ghidra_hvm_plugin.cweb         — Ghidra reverse engineering integration
+
 hanoivm_vm.cweb                — HanoiVM core interpreter
 hanoivm-runtime.cweb           — VM control loop
 hanoivm-core.cweb              — VM memory, instruction, and context manager
 hanoivm-test.cweb              — Kernel-space test framework
 hanoivm_tests.cweb             — Test entrypoints and definitions
 hanoivm_cli.cweb               — CLI tool for execution and testing
-
 hvmcli.cweb                    — Command-line user interface
 hvm_loader.cweb                — Runtime loader for `.hvm` binaries
 hvm_pcie_driver.cweb           — PCIe simulation driver for ternary co-processors
@@ -130,15 +133,16 @@ logviewer.cweb                 — Log search and viewer with AI filtering
 
 main_driver.cweb               — Entry point for bytecode execution
 meta.cweb                      — Metadata constants and identity signatures
+
 nist_encryption.cweb           — Ternary + NIST crypto integration
 
 recursive_exporter.cweb        — Extended recursion support with AxionAI annotations /w ternary insight   
 recursive_tier_execution.cweb  — Simulates VM promotion/demotion
+
 simple_add.cweb                — Basic ternary addition sample
+
 telemetry-cli.cweb             — CLI for introspection and profiling
-
 ternary_arithmetic_optimization.cweb — Optimized ternary logic routines
-
 test_advanced_hvm.cweb         — Test suite for symbolic + AI instructions
 test_controlflow_hvm.cweb      — Tests for recursive jumps and stack
 t81_patterns.cweb              — Symbolic ternary transformation templates
@@ -156,12 +160,10 @@ t729tensor_reshape.cweb        — Reshape logic for symbolic tensors
 t729tensor_slice.cweb          — Slice operations for tensor substructure
 t729tensor_to_string.cweb      — Debug stringification of symbolic tensor state
 t729tensor_transpose.cweb      — Tensor transpose macros
-
 tisc_backend.cweb              — Backend IR emitter for `.tisc` → `.hvm`
 tisc_compiler.cweb             — Compiler frontend
 tisc_ir.cweb                   — Instruction representation (IR)
 tisc_stdlib.cweb               — TISC standard library for high-level logic
-
 t81lang.cweb                   — T81Lang Grammer Specification
 t81lang_lexer.cweb             — T81Lang Lexer
 t81lang_parser.cweb            — T81Lang Parser
