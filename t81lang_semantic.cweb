@@ -19,12 +19,14 @@ typedef struct {
     char name[MAX_NAME_LEN];
     char type[MAX_NAME_LEN];
     SymbolType kind;
+    int scope_level;
 } Symbol;
 
 @d Symbol Table
 typedef struct {
     Symbol symbols[MAX_SYMBOLS];
     int count;
+    int scope_level;
 } SymbolTable;
 
 @d AST Forward Declaration
@@ -69,6 +71,21 @@ typedef struct ASTNode {
 @d Initialize Symbol Table
 void init_symbol_table(SymbolTable* table) {
     table->count = 0;
+    table->scope_level = 0;
+}
+
+@d Enter New Scope
+void enter_scope(SymbolTable* table) {
+    table->scope_level++;
+}
+
+@d Exit Current Scope
+void exit_scope(SymbolTable* table) {
+    for (int i = table->count - 1; i >= 0; --i) {
+        if (table->symbols[i].scope_level < table->scope_level) break;
+        table->count--;
+    }
+    table->scope_level--;
 }
 
 @d Add Symbol to Table
@@ -77,13 +94,14 @@ void add_symbol(SymbolTable* table, const char* name, const char* type, SymbolTy
         strncpy(table->symbols[table->count].name, name, MAX_NAME_LEN);
         strncpy(table->symbols[table->count].type, type, MAX_NAME_LEN);
         table->symbols[table->count].kind = kind;
+        table->symbols[table->count].scope_level = table->scope_level;
         table->count++;
     }
 }
 
 @d Lookup Symbol
 const char* lookup_symbol(SymbolTable* table, const char* name) {
-    for (int i = 0; i < table->count; ++i) {
+    for (int i = table->count - 1; i >= 0; --i) {
         if (strcmp(table->symbols[i].name, name) == 0) {
             return table->symbols[i].type;
         }
@@ -123,17 +141,21 @@ void analyze_statement(ASTNode* stmt, SymbolTable* table) {
         case AST_IF:
         case AST_WHILE: {
             analyze_expression(stmt->left, table);
+            enter_scope(table);
             ASTNode* body = stmt->right;
             while (body) {
                 analyze_statement(body, table);
                 body = body->next;
             }
+            exit_scope(table);
             if (stmt->next && stmt->next->type == AST_ELSE) {
+                enter_scope(table);
                 ASTNode* else_body = stmt->next->body;
                 while (else_body) {
                     analyze_statement(else_body, table);
                     else_body = else_body->next;
                 }
+                exit_scope(table);
             }
             break;
         }
@@ -175,11 +197,13 @@ void analyze_function(ASTNode* fn) {
         params = params->next;
     }
 
+    enter_scope(&table);
     ASTNode* body = fn->body;
     while (body) {
         analyze_statement(body, &table);
         body = body->next;
     }
+    exit_scope(&table);
 }
 
 @d Entry Point
