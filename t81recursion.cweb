@@ -1,106 +1,137 @@
-@* T81Recursion Library | `t81recursion.cweb`
+@* T81Recursion Library | t81recursion.cweb
+   This module defines recursive computation functions using T81BigInt.
+   It supports:
+     - Recursive factorial
+     - Tail-recursive Fibonacci
+     - General callback-based recursion dispatcher
 
-This module defines recursive computation functions using T81BigInt.
-It supports:
-- Recursive factorial
-- Tail-recursive Fibonacci
-- General callback-based recursion dispatcher
+   Enhancements include:
+     - Stack depth tracking with safety guards.
+     - Optional debug tracing of recursive calls.
+     - A helper to query the current recursion depth.
+@#
 
-Includes stack depth tracking, safety guards, and base-81 awareness.
+@<Include Dependencies@>=
+#include "t81.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+@#
 
-@d T81RECURSE_MAX_DEPTH 1024
+@<Define Constants@>=
+#define T81RECURSE_MAX_DEPTH 1024
+@#
 
-@f #include "t81.h"
-@f #include <stdio.h>
-@f #include <stdlib.h>
-@f #include <string.h>
+@<Optional Trace Macro@>=
+#ifdef T81REC_TRACE
+  #define T81REC_TRACE_PRINT(fmt, ...) printf("[TRACE][Depth %d] " fmt, t81recursion_depth, ##__VA_ARGS__)
+#else
+  #define T81REC_TRACE_PRINT(fmt, ...)
+#endif
+@#
 
-@<Global variables@> @;
-@<T81BigInt Recursive Factorial@> @;
-@<T81BigInt Tail-Recursive Fibonacci@> @;
-@<Generic Callback Dispatcher@> @;
-@<Reset Recursion Depth@> @;
-
-@*1 Global variables
-
-@<Global variables@>=
+@<Global Variables@>=
 static int t81recursion_depth = 0;
+@#
 
-@*1 Recursive Factorial
-
+@* Recursive Factorial
+   Computes factorial of a T81BigInt recursively.
 @<T81BigInt Recursive Factorial@>=
 TritError t81bigint_factorial_recursive(T81BigIntHandle n, T81BigIntHandle* result) {
     if (t81recursion_depth >= T81RECURSE_MAX_DEPTH)
         return T81RECURSE_STACK_OVERFLOW;
 
     t81recursion_depth++;
+    T81REC_TRACE_PRINT("Entering factorial_recursive\n");
 
     char* str;
-    if (t81bigint_to_string(n, &str) != TRIT_OK)
+    if (t81bigint_to_string(n, &str) != TRIT_OK) {
+        t81recursion_depth--;
         return T81RECURSE_INVALID_INPUT;
+    }
 
     if (strcmp(str, "0") == 0) {
         free(str);
         *result = t81bigint_new(1);
+        T81REC_TRACE_PRINT("Base case reached: n == 0\n");
         t81recursion_depth--;
         return TRIT_OK;
     }
-
     free(str);
+
     T81BigIntHandle one = t81bigint_new(1);
     T81BigIntHandle n_minus_1;
-    t81bigint_subtract(n, one, &n_minus_1);
+    TritError err = t81bigint_subtract(n, one, &n_minus_1);
     t81bigint_free(one);
+    if (err != TRIT_OK) {
+        t81recursion_depth--;
+        return err;
+    }
 
     T81BigIntHandle sub_result;
-    TritError err = t81bigint_factorial_recursive(n_minus_1, &sub_result);
-
+    err = t81bigint_factorial_recursive(n_minus_1, &sub_result);
     if (err == TRIT_OK)
         err = t81bigint_multiply(n, sub_result, result);
 
     t81bigint_free(n_minus_1);
     t81bigint_free(sub_result);
+
+    T81REC_TRACE_PRINT("Exiting factorial_recursive\n");
     t81recursion_depth--;
     return err;
 }
+@#
 
-@*1 Tail-Recursive Fibonacci
-
+@* Tail-Recursive Fibonacci
+   Computes Fibonacci numbers using tail recursion.
 @<T81BigInt Tail-Recursive Fibonacci@>=
 TritError t81bigint_fibonacci_tail_helper(T81BigIntHandle n, T81BigIntHandle a, T81BigIntHandle b, T81BigIntHandle* result) {
     if (t81recursion_depth >= T81RECURSE_MAX_DEPTH)
         return T81RECURSE_STACK_OVERFLOW;
 
     t81recursion_depth++;
+    T81REC_TRACE_PRINT("Entering fibonacci_tail_helper\n");
+
     char* str;
     t81bigint_to_string(n, &str);
-
     if (strcmp(str, "0") == 0) {
         *result = t81bigint_copy(a);
         free(str);
+        T81REC_TRACE_PRINT("Base case reached: n == 0\n");
         t81recursion_depth--;
         return TRIT_OK;
     }
-
     if (strcmp(str, "1") == 0) {
         *result = t81bigint_copy(b);
         free(str);
+        T81REC_TRACE_PRINT("Base case reached: n == 1\n");
         t81recursion_depth--;
         return TRIT_OK;
     }
-
     free(str);
+
     T81BigIntHandle one = t81bigint_new(1);
     T81BigIntHandle n1;
-    t81bigint_subtract(n, one, &n1);
+    TritError err = t81bigint_subtract(n, one, &n1);
     t81bigint_free(one);
+    if (err != TRIT_OK) {
+        t81recursion_depth--;
+        return err;
+    }
 
     T81BigIntHandle next;
-    t81bigint_add(a, b, &next);
-    TritError err = t81bigint_fibonacci_tail_helper(n1, b, next, result);
+    err = t81bigint_add(a, b, &next);
+    if (err != TRIT_OK) {
+        t81bigint_free(n1);
+        t81recursion_depth--;
+        return err;
+    }
 
+    err = t81bigint_fibonacci_tail_helper(n1, b, next, result);
     t81bigint_free(n1);
     t81bigint_free(next);
+
+    T81REC_TRACE_PRINT("Exiting fibonacci_tail_helper\n");
     t81recursion_depth--;
     return err;
 }
@@ -113,9 +144,10 @@ TritError t81bigint_fibonacci_tail(T81BigIntHandle n, T81BigIntHandle* result) {
     t81bigint_free(b);
     return err;
 }
+@#
 
-@*1 Generic Dispatcher Callback
-
+@* Generic Callback Dispatcher
+   Allows dispatching a recursive computation via a callback.
 @<Generic Callback Dispatcher@>=
 typedef TritError (*T81RecursiveCallback)(
     T81BigIntHandle current,
@@ -128,14 +160,33 @@ TritError t81recurse(T81BigIntHandle start, T81RecursiveCallback callback, void*
         return T81RECURSE_STACK_OVERFLOW;
 
     t81recursion_depth++;
+    T81REC_TRACE_PRINT("Entering generic callback dispatcher\n");
+
     TritError err = callback(start, context, result);
+
+    T81REC_TRACE_PRINT("Exiting generic callback dispatcher\n");
     t81recursion_depth--;
     return err;
 }
+@#
 
-@*1 Reset Recursion Depth
-
+@* Reset Recursion Depth
+   Resets the global recursion depth counter.
 @<Reset Recursion Depth@>=
 void t81recursion_reset_depth() {
     t81recursion_depth = 0;
 }
+@#
+
+@* Helper to Get Current Recursion Depth (for debugging)
+@<Get Recursion Depth@>=
+int t81recursion_get_depth() {
+    return t81recursion_depth;
+}
+@#
+
+@* End of t81recursion.cweb
+   This module now supports enhanced debugging via optional recursion tracing,
+   making it easier to track recursive calls and detect potential stack overflows.
+   Future enhancements may include memoization or iterative conversion for tail recursion.
+@*
