@@ -1,0 +1,107 @@
+// t81_codegen.cweb - LLVM Backend Integration for HanoiVM
+
+@* T81 LLVM Backend: Codegen Entrypoints.
+This document defines the basic scaffolding for a custom LLVM backend
+for the T81 (HanoiVM) ternary virtual architecture. It includes the
+`TargetMachine` setup, `ISelLowering`, top-level `.td` definitions,
+and build system integration for CMake.
+
+@<Includes@>
+@<T81TargetMachine.cpp@>
+@<T81ISelLowering.cpp@>
+@<T81.td@>
+@<CMakeLists.txt@>
+
+@*1 Includes.
+@<Includes@>=
+#include "T81.h"
+#include "T81TargetMachine.h"
+#include "T81ISelLowering.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
+#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
+
+using namespace llvm;
+
+@*1 T81TargetMachine.cpp.
+@<T81TargetMachine.cpp@>=
+namespace llvm {
+
+T81TargetMachine::T81TargetMachine(const Target &T, const Triple &TT,
+                                   StringRef CPU, StringRef FS,
+                                   const TargetOptions &Options,
+                                   Optional<Reloc::Model> RM,
+                                   Optional<CodeModel::Model> CM,
+                                   CodeGenOpt::Level OL, bool JIT)
+    : LLVMTargetMachine(T, "e-p:81:81-i81:81:81-n81", TT, CPU, FS, Options,
+                        getEffectiveRelocModel(RM),
+                        getEffectiveCodeModel(CM, CodeModel::Small), OL),
+      Subtarget(TT, CPU, FS, *this) {
+  initAsmInfo();
+}
+
+TargetPassConfig *T81TargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new TargetPassConfig(*this, PM);
+}
+
+} // namespace llvm
+
+@*1 T81ISelLowering.cpp.
+@<T81ISelLowering.cpp@>=
+#include "T81ISelLowering.h"
+#include "T81.h"
+#include "T81TargetMachine.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
+
+using namespace llvm;
+
+namespace llvm {
+
+T81TargetLowering::T81TargetLowering(const TargetMachine &TM,
+                                     const T81Subtarget &STI)
+    : TargetLowering(TM) {
+
+  // Define register classes
+  addRegisterClass(MVT::i32, &T81::T81GPRRegClass);
+
+  // Set operation actions
+  setOperationAction(ISD::ADD, MVT::i32, Legal);
+  setOperationAction(ISD::SUB, MVT::i32, Legal);
+  setOperationAction(ISD::MUL, MVT::i32, Legal);
+
+  // Conditional branch mapping
+  setOperationAction(ISD::BR_CC, MVT::Other, Expand);
+  setOperationAction(ISD::BR, MVT::Other, Legal);
+}
+
+SDValue T81TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
+  // Placeholder for lowering operations
+  return SDValue();
+}
+
+} // namespace llvm
+
+@*1 T81.td - Top-Level Target Definition.
+@<T81.td@>=
+include "llvm/Target/Target.td"
+
+//===----------------------------------------------------------------------===//
+// Target declaration for T81
+//===----------------------------------------------------------------------===//
+
+def T81 : Target {
+  let InstructionSet = T81Instrs;
+}
+
+@*1 CMakeLists.txt - LLVM Target Build Rules.
+@<CMakeLists.txt@>=
+add_llvm_target(T81CodeGen
+  T81ISelLowering.cpp
+  T81TargetMachine.cpp
+  )
+
+target_link_libraries(T81CodeGen PRIVATE LLVMCodeGen LLVMTarget)
+
+add_subdirectory(AsmPrinter)
+add_subdirectory(TargetInfo)
