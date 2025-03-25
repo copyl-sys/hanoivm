@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "ai_hook.h"
+#include "gaia_handle_request.h"  // New synergy import for GPU-backed dispatch
 
 @<Define Pattern Function Type@>=
 typedef uint81_t (*T81Pattern)(uint81_t);
@@ -39,6 +40,21 @@ uint81_t t81_pattern_zero(uint81_t x) {
     return (uint81_t){ .a = 0, .b = 0, .c = 0 };
 }
 
+// GPU-enhanced transformation pattern using GAIA
+uint81_t t81_pattern_gaia_transform(uint81_t x) {
+    GaiaRequest req = {
+        .tbin = (uint8_t*)&x,
+        .tbin_len = sizeof(uint81_t),
+        .intent = GAIA_TRANSFORM
+    };
+    GaiaResponse res = gaia_handle_request(req);
+
+    uint81_t out;
+    memcpy(&out, res.updated_macro, sizeof(uint81_t));
+    axion_log_event_json("gaia_transform", "Dispatched symbolic GPU transformation");
+    return out;
+}
+
 @<Define Pattern Registry@>=
 typedef struct {
     const char* name;
@@ -50,6 +66,7 @@ static T81PatternDef t81_pattern_registry[] = {
     { "negate",   t81_pattern_negate },
     { "rotate",   t81_pattern_rotate },
     { "zero",     t81_pattern_zero },
+    { "gaia",     t81_pattern_gaia_transform },
 };
 
 @<Apply Pattern by Name@>=
@@ -67,11 +84,12 @@ uint81_t t81_apply_pattern_by_name(const char* name, uint81_t input) {
 @<AI-Aware Pattern Dispatcher@>=
 uint81_t t81_dispatch_pattern(uint81_t input) {
     int signal = axion_get_optimization();
-    switch (signal % 4) {
+    switch (signal % 5) {
         case 0: return t81_pattern_identity(input);
         case 1: return t81_pattern_negate(input);
         case 2: return t81_pattern_rotate(input);
         case 3: return t81_pattern_zero(input);
+        case 4: return t81_pattern_gaia_transform(input);
         default: return input;
     }
 }
@@ -90,6 +108,7 @@ uint81_t t81_pattern_identity(uint81_t);
 uint81_t t81_pattern_negate(uint81_t);
 uint81_t t81_pattern_rotate(uint81_t);
 uint81_t t81_pattern_zero(uint81_t);
+uint81_t t81_pattern_gaia_transform(uint81_t);
 
 uint81_t t81_apply_pattern_by_name(const char* name, uint81_t input);
 uint81_t t81_dispatch_pattern(uint81_t input);
