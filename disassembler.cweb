@@ -47,7 +47,19 @@ uint81_t fetch_operand(const uint8_t* buf) {
 
 @<Opcode to String Translator@>=
 const char* opcode_to_str(uint8_t opcode) {
-    return opcode_name(opcode);  // Use unified name resolver (assumed to be defined)
+    switch (opcode) {
+        case OP_TFADD:   return "TFADD";
+        case OP_TFSUB:   return "TFSUB";
+        case OP_TFLADD:  return "TFLADD";
+        case OP_TFCOS:   return "TFCOS";
+        case OP_TMMUL:   return "TMMUL";
+        case OP_TVDOT:   return "TVDOT";
+        case OP_TQMUL:   return "TQMUL";
+        case OP_TPMUL:   return "TPMUL";
+        case OP_TTCON:   return "TTCON";
+        case OP_TGBFS:   return "TGBFS";
+        default:         return opcode_name(opcode);
+    }
 }
 @#
 
