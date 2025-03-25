@@ -1,8 +1,19 @@
-@* telemetry-calc.cweb | CLI for advanced ternary calculations and introspection
-
-This tool is a command-line interface for performing secure, AI-aware ternary math
-using Axion's T81BigInt data types. It builds upon HanoiVM telemetry infrastructure
-and provides scientific, logical, and scripting-based operations from the terminal.
+@* telemetry-calc.cweb | CLI for Advanced Ternary Calculations and Introspection
+   This tool is a command-line interface for performing secure, AI-aware ternary math
+   using Axion's T81BigInt data types. It builds upon HanoiVM telemetry infrastructure
+   and provides scientific, logical, and scripting-based operations from the terminal.
+   
+   Supported Commands:
+   - raw:        Print raw JSON telemetry (pretty printed)
+   - json:       Print compact JSON telemetry
+   - get key:    Fetch nested key from telemetry JSON using dot notation
+   - add A B:    Add two base-3 numbers
+   - mul A B:    Multiply two base-3 numbers
+   - sqrt A:     Square root of a ternary number
+   - lua code:   Run inline Lua snippet
+   - lua -f file.lua: Run Lua file
+   - help:       Show this help text
+@#
 
 @<Includes and Defines@>=
 #include <stdio.h>
@@ -16,14 +27,19 @@ and provides scientific, logical, and scripting-based operations from the termin
 #include <lauxlib.h>
 #include <lualib.h>
 
-#define TELEMETRY_PATH "/sys/kernel/debug/telemetry-view"
+/* Telemetry file path, override with TELEMETRY_PATH env variable if set */
+#define DEFAULT_TELEMETRY_PATH "/sys/kernel/debug/telemetry-view"
+static char TELEMETRY_PATH[256];
+
+@#
 
 @<Usage Help Function@>=
 void usage(const char *prog) {
     printf("Usage: %s [command] [args]\n", prog);
     printf("Commands:\n");
-    printf("  raw                  Print raw JSON telemetry\n");
-    printf("  get key              Fetch nested key\n");
+    printf("  raw                  Print pretty-printed JSON telemetry\n");
+    printf("  json                 Print compact JSON telemetry\n");
+    printf("  get key              Fetch nested key (dot-separated) from telemetry JSON\n");
     printf("  add A B              Add two base-3 numbers\n");
     printf("  mul A B              Multiply two base-3 numbers\n");
     printf("  sqrt A               Square root of ternary number\n");
@@ -31,10 +47,40 @@ void usage(const char *prog) {
     printf("  lua -f file.lua      Run Lua file\n");
     printf("  help                 Show this help text\n");
 }
+@#
+
+@<Helper: Read Telemetry File@>=
+char* read_telemetry_file(const char *path, long *out_size) {
+    FILE *fp = fopen(path, "r");
+    if (!fp) {
+        perror("open telemetry file");
+        return NULL;
+    }
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    rewind(fp);
+    char *buf = calloc(1, size + 1);
+    if (!buf) {
+        perror("calloc telemetry buffer");
+        fclose(fp);
+        return NULL;
+    }
+    if (fread(buf, 1, size, fp) != (size_t)size) {
+        perror("fread telemetry file");
+        free(buf);
+        fclose(fp);
+        return NULL;
+    }
+    fclose(fp);
+    if (out_size) *out_size = size;
+    return buf;
+}
+@#
 
 @<Nested JSON Lookup@>=
 json_t *json_nested_lookup(json_t *root, const char *path) {
     char *mutable = strdup(path);
+    if (!mutable) return NULL;
     char *token = strtok(mutable, ".");
     json_t *val = root;
     while (token && val) {
@@ -44,6 +90,7 @@ json_t *json_nested_lookup(json_t *root, const char *path) {
     free(mutable);
     return val;
 }
+@#
 
 @<Mock TritJS Arithmetic@>=
 long base3_to_long(const char *s) {
@@ -59,23 +106,27 @@ void long_to_base3(long n, char *out, size_t len) {
         n /= 3;
     }
 }
+@#
 
 @<Main Function@>=
 int main(int argc, char *argv[]) {
+    /* Determine telemetry path: use environment variable if set */
+    char *env_path = getenv("TELEMETRY_PATH");
+    if (env_path) {
+        strncpy(TELEMETRY_PATH, env_path, sizeof(TELEMETRY_PATH)-1);
+    } else {
+        strncpy(TELEMETRY_PATH, DEFAULT_TELEMETRY_PATH, sizeof(TELEMETRY_PATH)-1);
+    }
+
     if (argc < 2) {
         usage(argv[0]);
         return 1;
     }
 
     if (strcmp(argv[1], "raw") == 0) {
-        FILE *fp = fopen(TELEMETRY_PATH, "r");
-        if (!fp) { perror("open"); return 1; }
-        fseek(fp, 0, SEEK_END);
-        long size = ftell(fp);
-        rewind(fp);
-        char *buf = calloc(1, size + 1);
-        fread(buf, 1, size, fp);
-        fclose(fp);
+        long size = 0;
+        char *buf = read_telemetry_file(TELEMETRY_PATH, &size);
+        if (!buf) return 1;
 
         json_error_t err;
         json_t *root = json_loads(buf, 0, &err);
@@ -84,21 +135,15 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "JSON parse error: %s\n", err.text);
             return 1;
         }
-
         char *out = json_dumps(root, JSON_INDENT(2));
         puts(out);
         free(out);
         json_decref(root);
         return 0;
-    } else if (strcmp(argv[1], "get") == 0 && argc == 3) {
-        FILE *fp = fopen(TELEMETRY_PATH, "r");
-        if (!fp) { perror("open"); return 1; }
-        fseek(fp, 0, SEEK_END);
-        long size = ftell(fp);
-        rewind(fp);
-        char *buf = calloc(1, size + 1);
-        fread(buf, 1, size, fp);
-        fclose(fp);
+    } else if (strcmp(argv[1], "json") == 0) {
+        long size = 0;
+        char *buf = read_telemetry_file(TELEMETRY_PATH, &size);
+        if (!buf) return 1;
 
         json_error_t err;
         json_t *root = json_loads(buf, 0, &err);
@@ -107,7 +152,23 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "JSON parse error: %s\n", err.text);
             return 1;
         }
+        char *out = json_dumps(root, 0);  // Compact JSON output
+        puts(out);
+        free(out);
+        json_decref(root);
+        return 0;
+    } else if (strcmp(argv[1], "get") == 0 && argc == 3) {
+        long size = 0;
+        char *buf = read_telemetry_file(TELEMETRY_PATH, &size);
+        if (!buf) return 1;
 
+        json_error_t err;
+        json_t *root = json_loads(buf, 0, &err);
+        free(buf);
+        if (!root) {
+            fprintf(stderr, "JSON parse error: %s\n", err.text);
+            return 1;
+        }
         json_t *val = json_nested_lookup(root, argv[2]);
         if (!val) {
             fprintf(stderr, "Key not found: %s\n", argv[2]);
@@ -135,15 +196,14 @@ int main(int argc, char *argv[]) {
         return 0;
     } else if (strcmp(argv[1], "sqrt") == 0 && argc == 3) {
         long A = base3_to_long(argv[2]);
-        double root = sqrt((double)A);
+        double root_val = sqrt((double)A);
         char buf[64];
-        long_to_base3((long)root, buf, sizeof(buf));
+        long_to_base3((long)root_val, buf, sizeof(buf));
         printf("%s\n", buf);
         return 0;
     } else if (strcmp(argv[1], "lua") == 0 && argc >= 3) {
         lua_State *L = luaL_newstate();
         luaL_openlibs(L);
-
         if (strcmp(argv[2], "-f") == 0 && argc == 4) {
             if (luaL_dofile(L, argv[3]) != LUA_OK) {
                 fprintf(stderr, "Lua file error: %s\n", lua_tostring(L, -1));
@@ -162,3 +222,5 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 }
+@*
+
