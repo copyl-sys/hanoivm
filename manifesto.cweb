@@ -131,6 +131,7 @@ main_driver.cweb               — Entry point for bytecode execution
 meta.cweb                      — Metadata constants and identity signatures
 nist_encryption.cweb           — Ternary + NIST crypto integration
 
+recursive_exporter.cweb        — Extended recursion support with AxionAI annotations /w ternary insight
 recursive_tier_execution.cweb  — Simulates VM promotion/demotion
 simple_add.cweb                — Basic ternary addition sample
 telemetry-cli.cweb             — CLI for introspection and profiling
