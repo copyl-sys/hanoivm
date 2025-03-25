@@ -15,6 +15,7 @@ a refined `DataLayout`, top-level `.td` definitions, and build system integratio
 @<T81MCInstLower.cpp@>
 @<T81TargetInfo.cpp@>
 @<T81.td@>
+@<T81ValueTypes.td@>
 @<CMakeLists.txt@>
 
 @*1 Includes.
@@ -121,6 +122,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeT81TargetInfo() {
 @*1 T81.td - Top-Level Target Definition.
 @<T81.td@>=
 include "llvm/Target/Target.td"
+include "T81ValueTypes.td"
 
 //===----------------------------------------------------------------------===//
 // Target declaration for T81
@@ -130,6 +132,13 @@ def T81 : Target {
   let InstructionSet = T81Instrs;
   let AssemblyWriters = [T81];
 }
+
+@*1 T81ValueTypes.td - Custom Value Types.
+@<T81ValueTypes.td@>=
+// Define custom 81-bit ternary integer type
+
+// Format: def <name> : ValueType<bit_width, unique_id>;
+def i81 : ValueType<81, 260>;
 
 @*1 CMakeLists.txt - LLVM Target Build Rules.
 @<CMakeLists.txt@>=
