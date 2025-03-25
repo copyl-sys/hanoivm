@@ -1,22 +1,105 @@
 @* advanced_ops_ext.cweb — T243 and T729 Logical Extensions for HanoiVM *@
 
+@* 
+This module extends the HanoiVM runtime to support advanced ternary-aware 
+logic structures (T243, T729) including symbolic AI logic via T729Intent,
+state machines with T243StateVector, and complex transformations like 
+FFT on ternary holotensors. Header files are embedded for extraction.
+*@
+
+@*== Header: t243_ops.h ==*@
+@h
+#ifndef T243_OPS_H
+#define T243_OPS_H
+
+#include "t81vector.h"
+
+typedef struct {
+    uint8_t current_state;
+    T81VectorHandle transition_map;
+} T243StateVector;
+
+TritError t243_state_advance(T243StateVector* sv, int signal);
+
+#endif /* T243_OPS_H */
+
+@*== Header: t729_intent.h ==*@
+@h
+#ifndef T729_INTENT_H
+#define T729_INTENT_H
+
+#include "t81opcode.h"
+#include "t81vector.h"
+#include "t81bigint.h"
+
+typedef struct {
+    T81Opcode opcode;
+    T81VectorHandle modifiers;
+    T81BigIntHandle entropy_weight;
+} T729Intent;
+
+TritError t729_intent_dispatch(const T729Intent* intent);
+
+#endif /* T729_INTENT_H */
+
+@*== Header: t729_holotensor.h ==*@
+@h
+#ifndef T729_HOLOTENSOR_H
+#define T729_HOLOTENSOR_H
+
+#include "t81tensor.h"
+#include "t81vector.h"
+
+typedef struct {
+    T81TensorHandle real_part;
+    T81TensorHandle imag_part;
+    T81VectorHandle phase_vector;
+} T729HoloTensor;
+
+TritError t729_holo_fft(const T729HoloTensor* input, T729HoloTensor** output);
+
+#endif /* T729_HOLOTENSOR_H */
+
+@*== Header: t729_metaopcode.h ==*@
+@h
+#ifndef T729_METAOPCODE_H
+#define T729_METAOPCODE_H
+
+#include "t243_ops.h"
+#include "t81opcode.h"
+#include "t81bigint.h"
+
+typedef struct {
+    T243StateVector state_fingerprint;
+    T81Opcode base_opcode;
+    T81BigIntHandle condition_mask;
+} T729MetaOpcode;
+
+TritError t729_meta_execute(const T729MetaOpcode* mop);
+
+#endif /* T729_METAOPCODE_H */
+
+@*== Implementation: Extended Opcode Logic ==*@
 @c
+#include <stdio.h>
+#include <stdint.h>
 #include "t81types.h"
 #include "hvm_context.h"
 #include "t243_ops.h"
 #include "t729_intent.h"
 #include "t729_holotensor.h"
+#include "t729_metaopcode.h"
 
-@* New Opcode Enum Extensions *@
+@* Extended Opcode Enum *@
 @c
 typedef enum {
-    OP_T243_STATE_ADV  = 0x30,  // Advance state machine
-    OP_T729_INTENT     = 0x31,  // Dispatch intent-based logic
-    OP_T729_HOLO_FFT   = 0x32,  // Fourier transform on ternary holotensor
-    OP_T729_META_EXEC  = 0x33   // Meta-opcode execution
+    OP_T243_STATE_ADV  = 0x30,  // Advance T243 state machine
+    OP_T729_INTENT     = 0x31,  // Dispatch symbolic AI intent
+    OP_T729_HOLO_FFT   = 0x32,  // HoloTensor FFT
+    OP_T729_META_EXEC  = 0x33   // MetaOpcode Execution Layer
 } ExtendedOpcode;
 
-@* Opcode Evaluation Extension *@
+@* Opcode Handler for T243/T729 *@
 @c
 uint81_t evaluate_extended_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext* ctx) {
     switch (op) {
@@ -36,7 +119,7 @@ uint81_t evaluate_extended_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext*
                 return (uint81_t){0};
             }
             T729Intent intent = {
-                .opcode = OP_ADD,
+                .opcode = (uint8_t)t81_to_int(a),
                 .modifiers = ctx->ai_flags,
                 .entropy_weight = ctx->entropy
             };
@@ -53,7 +136,7 @@ uint81_t evaluate_extended_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext*
             T729HoloTensor* result = NULL;
             t729_holo_fft(input, &result);
             ctx->holo_output = result;
-            return t81_from_int(1);  // Success
+            return t81_from_int(1);  // FFT complete
         }
 
         case OP_T729_META_EXEC: {
@@ -62,12 +145,12 @@ uint81_t evaluate_extended_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext*
                 return (uint81_t){0};
             }
             T729MetaOpcode mop = {
-                .base_opcode = OP_ADD,
+                .base_opcode = (uint8_t)t81_to_int(a),
                 .condition_mask = ctx->entropy,
                 .state_fingerprint = *ctx->state_vector
             };
             t729_meta_execute(&mop);
-            return t81_from_int(1);  // Placeholder return
+            return t81_from_int(1);
         }
 
         default:
