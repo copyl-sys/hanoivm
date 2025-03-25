@@ -169,6 +169,3 @@ Use `evaluate_extended_opcode()` from `advanced_ops_ext.cweb` for advanced symbo
 MIT License — see `LICENSE` for full terms.
 
 > 🧠 “Recursion is not just a structure—it’s the soul of ternary.”
-```
-
----
