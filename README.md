@@ -1,89 +1,85 @@
-### ✅ `README.md`
+Here's your **reiterated `README.md`** for **HanoiVM**, updated and polished for public `v0.8` alpha release:
+
+---
 
 ```markdown
-# **HanoiVM**
+# 🚀 HanoiVM — Recursive Ternary Virtual Machine
 
-**HanoiVM** is a recursive, AI-augmented **ternary virtual machine** built on a symbolic base-81 logic architecture. It forms the execution core of the **Axion + T81Lang** ecosystem, supporting **recursive stack tiers**, **TISC instruction dispatch**, and **GPU-accelerated symbolic macros**. Designed for both research and future hardware acceleration, it demonstrates a full-stack ternary computing platform.
+**HanoiVM** is a recursive, AI-augmented **ternary virtual machine** built on a symbolic base-81 architecture. It is the execution core of the **Axion + T81Lang** ecosystem, enabling stack-tier promotion, symbolic AI opcodes, and entropy-aware transformations across three levels of logic:
 
----
+- 🔹 `T81`: 81-bit operand logic (register-like)
+- 🔸 `T243`: Symbolic BigInt + FSM state logic
+- 🔺 `T729`: Tensor-based AI macros with semantic dispatch
 
-## 🔍 Features
-
-- 🔺 **81-bit ternary operand architecture** (`uint81_t`)
-- 🔁 **Recursive tiered stacks**:
-  - `T81` — register logic
-  - `T243` — BigInt symbolic math + FSM vector logic
-  - `T729` — tensor AI macros + symbolic intent dispatch
-- 🧠 **Symbolic & AI-aware opcodes**:
-  - `TNN_ACCUM`, `T81_MATMUL`, `T243_STATE_ADV`, `T729_INTENT`, `T729_META_EXEC`
-  - Axion signal hooks for real-time optimization & rollback
-- 🎨 **T729Tensor & HoloTensor engine**:
-  - Operations: `DOT`, `TRANS`, `SLICE`, `RESHAPE`, `CLONE`, `PRINT`, `FFT`
-- 🔢 **T243BigInt arithmetic**:
-  - `ADD`, `MUL`, `TO_STRING`
-- ⚙️ **Axion AI** integration:
-  - NLP commands (`optimize`, `rollback`, `snapshot`)
-  - AI-powered `T729Intent` & `T729MetaOpcode` dispatch
-  - GPU offload using CUDA/HIP for symbolic macros
-- ⚡ **GAIA GPU backend**:
-  - ROCm/HIP kernel `gaia_handle_request.cweb` for AMD GPUs
-  - CUDA mirror for NVIDIA
-- 🧬 **Symbolic pattern engine**:
-  - Defined in `t81_patterns.cweb`, supports GAIA-based transformation
-- 🔁 **Recursive pattern primitives**:
-  - `t81recursion.cweb` implements core symbolic recursion logic
-- 🪵 **Log viewer utility**:
-  - `logviewer.cweb` provides Axion + runtime search/filtering
-- 📄 **`.cweb` literate programming**:
-  - Inline documentation + modular architecture
-- 🧪 **Kernel-mode test harness** (`hanoivm-test.cweb`) via `debugfs`
-- 📦 **CI-integrated** test and disassembly for `.hvm` bytecode
-- 🧠 Full **TISC backend** support via `tisc_backend.cweb`
-- 🔍 **Disassembler** with verbose T81 decoding and operand introspection
+Designed for research, language development, and future ternary hardware acceleration, **HanoiVM** is literate, modular, and fully recursive.
 
 ---
 
-## 🗂️ Repository Structure
+## 🔍 Core Features
+
+- 🔢 **Ternary Operand Architecture**:
+  - Supports `uint81_t`, `T243BigInt`, and `T729Tensor` data types
+- 🌀 **Recursive Stack Tiering**:
+  - Auto-promotes through `T81 → T243 → T729` based on depth/entropy
+- 🧠 **Symbolic AI Execution**:
+  - Includes FSM logic, pattern recognition, entropy-driven dispatch
+  - AI macros: `TNN_ACCUM`, `T81_MATMUL`, `T729Intent`, `T729MetaOpcode`
+- 🧬 **Tensor Engine + Holomorphic Support**:
+  - `DOT`, `SLICE`, `TRANSPOSE`, `RESHAPE`, `CLONE`, `PRINT`, `FFT`
+- ⚙️ **Axion Kernel AI**:
+  - AI introspection + rollback via NLP-style commands (`optimize`, `snapshot`)
+  - Integrated Axion telemetry, logs, entropy weighting
+- ⚡ **GPU Acceleration via GAIA**:
+  - AMD: `gaia_handle_request.cweb` (HIP)
+  - NVIDIA: `cuda_handle_request.cu` (CUDA)
+- 📄 **Literate Codebase (`.cweb`)**:
+  - Every module is self-documenting and extractable via `cweave`/`ctangle`
+- 🧪 **Disassembler + Test Infrastructure**:
+  - Disassembles `.hvm` with symbolic introspection
+  - CI-compatible tests + kernel-mode driver for system-level validation
+
+---
+
+## 🗂️ Repository Overview
 
 ```bash
 src/
-├── hanoivm_vm.cweb               # Main interpreter
-├── advanced_ops.cweb             # TNN + matrix ops + AI macros
-├── advanced_ops_ext.cweb         # T243/T729 symbolic logic, intent, FFT, meta
-├── t243bigint.cweb               # Recursive BigInt arithmetic
-├── t729tensor.cweb               # Base-729 tensor engine
-├── t81_patterns.cweb             # Symbolic transformation patterns (AI + GAIA aware)
-├── t81recursion.cweb             # Recursive computation primitives
-├── gaia_handle_request.cweb      # HIP backend for symbolic GPU ops
-├── cuda_handle_request.cu        # CUDA backend (if enabled)
-├── axion-ai.cweb                 # Kernel AI logic + rollback
-├── disassembler.cweb             # Bytecode disassembler
-├── logviewer.cweb                # Log inspector for Axion + runtime metadata
-├── recursive_tier_execution.cweb # Demo driver for tier transitions
-├── tisc_backend.cweb             # TISC IR compiler and entropy analyzer
+├── hanoivm_vm.cweb               # Main interpreter engine
+├── advanced_ops.cweb             # TNN, matrix, AI primitive opcodes
+├── advanced_ops_ext.cweb         # T243/T729 extensions: FSM, intent, FFT
+├── t243bigint.cweb               # BigInt math in ternary (T243)
+├── t729tensor.cweb               # Tensor logic for T729 tier
+├── t81_patterns.cweb             # Symbolic AI patterns & dispatch
+├── t81recursion.cweb             # Canonical ternary recursion patterns
+├── gaia_handle_request.cweb      # HIP symbolic GPU backend
+├── cuda_handle_request.cu        # CUDA symbolic tensor support
+├── axion-ai.cweb                 # Kernel AI optimizer and rollback hooks
+├── disassembler.cweb             # Human-readable `.hvm` introspector
+├── recursive_tier_execution.cweb # Tier transition driver (T81 → T729)
+├── tisc_backend.cweb             # TISC backend compiler
 
 tests/
-├── hanoivm-test.cweb             # Kernel module test suite via debugfs
-├── test_advanced_hvm.cweb        # Generator for AI-annotated bytecode
-├── t729tensor_to_string.cweb     # Tensor serializer for logs/debug
-
-scripts/
-├── disasm_*.sh                   # Disassembler test cases
+├── hanoivm-test.cweb             # Kernel-mode debugfs test harness
+├── test_advanced_hvm.cweb        # Test AI macros, recursion, control flow
+├── t729tensor_to_string.cweb     # Tensor stringification for debug/logs
 
 docs/
 ├── ROADMAP.md
 ├── CHANGELOG.md
-├── t243_t729.md                  # New: Documentation for FSM and symbolic AI layers
+├── t243_t729.md                  # Documentation for FSM, Intent, FFT
+
+scripts/
+├── disasm_*.sh                   # Bytecode disassembler tests
 
 bazel/
-├── BUILD                         # Bazel rules for VM, tests, and examples
+├── BUILD                         # Bazel config for modular builds
 
 README.md                         # You are here
 ```
 
 ---
 
-## 🚀 Getting Started
+## ⚙️ Getting Started
 
 ### 🔧 Build
 
@@ -99,73 +95,85 @@ bazel test //:disasm_controlflow_test
 bazel test //:disasm_logic_test
 ```
 
-### 🧠 Kernel Module Test Harness
+### 🧠 Kernel Test Harness
 
 ```bash
 sudo insmod hanoivm-test.ko
 cat /sys/kernel/debug/hanoivm-test
 ```
 
-### 🔬 Tensor & Tier Demo
+### 🔬 Tier Execution Demo
 
 ```bash
-bazel run //:recursive_tier_execution -- --max-depth=36 --simulate-demotion
+bazel run //:recursive_tier_execution -- --max-depth=36
 ```
 
 ---
 
-## 🧩 Axion AI + GAIA GPU Integration
+## 🤖 Axion + GAIA Integration
 
-- Send ternary macros to GPU via:
-  - `cuda_handle_request.cu` for NVIDIA
-  - `gaia_handle_request.cweb` via HIP for AMD
-- Axion signals determine:
-  - Pattern transformations
-  - Rollback on entropy spikes
-  - Promotion to higher tiers (T243, T729)
-  - Intent and symbolic dispatch via `T729Intent` & `T729MetaOpcode`
+- **GPU Execution Paths**:
+  - NVIDIA: `cuda_handle_request.cu`
+  - AMD: `gaia_handle_request.cweb`
+
+- **Ternary AI Macros**:
+  - `T729Intent` for symbolic AI behavior
+  - `T729MetaOpcode` for entropy-weighted logic switching
+  - `T729HoloTensor` for FFT and multi-dimensional signal composition
+
+- **Signal Control**:
+  - Axion tracks recursive entropy, triggers promotion/demotion
+  - `rollback`, `optimize`, `snapshot` available via NLP hooks
 
 ---
 
-## 🧠 Symbolic Pattern & Intent Registry
+## 🔁 Pattern + Symbolic Opcode Summary
 
-- `t81_patterns.cweb` defines symbolic macros
-- `advanced_ops_ext.cweb` adds:
-  - `OP_T243_STATE_ADV`: FSM logic
-  - `OP_T729_INTENT`: entropy-weighted AI intent
-  - `OP_T729_HOLO_FFT`: tensor FFT engine
-  - `OP_T729_META_EXEC`: conditional symbolic opcode executor
-
-Use `evaluate_extended_opcode()` from `advanced_ops_ext.cweb` for advanced symbolic logic.
+| Opcode                | Tier   | Function                              |
+|-----------------------|--------|---------------------------------------|
+| `T81_MATMUL`          | T81    | Matrix multiply over base-81          |
+| `T243_STATE_ADV`      | T243   | FSM state vector logic                |
+| `T729_INTENT`         | T729   | Dispatch symbolic AI intent           |
+| `T729_HOLO_FFT`       | T729   | FFT over holomorphic ternary tensor   |
+| `T729_META_EXEC`      | T729   | Meta-instruction, conditional entropy |
 
 ---
 
 ## 📈 Project Status
 
-✅ Recursive execution loop  
-✅ Full T81/T243/T729 stack promotion logic  
-✅ Axion AI integration and entropy feedback  
-✅ T729Tensor + HoloTensor with FFT  
-✅ T243 BigInt + FSM symbolic execution  
-✅ GPU symbolic backends (CUDA/HIP)  
-✅ `.hvm` disassembler and introspector  
-✅ Log viewer, rollback, snapshot support  
-🔜 T81Lang compiler backend to `.hvm`  
-🔜 T729 neural symbolic inference + Project Looking Glass UI  
+✅ Recursive execution engine  
+✅ Literate `.cweb` modular design  
+✅ Full symbolic tier stack (T81 → T243 → T729)  
+✅ Pattern dispatch and entropy signal handling  
+✅ Axion AI integration with rollback and NLP  
+✅ GPU offload (HIP + CUDA) for symbolic macros  
+✅ Verbose `.hvm` disassembler and type introspection  
+✅ Kernel-level testing (`debugfs`)  
+🔜 Live REPL for `.t81` to `.hvm`  
+🔜 LLVM IR export for hybrid backend  
+🔜 Project Looking Glass 3D recursion visualization  
 
 ---
 
 ## 🔗 Related Projects
 
-- [**Axion AI**](https://github.com/copyl-sys) — AI optimization kernel + rollback logic  
-- **T81Lang** — Ternary-native language with JIT + AI patterns  
-- [**Alexis Linux**](https://github.com/copyl-sys) — AI-native Linux distro for Axion/T81  
-- **Project Looking Glass** — Future GUI: visual recursion and ternary stack views
+- [**Axion AI**](https://github.com/copyl-sys) — AI optimizer and rollback kernel
+- **T81Lang** — Ternary language for symbolic logic + AI macros
+- [**Alexis Linux**](https://github.com/copyl-sys) — AI-first OS with ternary kernel base
+- **Project Looking Glass** — 3D GUI for recursion visualization and stack tiering
 
 ---
 
 ## 📜 License
 
-MIT License — see `LICENSE` for full terms.
+**MIT License** — see `LICENSE` for full terms.
 
-> 🧠 “Recursion is not just a structure—it’s the soul of ternary.”
+---
+
+> 🧠 “Recursion is not just a structure — it’s the soul of ternary.”
+```
+
+---
+
+Would you like a `.html` or `.pdf` version generated for use in the GitHub release or docs viewer?  
+We could also render this into a banner or infographic to showcase in a tweet thread!
