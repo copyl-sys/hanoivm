@@ -1,81 +1,83 @@
-# **STATUS.md**
+# ✅ STATUS.md
 
-## 📊 Reevaluated System Progress (March 2025)
+## 📊 HanoiVM Development Status (v0.8 — March 2025)
 
-| Subsystem                | Description                                          | Status                 | Completion |
-|-------------------------|------------------------------------------------------|------------------------|------------|
-| **T81Lang**             | Full spec, compiler design, language grammar, REPL, JIT | ✅ Documented         | **85%**    |
-| **T81VM**               | Virtual machine for `.t81` / `.hvm` execution        | ✅ Tiered + Symbolic    | **75%**    |
-| **T81 Data Types**      | T81BigInt, Float, Tensor, Graph, Matrix, etc.        | ✅ Library + Ops       | **85–98%** |
-| **T81 Compiler**        | Rust-based: Lexer → AST → Optimizer → TISC           | 🔄 Parser + TISC output | **40%**    |
-| **T81TISC**             | Instruction set for ternary computing (AI/Crypto/Physics) | ✅ Complete Spec | **95%**    |
-| **Axion AI**            | Kernel AI for optimization, rollback, package mgmt   | ✅ Axion.ko Complete    | **95%**    |
-| **Axion Package Format**| `.cweb` AI-optimized packages + logs                 | ✅ Functional + Logging | **85%**    |
-| **T81 Accelerator (M.2)**| PCIe ternary logic card                              | 🧠 R&D Design Phase     | **15%**    |
-| **AI Optimizations**    | Loop unrolling, SIMD, ternary auto-flags             | 🔄 Pattern & GPU dispatch | **70%** |
-| **Guardian AI**         | Security layer for Alexis Linux                      | 🔲 Planned              | **0%**     |
-| **Alexis Linux**        | Modular AI OS w/ Axion, NeuraDE, T81 kernel          | ✅ Alpha/QEMU           | **85%**    |
-| **Looking Glass UI**    | 3D visualizer for ternary states                     | 🧠 Axion-Tier Mapping Planned | **25%** |
-| **RiftCat Forensics Tool** | TCP/IP oscilloscope Ghidra plugin               | 🔄 Packet Viewer WIP    | **45%**    |
-| **Disassembler / Debugger** | For `.hvm` + nested T81 types                   | ✅ T81 + Symbolic Output | **85%**    |
-| **Tensor + Math Libraries** | T729Tensor, HoloTensor, GPU Macros              | ✅ FFT + AI Dispatch     | **85%**    |
-
----
-
-## ✅ Ternary Core Projects
-
-| Component        | Name                          | Purpose                                              | Status         | Notes                                      |
-|-----------------|-------------------------------|------------------------------------------------------|----------------|--------------------------------------------|
-| 🧠 AI Kernel Module | `axion-ai.cweb`            | AI-powered kernel logic for optimization, rollback   | ✅ Complete     | NLP, rollback, TBIN hooks, entropy metrics |
-| 🔌 GPU Interface  | `axion-gaia-interface.cweb` | Dispatch layer for symbolic GPU macro ops            | ✅ Integrated   | Supports CUDA + HIP                        |
-| ⚙️ CUDA Backend   | `cuda_handle_request.cu`    | Symbolic ternary dispatch via NVIDIA GPUs            | ✅ Operational  | FFT macros now supported                   |
-| 🧠 HIP Backend    | `gaia_handle_request.cweb`   | AMD ROCm HIP symbolic execution                      | ✅ Prototype    | Mirrors CUDA for parity                    |
-| 🌀 Virtual Machine | `hanoivm_vm.cweb`           | Recursive `.hvm` execution                           | ✅ Symbolic Tiers| T81/T243/T729 + AI Context                 |
-| 🔍 Disassembler   | `disassembler.cweb`          | Parses and prints `.hvm` with T81-level granularity  | ✅ Verbose      | Now includes symbolic intent disassembly   |
-| 🪵 Log Viewer     | `logviewer.cweb`             | Axion AI-aware search/filter for logs                | ✅ Integrated   | Logs symbolic dispatch + entropy analysis  |
-| ♻️ Symbolic Extensions | `advanced_ops_ext.cweb` | T243 FSMs, T729 intents, FFT, meta-op dispatch       | ✅ New          | Tier-aware opcode expansion                |
+| Subsystem                | Description                                             | Status                 | Completion |
+|-------------------------|---------------------------------------------------------|------------------------|------------|
+| **T81Lang**             | Language grammar, compiler backend, REPL, JIT           | ✅ Documented          | **85%**    |
+| **T81VM**               | Tiered ternary virtual machine for `.t81` / `.hvm`      | ✅ Tiered + Symbolic   | **75%**    |
+| **T81 Data Types**      | BigInt, Float, Fraction, Graph, Tensor, etc.            | ✅ Library + Ops       | **85–98%** |
+| **T81 Compiler**        | Lexer → AST → Optimizer → TISC                          | 🔄 Parser in Progress  | **40%**    |
+| **T81TISC**             | Instruction Set (AI/Crypto/Physics)                     | ✅ Complete Spec       | **95%**    |
+| **Axion AI**            | AI kernel module for rollback + optimization            | ✅ Complete            | **95%**    |
+| **Axion Package Format**| `.cweb`-based AI package system                         | ✅ Functional + Logging| **85%**    |
+| **T81 Accelerator (M.2)**| PCIe ternary coprocessor (software/hardware co-design) | 🧠 R&D Design Phase     | **15%**    |
+| **AI Optimizations**    | Loop unrolling, SIMD, entropy-based transforms          | 🔄 Pattern & GPU Paths | **70%**    |
+| **Guardian AI**         | AI security daemon for Alexis Linux                    | 🔲 Planned             | **0%**     |
+| **Alexis Linux**        | AI-native modular OS (Wayland + Axion)                 | ✅ Alpha/QEMU          | **85%**    |
+| **Looking Glass UI**    | 3D recursion/tier visualizer                           | 🧠 Design Phase        | **25%**    |
+| **RiftCat Plugin**      | Ghidra plugin for forensic TCP/IP analysis             | 🔄 Packet Layer WIP    | **45%**    |
+| **Disassembler/Debugger** | Full `.hvm` + symbolic operand decoding              | ✅ Symbolic Introspection | **85%** |
+| **Tensor Libraries**    | T729Tensor, HoloTensor, symbolic FFT, macros           | ✅ FFT + AI Hooks      | **85%**    |
 
 ---
 
-## 📚 Ternary Language Ecosystem (T81Lang)
+## ✅ Ternary Core Modules
 
-| Component             | Purpose                                       | Status     | Notes                                         |
-|----------------------|-----------------------------------------------|------------|-----------------------------------------------|
-| 🔤 T81Lang Spec       | Language spec for symbolic ternary programming| ✅ Stable   | Ready for JIT & TISC                          |
-| 📦 Axion `.cweb` Format | Text-based AI package system               | ✅ Functional | Supports logs, sandboxing, auto-split         |
-| 🧠 T81 Pattern Engine | Symbolic pattern matching + GPU dispatch      | ✅ Enhanced | GAIA + AI Feedback via `t81_patterns.cweb`    |
-| 💾 T81 Types          | T81BigInt, Float, Fraction, Tensor            | ✅ Complete | Library + Tests                               |
-| 🔁 T81 Recursion      | Canonical symbolic recursion patterns         | ✅ New      | `t81recursion.cweb`, `t81recursion.h`         |
-| 🔮 T243/T729 Layers   | FSM, Intent, MetaOpcode, FFT, HoloTensors     | ✅ New      | Embedded headers, extended ops                |
+| Component        | Name                           | Purpose                                              | Status         | Notes                                      |
+|-----------------|--------------------------------|------------------------------------------------------|----------------|--------------------------------------------|
+| 🧠 AI Kernel     | `axion-ai.cweb`                | Axion-based NLP, rollback, entropy AI kernel         | ✅ Complete     | NLP hooks, metadata, tier control          |
+| 🔌 GPU Bridge    | `axion-gaia-interface.cweb`    | Unified interface for CUDA/HIP symbolic ops          | ✅ Integrated   | Routes GAIA → FFT, intent, pattern logic   |
+| ⚙️ CUDA Backend  | `cuda_handle_request.cu`       | NVIDIA GPU FFT + symbolic tensor execution           | ✅ Operational  | T81 macro-compatible                       |
+| 🧠 HIP Backend   | `gaia_handle_request.cweb`     | AMD ROCm symbolic executor (FFT, intent dispatch)    | ✅ Functional   | Mirrors CUDA FFT macros                    |
+| 🌀 Virtual Machine| `hanoivm_vm.cweb`             | Recursive ternary execution core                     | ✅ Symbolic AI  | Supports T81, T243, T729 stack promotion   |
+| 🔍 Disassembler  | `disassembler.cweb`            | Bytecode + T81/T243/T729 introspection               | ✅ Verbose      | Opcode + symbolic intent printed           |
+| 🪵 Log Viewer    | `logviewer.cweb`               | CLI/GUI event tracker for Axion telemetry            | ✅ Interactive  | Supports pattern filtering, timestamps     |
+| ♻️ Symbolic Ops  | `advanced_ops_ext.cweb`        | FSM logic, intent dispatch, FFT, meta-instructions   | ✅ Complete     | Tier-aware opcodes added (v0.8)            |
 
 ---
 
-## 🖥️ Desktop & OS Layer
+## 📚 Language & Type System
+
+| Component            | Purpose                                       | Status     | Notes                                         |
+|---------------------|-----------------------------------------------|------------|-----------------------------------------------|
+| 🔤 T81Lang Spec      | Symbolic ternary language + syntax            | ✅ Stable   | Includes REPL + standard library              |
+| 📦 `.cweb` Format    | Literate AI-optimized source package format   | ✅ Supported| Split-aware, includes Axion logging           |
+| 🧠 Pattern Engine    | Symbolic AI pattern dispatch                  | ✅ GAIA-Ready| `t81_patterns.cweb`, hooks into entropy paths |
+| 💾 Data Types        | BigInt, Float, Fraction, Tensor, Graph        | ✅ Full     | Extensive library support with unit tests     |
+| 🔁 Recursion Library | Canonical ternary recursive primitives        | ✅ Shipped  | `t81recursion.cweb`, `t81recursion.h`         |
+| 🔮 T243/T729 Layers  | FSM, AI intent, FFT, holomorphic tensors      | ✅ Modular  | `t243_ops.h`, `t729_intent.h`, and friends    |
+
+---
+
+## 🖥️ Desktop & Kernel Integration
 
 | Component          | Purpose                                  | Status         | Notes                        |
 |-------------------|------------------------------------------|----------------|------------------------------|
-| 💻 Alexis Linux    | AI-native Linux OS built from scratch    | ✅ QEMU Alpha   | Modular, Wayland + Axion     |
-| 🌐 Looking Glass   | 3D interface for ternary recursion        | 🧠 Design Phase | Axion-tier hooks in progress |
-| 🛡️ Guardian AI     | AI intrusion + anomaly detection          | 🔲 Planned      | Entropy + rollback focus     |
+| 💻 Alexis Linux    | AI-native OS, Axion/Wayland stack        | ✅ Alpha QEMU   | Full AI hooks integrated     |
+| 🌐 Looking Glass   | Visual UI for symbolic recursion         | 🧠 Planning     | Output-to-3D in future GUI   |
+| 🛡️ Guardian AI     | Intrusion detection, entropy monitoring  | 🔲 Planned      | Will use Axion + rollback AI |
 
 ---
 
-## 📡 Network & Forensic Tools
+## 📡 Network + Forensic Modules
 
-| Component              | Purpose                                     | Status         | Notes                                  |
-|-----------------------|---------------------------------------------|----------------|----------------------------------------|
-| 📊 RiftCat            | Packet introspection + Ghidra plugin         | 🔄 UI Logic WIP | Timeline + Netcat layer in progress    |
-| 📁 Structured Reports | Auto-export to JSON/XML/PDF                  | 🧠 WIP          | Hooks from RiftCat in place            |
-| 🔐 TLS Detection      | Anomaly detection during encrypted sessions  | 🔲 Not started  | Axion entropy + ML inference planned   |
+| Component              | Purpose                                      | Status         | Notes                                  |
+|-----------------------|----------------------------------------------|----------------|----------------------------------------|
+| 📊 RiftCat Forensics  | Ghidra plugin for packet-level visualization | 🔄 Timeline UI  | CISA-inspired network introspection    |
+| 📁 Structured Reports | Export JSON/XML/PDF from symbolic state      | 🧠 Axion-linked | Designed for forensics/reporting       |
+| 🔐 TLS Anomaly Detection | Encrypted flow entropy detection          | 🔲 Not Started  | Tied to entropy + Axion inference      |
 
 ---
 
-## ⚗️ Advanced Concepts
+## ⚗️ Symbolic & Experimental Features
 
-| Concept                     | Description                                       | Status         | Notes                                     |
-|----------------------------|---------------------------------------------------|----------------|-------------------------------------------|
-| 🔁 Recursive Tier Simulation | Tier promotion (T81 → T243 → T729)               | ✅ Implemented  | `recursive_tier_execution.cweb`           |
-| 📐 TISC Compiler Backend     | `.hvm` to `TISCProgram` IR                        | ✅ Finished     | `tisc_backend.cweb` complete              |
-| 🧬 PCIe Accelerator          | Hardware design for ternary VM                   | 🧠 In Planning  | Linux driver + HDL stub underway          |
-| 🕸️ Metadata Blockchain       | Immutable AI logs, rollback, modularization       | ✅ Defined      | SaaS/SaaP toggle and local-first approach |
-| 🧠 Symbolic AI Framework     | Intent dispatch + entropy-driven opcode mutation | ✅ New          | Via `T729Intent`, `MetaOpcode`, `FFT`     |
+| Concept                    | Description                                         | Status         | Notes                                     |
+|---------------------------|-----------------------------------------------------|----------------|-------------------------------------------|
+| 🔁 Recursive Tier Engine   | Promotion from T81 → T243 → T729                    | ✅ Executable   | `recursive_tier_execution.cweb`           |
+| 📐 TISC Compiler Backend   | IR → `.hvm` + optimization                          | ✅ Integrated   | `tisc_backend.cweb` complete              |
+| 🧬 PCIe Ternary Coprocessor| M.2 accelerator for HanoiVM                        | 🧠 Prototyping  | HDL + driver pending                      |
+| 🕸️ Metadata Blockchain     | Immutable Axion logs + rollback history            | ✅ Embedded     | Local-first AI integrity model            |
+| 🧠 Symbolic AI Framework   | Intent-aware dispatch, FFT, entropy macros          | ✅ v0.8 Feature | Defined via `T729Intent`, `MetaOpcode`    |
+
+---
