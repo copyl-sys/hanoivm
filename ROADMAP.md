@@ -51,6 +51,18 @@
 - [x] `OP_T729_HOLO_FFT`: Holomorphic FFT macro
 - [x] `OP_T729_META_EXEC`: Symbolic opcode remapping based on AI
 
+
+---
+
+## 🧠 Phase 3: Compiler & Execution Toolchain
+
+- [x] `T81Lang` grammar specification (`.ebnf`)
+- [x] Lexer + Parser (AST via `t81lang_parser.cweb`)
+- [x] Semantic analyzer with symbol table + scope
+- [x] Intermediate Representation (IR) generator
+- [x] `.hvm` emitter for symbolic bytecode
+- [x] HVM interpreter for executing `.hvm` output
+- [x] Full CLI compiler entrypoint: `t81lang_compiler.cweb`
 ---
 
 ## 🧠 Phase 3: Language Integration
