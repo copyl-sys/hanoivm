@@ -197,3 +197,46 @@ cc_binary(
 # Clean all generated test files and build artifacts
 clean:
 	rm -f tests/*.hvm *.o *.c *.h
+
+# ---------------------------- T81LANG COMPILER PIPELINE ----------------------------
+
+cc_binary(
+    name = "t81lang_parser",
+    srcs = ["t81lang_parser.cweb"],
+    deps = [],
+)
+
+cc_binary(
+    name = "t81lang_semantic",
+    srcs = ["t81lang_semantic.cweb"],
+    deps = [],
+)
+
+cc_binary(
+    name = "t81lang_irgen",
+    srcs = ["t81lang_irgen.cweb"],
+    deps = [],
+)
+
+cc_binary(
+    name = "emit_hvm",
+    srcs = ["emit_hvm.cweb"],
+    deps = [],
+)
+
+cc_binary(
+    name = "t81lang_compiler",
+    srcs = ["t81lang_compiler.cweb"],
+    deps = [
+        ":t81lang_parser",
+        ":t81lang_semantic",
+        ":t81lang_irgen",
+        ":emit_hvm",
+    ],
+)
+
+cc_binary(
+    name = "hvm_interpreter",
+    srcs = ["hvm_interpreter.cweb"],
+    deps = [],
+)
