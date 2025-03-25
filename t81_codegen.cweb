@@ -3,14 +3,16 @@
 @* T81 LLVM Backend: Codegen Entrypoints.
 This document defines the basic scaffolding for a custom LLVM backend
 for the T81 (HanoiVM) ternary virtual architecture. It includes the
-`TargetMachine` setup, `ISelLowering`, `DAGISel`, top-level `.td` definitions,
-and build system integration for CMake.
+`TargetMachine` setup, `ISelLowering`, `DAGISel`, `TargetInfo`, `AsmPrinter`,
+a refined `DataLayout`, top-level `.td` definitions, and build system integration.
 
 @<Includes@>
 @<T81TargetMachine.cpp@>
 @<T81ISelLowering.cpp@>
 @<T81DAGISel.cpp@>
 @<T81InstrPatterns.td@>
+@<T81AsmPrinter.cpp@>
+@<T81TargetInfo.cpp@>
 @<T81.td@>
 @<CMakeLists.txt@>
 
@@ -20,6 +22,7 @@ and build system integration for CMake.
 #include "T81TargetMachine.h"
 #include "T81ISelLowering.h"
 #include "T81DAGISel.h"
+#include "T81AsmPrinter.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Target/TargetMachine.h"
@@ -37,7 +40,7 @@ T81TargetMachine::T81TargetMachine(const Target &T, const Triple &TT,
                                    Optional<Reloc::Model> RM,
                                    Optional<CodeModel::Model> CM,
                                    CodeGenOpt::Level OL, bool JIT)
-    : LLVMTargetMachine(T, "e-p:81:81-i81:81:81-n81", TT, CPU, FS, Options,
+    : LLVMTargetMachine(T, "e-p:81:81-i81:81:81-n81:81-S81", TT, CPU, FS, Options,
                         getEffectiveRelocModel(RM),
                         getEffectiveCodeModel(CM, CodeModel::Small), OL),
       Subtarget(TT, CPU, FS, *this) {
@@ -50,121 +53,46 @@ TargetPassConfig *T81TargetMachine::createPassConfig(PassManagerBase &PM) {
 
 } // namespace llvm
 
-@*1 T81ISelLowering.cpp.
-@<T81ISelLowering.cpp@>=
-#include "T81ISelLowering.h"
+@*1 T81AsmPrinter.cpp - Assembly Output Support.
+@<T81AsmPrinter.cpp@>=
+#include "T81AsmPrinter.h"
 #include "T81.h"
-#include "T81TargetMachine.h"
-#include "llvm/CodeGen/SelectionDAGISel.h"
-
-using namespace llvm;
-
-namespace llvm {
-
-T81TargetLowering::T81TargetLowering(const TargetMachine &TM,
-                                     const T81Subtarget &STI)
-    : TargetLowering(TM) {
-
-  // Define register classes
-  addRegisterClass(MVT::i32, &T81::T81GPRRegClass);
-
-  // Set operation actions
-  setOperationAction(ISD::ADD, MVT::i32, Legal);
-  setOperationAction(ISD::SUB, MVT::i32, Legal);
-  setOperationAction(ISD::MUL, MVT::i32, Legal);
-  setOperationAction(ISD::LOAD, MVT::i32, Legal);
-  setOperationAction(ISD::STORE, MVT::i32, Legal);
-
-  // Conditional and unconditional branches
-  setOperationAction(ISD::BR_CC, MVT::i32, Expand);
-  setOperationAction(ISD::BR, MVT::Other, Legal);
-  setOperationAction(ISD::SELECT, MVT::i32, Legal);
-  setOperationAction(ISD::PHI, MVT::i32, Expand);
-}
-
-SDValue T81TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
-  // Placeholder for lowering operations
-  return SDValue();
-}
-
-} // namespace llvm
-
-@*1 T81DAGISel.cpp - Instruction Selector.
-@<T81DAGISel.cpp@>=
-#include "T81.h"
-#include "T81TargetMachine.h"
-#include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 
 namespace {
 
-class T81DAGISel : public SelectionDAGISel {
+class T81AsmPrinter : public AsmPrinter {
 public:
-  explicit T81DAGISel(T81TargetMachine &TM)
-      : SelectionDAGISel(TM) {}
+  T81AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
+      : AsmPrinter(TM, std::move(Streamer)) {}
 
-  void Select(SDNode *Node) override {
-    switch (Node->getOpcode()) {
-    default:
-      SelectCode(Node);
-      return;
-    }
-  }
+  StringRef getPassName() const override { return "T81 Assembly Printer"; }
 
-  StringRef getPassName() const override {
-    return "T81 DAG Instruction Selector";
+  void emitInstruction(const MachineInstr *MI) override {
+    MCInst OutInst;
+    LowerT81MachineInstrToMCInst(MI, OutInst, *this);
+    OutStreamer->emitInstruction(OutInst, getSubtargetInfo());
   }
 };
 
 } // end anonymous namespace
 
-FunctionPass *createT81ISelDag(T81TargetMachine &TM) {
-  return new T81DAGISel(TM);
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeT81AsmPrinter() {
+  RegisterAsmPrinter<T81AsmPrinter> X(getTheT81Target());
 }
 
-@*1 T81InstrPatterns.td - Instruction Selection Patterns.
-@<T81InstrPatterns.td@>=
-include "T81InstrInfo.td"
-include "llvm/Target/TargetSelectionDAG.td"
+@*1 T81TargetInfo.cpp - Target Triple Registration.
+@<T81TargetInfo.cpp@>=
+#include "llvm/Support/TargetRegistry.h"
+using namespace llvm;
 
-// Pattern to select tadd from ISD::ADD
-def : Pat<(add T81GPR:$lhs, T81GPR:$rhs),
-          (TADD T81GPR:$lhs, T81GPR:$rhs)>;
-
-// Pattern to select tsub from ISD::SUB
-def : Pat<(sub T81GPR:$lhs, T81GPR:$rhs),
-          (TSUB T81GPR:$lhs, T81GPR:$rhs)>;
-
-// Pattern to select tmul from ISD::MUL
-def : Pat<(mul T81GPR:$lhs, T81GPR:$rhs),
-          (TMUL T81GPR:$lhs, T81GPR:$rhs)>;
-
-// Pattern to select tld from ISD::LOAD
-def : Pat<(load T81GPR:$addr),
-          (TLD T81GPR:$addr)>;
-
-// Pattern to select tst from ISD::STORE
-def : Pat<(store T81GPR:$val, T81GPR:$addr),
-          (TST T81GPR:$val, T81GPR:$addr)>;
-
-// Pattern to select tbr from ISD::BR
-def : Pat<(br bb:$dst),
-          (TBR bb:$dst)>;
-
-// Pattern to select tbrz conditional branch (x == 0)
-def : Pat<(brcond (i32 (seteq T81GPR:$cond, 0)), bb:$dst),
-          (TBRZ T81GPR:$cond, bb:$dst)>;
-
-// Pattern to select tbrnz conditional branch (x != 0)
-def : Pat<(brcond (i32 (setne T81GPR:$cond, 0)), bb:$dst),
-          (TBRNZ T81GPR:$cond, bb:$dst)>;
-
-// Pattern to select ternary select
-// select cond ? a : b
-
-def : Pat<(select T81GPR:$cond, T81GPR:$if_true, T81GPR:$if_false),
-          (TSEL T81GPR:$cond, T81GPR:$if_true, T81GPR:$if_false)>;
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeT81TargetInfo() {
+  RegisterTarget<Triple::t81> X(getTheT81Target(), "t81", "T81 Ternary Target", "T81");
+}
 
 @*1 T81.td - Top-Level Target Definition.
 @<T81.td@>=
@@ -176,6 +104,7 @@ include "llvm/Target/Target.td"
 
 def T81 : Target {
   let InstructionSet = T81Instrs;
+  let AssemblyWriters = [T81];
 }
 
 @*1 CMakeLists.txt - LLVM Target Build Rules.
@@ -184,6 +113,8 @@ add_llvm_target(T81CodeGen
   T81ISelLowering.cpp
   T81TargetMachine.cpp
   T81DAGISel.cpp
+  T81AsmPrinter.cpp
+  T81TargetInfo.cpp
   )
 
 target_link_libraries(T81CodeGen PRIVATE LLVMCodeGen LLVMTarget)
