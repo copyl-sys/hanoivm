@@ -3,12 +3,13 @@
 @* T81 LLVM Backend: Codegen Entrypoints.
 This document defines the basic scaffolding for a custom LLVM backend
 for the T81 (HanoiVM) ternary virtual architecture. It includes the
-`TargetMachine` setup, `ISelLowering`, top-level `.td` definitions,
+`TargetMachine` setup, `ISelLowering`, `DAGISel`, top-level `.td` definitions,
 and build system integration for CMake.
 
 @<Includes@>
 @<T81TargetMachine.cpp@>
 @<T81ISelLowering.cpp@>
+@<T81DAGISel.cpp@>
 @<T81.td@>
 @<CMakeLists.txt@>
 
@@ -17,6 +18,7 @@ and build system integration for CMake.
 #include "T81.h"
 #include "T81TargetMachine.h"
 #include "T81ISelLowering.h"
+#include "T81DAGISel.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Target/TargetMachine.h"
@@ -82,6 +84,40 @@ SDValue T81TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
 } // namespace llvm
 
+@*1 T81DAGISel.cpp - Instruction Selector.
+@<T81DAGISel.cpp@>=
+#include "T81.h"
+#include "T81TargetMachine.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
+
+using namespace llvm;
+
+namespace {
+
+class T81DAGISel : public SelectionDAGISel {
+public:
+  explicit T81DAGISel(T81TargetMachine &TM)
+      : SelectionDAGISel(TM) {}
+
+  void Select(SDNode *Node) override {
+    switch (Node->getOpcode()) {
+    default:
+      SelectCode(Node);
+      return;
+    }
+  }
+
+  StringRef getPassName() const override {
+    return "T81 DAG Instruction Selector";
+  }
+};
+
+} // end anonymous namespace
+
+FunctionPass *createT81ISelDag(T81TargetMachine &TM) {
+  return new T81DAGISel(TM);
+}
+
 @*1 T81.td - Top-Level Target Definition.
 @<T81.td@>=
 include "llvm/Target/Target.td"
@@ -99,6 +135,7 @@ def T81 : Target {
 add_llvm_target(T81CodeGen
   T81ISelLowering.cpp
   T81TargetMachine.cpp
+  T81DAGISel.cpp
   )
 
 target_link_libraries(T81CodeGen PRIVATE LLVMCodeGen LLVMTarget)
