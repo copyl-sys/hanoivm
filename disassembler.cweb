@@ -1,4 +1,4 @@
-@* HanoiVM | Bytecode Disassembler — Extended with T81 Operand Support, Extended Operand Types, and Verbose Hex Dump *@
+/* HanoiVM | Bytecode Disassembler — Extended with T81 Operand Support, Extended Operand Types, and Verbose Hex Dump */
 
 @<Include Dependencies@>=
 #include <stdio.h>
@@ -8,6 +8,7 @@
 #include <errno.h>
 #include "advanced_ops.h"
 #include "t81types.h"
+#include "t81_types_support.h"
 @#
 
 @<Define Verbose Flag and Macros@>=
@@ -64,9 +65,6 @@ const char* opcode_to_str(uint8_t opcode) {
 @#
 
 @<Extended Operand Disassembly@>=
-/* Disassemble an operand based on its type tag.
-   Future work: add cases for T81_TAG_VECTOR, T81_TAG_TENSOR, etc.
-*/
 void disasm_operand(FILE *in) {
     uint8_t tag;
     if (fread(&tag, 1, 1, in) != 1) {
@@ -89,41 +87,35 @@ void disasm_operand(FILE *in) {
             printf("BIGINT(%s)", buf);
             break;
         }
-        case T81_TAG_FRACTION: {
-            printf("FRACTION { numerator: ");
-            disasm_operand(in);  // Recursively disassemble numerator
-            printf(", denominator: ");
-            disasm_operand(in);  // Then denominator
-            printf(" }");
-            break;
-        }
-        case T81_TAG_FLOAT: {
-            printf("FLOAT { mantissa: ");
-            disasm_operand(in);
+        case T81_TAG_FRACTION:
+            printf("FRACTION { numerator: "); disasm_operand(in);
+            printf(", denominator: "); disasm_operand(in); printf(" }"); break;
+        case T81_TAG_FLOAT:
+            printf("FLOAT { mantissa: "); disasm_operand(in);
             int8_t exponent;
             if (fread(&exponent, 1, 1, in) != 1) {
-                fprintf(stderr, "[ERROR] Failed to read FLOAT exponent\n");
-                return;
+                fprintf(stderr, "[ERROR] Failed to read FLOAT exponent\n"); return;
             }
-            printf(", exponent: %d }", exponent);
-            break;
-        }
+            printf(", exponent: %d }", exponent); break;
+        case T81_TAG_VECTOR:
+            printf("VECTOR { dim: ..., data: [...] }"); break;
+        case T81_TAG_MATRIX:
+            printf("MATRIX { shape: ..., values: [...] }"); break;
+        case T81_TAG_TENSOR:
+            printf("TENSOR { shape: [...], rank: ..., data: [...] }"); break;
         case T81_TAG_GRAPH:
-            printf("GRAPH { ... }"); break;
+            printf("GRAPH { nodes: ..., edges: ... }"); break;
         case T81_TAG_QUATERNION:
-            printf("QUATERNION { ... }"); break;
+            printf("QUATERNION { x, y, z, w }"); break;
         case T81_TAG_OPCODE: {
             uint8_t inner;
             if (fread(&inner, 1, 1, in) != 1) {
-                fprintf(stderr, "[ERROR] Failed to read inner opcode\n");
-                return;
+                fprintf(stderr, "[ERROR] Failed to read inner opcode\n"); return;
             }
-            printf("OPCODE (inner): %s", opcode_to_str(inner));
-            break;
+            printf("OPCODE (inner): %s", opcode_to_str(inner)); break;
         }
         default:
-            printf("UNKNOWN TYPE TAG 0x%02X", tag);
-            break;
+            printf("UNKNOWN TYPE TAG 0x%02X", tag); break;
     }
 }
 @#
@@ -131,23 +123,21 @@ void disasm_operand(FILE *in) {
 @<Disassemble Core Function@>=
 void disassemble_vm(void) {
     size_t ip = 0;
-    
+
     if (!hvm_code) {
         printf("[ERROR] No bytecode loaded (hvm_code is NULL).\n");
         return;
     }
-    
-    /* Print header with total code size */
+
     printf("=== HanoiVM Disassembly ===\n");
     printf("Total Code Size: %zu bytes\n", hvm_code_size);
     printf("----------------------------\n");
-    
+
     while (ip < hvm_code_size) {
         uint8_t opcode = hvm_code[ip++];
         printf("%04zx: %-12s", ip - 1, opcode_to_str(opcode));
-        
+
 #ifdef VERBOSE_DISASSEMBLE
-        /* Print raw opcode byte */
         printf(" [Raw: %02X]", opcode);
 #endif
 
@@ -155,7 +145,6 @@ void disassemble_vm(void) {
             case OP_PUSH:
             case OP_TNN_ACCUM:
             case OP_T81_MATMUL: {
-                /* Check that enough bytes exist for two operands (assumed 18 bytes total) */
                 if (ip + 17 < hvm_code_size) {
 #ifdef VERBOSE_DISASSEMBLE
                     printf(" | Operands Raw: ");
@@ -169,29 +158,21 @@ void disassemble_vm(void) {
                     printf(" A:%08X B:%08X C:%02X | A':%08X B':%08X C':%02X\n",
                         a.a, a.b, a.c, b.a, b.b, b.c);
                 } else {
-                    printf(" [truncated operands]\n");
-                    return;
+                    printf(" [truncated operands]\n"); return;
                 }
                 break;
             }
-            /* Additional opcode cases can be added here for different operand lengths or types */
             default:
-                printf("\n");
-                break;
+                printf("\n"); break;
         }
     }
 }
 @#
 
 @<Optional: Disassemble to File@>=
-/* Optionally output the disassembly to a file for logging purposes */
 void disassemble_to_file(const char* filename) {
     FILE* f = fopen(filename, "w");
-    if (!f) {
-        perror("fopen disassembly file");
-        return;
-    }
-    /* Redirect stdout temporarily */
+    if (!f) { perror("fopen disassembly file"); return; }
     FILE* orig = stdout;
     stdout = f;
     disassemble_vm();
@@ -205,8 +186,4 @@ void disassemble_to_file(const char* filename) {
 void disassemble_vm(void);
 @#
 
-@* End of disassembler.cweb
-   This module now robustly disassembles HVM bytecode with extended operand processing,
-   optional verbose hex dumps, and future extension hooks for additional operand types.
-   The optional file output function facilitates logging and offline analysis.
-@*
+@* End of disassembler.cweb */
