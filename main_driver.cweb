@@ -1,40 +1,104 @@
-@* HanoiVM | Main Driver
+@* HanoiVM | Main Driver (Enhanced)
+   This is the entry point for the HanoiVM virtual machine.
+   It loads a `.hvm` bytecode file, optionally disassembles it,
+   and then runs the execution loop defined in `hanoivm_vm.cweb`.
 
-This is the entry point for the HanoiVM virtual machine. It loads a
-`.hvm` bytecode file, invokes the disassembler (optional), and runs
-the execution loop defined in `hanoivm_vm.cweb`.
+   Enhancements include:
+     - Extended command-line options (e.g., --disasm, --trace)
+     - Execution time measurement for performance monitoring.
+     - A startup banner and improved usage message.
+     - Future hooks for interactive mode and logging.
+@#
 
-@c
+@<Include Dependencies@>=
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include "hvm_loader.h"
 #include "disassembler.h"
+@#
 
-// Provided by hanoivm_vm.cweb
+@<External VM Execution Declaration@>=
+/* Provided by hanoivm_vm.cweb */
 void execute_vm(void);
+@#
 
+@<Usage Function@>=
+void usage(const char *prog) {
+    fprintf(stderr, "Usage: %s <file.hvm> [--disasm] [--trace]\n", prog);
+    fprintf(stderr, "  <file.hvm>   Path to the HVM bytecode file\n");
+    fprintf(stderr, "  --disasm    Print disassembly of the bytecode before execution\n");
+    fprintf(stderr, "  --trace     Enable detailed VM execution tracing (if supported)\n");
+}
+@#
+
+@<Main Function@>=
 int main(int argc, char** argv) {
+    /* Print startup banner */
+    printf("=== HanoiVM Virtual Machine ===\n");
+
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <file.hvm> [--disasm]\n", argv[0]);
+        usage(argv[0]);
         return 1;
     }
 
+    int disasm_flag = 0;
+    int trace_flag = 0;
+
+    /* Parse command-line arguments */
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "--disasm") == 0) {
+            disasm_flag = 1;
+        } else if (strcmp(argv[i], "--trace") == 0) {
+            trace_flag = 1;
+        } else {
+            usage(argv[0]);
+            return 1;
+        }
+    }
+
+    /* Load the HVM bytecode file */
     if (!load_hvm(argv[1])) {
+        fprintf(stderr, "Failed to load bytecode file: %s\n", argv[1]);
         return 1;
     }
 
-    if (argc > 2 && argv[2] && strcmp(argv[2], "--disasm") == 0) {
+    /* Optional disassembly output */
+    if (disasm_flag) {
         printf("Disassembly of %s:\n", argv[1]);
         disassemble_vm();
         printf("\n--- Executing ---\n\n");
     }
 
+    /* Optionally, set VM trace mode here if supported.
+       For example:
+       if (trace_flag) {
+           enable_vm_tracing();
+       }
+    */
+
+    /* Measure execution time */
+    clock_t start = clock();
     execute_vm();
+    clock_t end = clock();
+    double elapsed_sec = (double)(end - start) / CLOCKS_PER_SEC;
+
+    printf("\nExecution completed in %.3f seconds.\n", elapsed_sec);
     return 0;
 }
+@#
 
+@* Header Export
+   Other modules can include this header to access main() if needed.
 @h
 #ifndef MAIN_DRIVER_H
 #define MAIN_DRIVER_H
 int main(int argc, char** argv);
 #endif
+@#
+
+@* End of main_driver.cweb
+   This enhanced main driver supports extended command-line options, execution timing,
+   and a startup banner. Future extensions may include interactive debugging and logging.
+@*
