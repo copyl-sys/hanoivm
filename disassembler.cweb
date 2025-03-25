@@ -1,4 +1,4 @@
-@* HanoiVM | Bytecode Disassembler — Extended with T81 Operand Support *@
+@* HanoiVM | Bytecode Disassembler — Extended with T81 Operand Support and Verbose Mode *@
 
 @c
 #include <stdio.h>
@@ -6,8 +6,16 @@
 #include "advanced_ops.h"
 #include "t81types.h"
 
+/* Global bytecode and its size */
 extern uint8_t* hvm_code;
 extern size_t hvm_code_size;
+
+/* Optional verbose mode for detailed hex dump */
+#ifdef VERBOSE_DISASSEMBLE
+  #define VERBOSE_PRINT(...) printf(__VA_ARGS__)
+#else
+  #define VERBOSE_PRINT(...)
+#endif
 
 @* Fetch T81 ternary operand from byte stream *@
 @c
@@ -19,21 +27,48 @@ uint81_t fetch_operand(const uint8_t* buf) {
     return out;
 }
 
+@* Convert opcode to string using unified name resolver *@
+@c
 const char* opcode_to_str(uint8_t opcode) {
-    return opcode_name(opcode);  // use unified name resolver
+    return opcode_name(opcode);
 }
 
+@* Disassemble the provided bytecode stream *@
+@c
 void disassemble_vm(void) {
     size_t ip = 0;
+    
+    if (!hvm_code) {
+        printf("[ERROR] No bytecode loaded (hvm_code is NULL).\n");
+        return;
+    }
+    
+    /* Print header with total code size */
+    printf("=== HanoiVM Disassembly ===\n");
+    printf("Total Code Size: %zu bytes\n", hvm_code_size);
+    printf("----------------------------\n");
+    
     while (ip < hvm_code_size) {
         uint8_t opcode = hvm_code[ip++];
         printf("%04zx: %-12s", ip - 1, opcode_to_str(opcode));
+        
+#ifdef VERBOSE_DISASSEMBLE
+        /* Print raw opcode byte */
+        printf(" [Raw: %02X]", opcode);
+#endif
 
         switch (opcode) {
             case OP_PUSH:
             case OP_TNN_ACCUM:
             case OP_T81_MATMUL: {
+                /* Check that we have enough bytes for two operands (18 bytes total) */
                 if (ip + 17 < hvm_code_size) {
+#ifdef VERBOSE_DISASSEMBLE
+                    printf(" | Operands Raw: ");
+                    for (int j = 0; j < 18; j++)
+                        printf("%02X ", hvm_code[ip + j]);
+                    printf("\n");
+#endif
                     uint81_t a = fetch_operand(&hvm_code[ip]);
                     uint81_t b = fetch_operand(&hvm_code[ip + 9]);
                     ip += 18;
@@ -45,6 +80,7 @@ void disassemble_vm(void) {
                 }
                 break;
             }
+            /* Additional opcodes with operands can be handled here */
             default:
                 printf("\n");
                 break;
