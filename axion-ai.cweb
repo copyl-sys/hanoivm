@@ -1,5 +1,7 @@
-@* axion-ai.cweb | Axion AI Kernel Module with Ternary AI Stack, NLP Interface, and Rollback *@
-
+@* axion-ai.cweb | Axion AI Kernel Module with Ternary AI Stack, NLP Interface, and Rollback
+This module provides an AI kernel layer for the Axion platform.
+It supports a ternary AI stack, an NLP interface for runtime commands,
+and features snapshot/rollback for state recovery.
 @c
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -29,6 +31,7 @@ typedef struct {
     int pointer;
 } t81_stack_t;
 
+@d Global Variables
 @<Global Variables@>=
 static struct dentry *axion_debug_dir;
 static t81_stack_t axion_stack;
@@ -83,6 +86,46 @@ static void axion_tbin_execute(void) {
     }
 }
 
+@d Additional NLP Commands
+@<Additional NLP Commands@>=
+static void axion_status(void) {
+    int i;
+    pr_info("%s: [STATUS] axion_stack pointer: %d\n", AXION_NAME, axion_stack.pointer);
+    pr_info("%s: [STATUS] axion_stack contents: ", AXION_NAME);
+    for (i = 0; i < axion_stack.pointer; i++) {
+        pr_cont("%d ", axion_stack.stack[i].value);
+    }
+    pr_cont("\n");
+}
+
+static void axion_clear(void) {
+    axion_stack.pointer = 0;
+    take_snapshot();
+    pr_info("%s: stack cleared and snapshot updated\n", AXION_NAME);
+}
+
+static void axion_simulate(void) {
+    t81_stack_t sim_stack;
+    int i;
+    memcpy(&sim_stack, &axion_stack, sizeof(t81_stack_t));
+    pr_info("%s: simulation starting...\n", AXION_NAME);
+    while (sim_stack.pointer >= 2) {
+        t81_unit_t op1, op2, result;
+        sim_stack.pointer -= 2;
+        op1 = sim_stack.stack[sim_stack.pointer];
+        op2 = sim_stack.stack[sim_stack.pointer + 1];
+        result.value = (op1.value + op2.value) % 3;
+        result.entropy = (op1.entropy ^ op2.entropy) ^ get_random_int();
+        if (result.entropy > 0xF0) {
+            pr_warn("%s: simulation anomaly detected, aborting simulation\n", AXION_NAME);
+            return;
+        }
+        sim_stack.stack[sim_stack.pointer++] = result;
+    }
+    pr_info("%s: simulation complete, simulated top value: %d\n", AXION_NAME,
+            sim_stack.pointer > 0 ? sim_stack.stack[sim_stack.pointer - 1].value : -1);
+}
+
 @d NLP Command Parser
 @<NLP Command Parser@>=
 static void axion_parse_command(const char *cmd) {
@@ -93,6 +136,13 @@ static void axion_parse_command(const char *cmd) {
         rollback_if_anomalous();
     } else if (strstr(cmd, "snapshot")) {
         take_snapshot();
+        pr_info("%s: snapshot taken\n", AXION_NAME);
+    } else if (strstr(cmd, "status")) {
+        axion_status();
+    } else if (strstr(cmd, "clear")) {
+        axion_clear();
+    } else if (strstr(cmd, "simulate")) {
+        axion_simulate();
     } else {
         pr_info("%s: unknown command\n", AXION_NAME);
     }
@@ -123,6 +173,7 @@ static ssize_t axion_debugfs_write(struct file *file, const char __user *ubuf,
     if (strncmp(buf, "cmd:", 4) == 0) {
         axion_parse_command(buf + 4);
     } else {
+        /* Default behavior: reset stack, take snapshot, then push new units */
         axion_stack.pointer = 0;
         take_snapshot();
 
@@ -175,6 +226,7 @@ static int __init axion_init(void) {
     if (!axion_debug_dir)
         return -ENOMEM;
     axion_stack.pointer = 0;
+    take_snapshot();
     return 0;
 }
 
