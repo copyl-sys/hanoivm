@@ -82,3 +82,31 @@ void interpret_hvm(const char* hvm_file) {
                 break;
             } else if (strcmp(op, "JUMP") == 0) {
                 for (int i = 0; i < label_count; ++i) {
+                    if (strcmp(labels[i].label, a1) == 0) {
+                        fseek(f, labels[i].file_offset, SEEK_SET);
+                        break;
+                    }
+                }
+            } else if (strcmp(op, "JUMP_IF") == 0) {
+                if (atof(get_reg(a1)) != 0) {
+                    for (int i = 0; i < label_count; ++i) {
+                        if (strcmp(labels[i].label, dst) == 0) {
+                            fseek(f, labels[i].file_offset, SEEK_SET);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fclose(f);
+}
+
+@d Main Test Harness
+#ifdef TEST_HVM_RUN
+int main() {
+    interpret_hvm("output.hvm");
+    return 0;
+}
+#endif
