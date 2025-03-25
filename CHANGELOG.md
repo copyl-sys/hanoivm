@@ -1,3 +1,25 @@
+## [v0.9] - 2025-03-27
+
+### ✨ Added
+
+- **📦 T81Lang Compiler Pipeline**
+  - Lexer, parser, and semantic analyzer via `t81lang_parser.cweb` and `t81lang_semantic.cweb`
+  - IR generator (`t81lang_irgen.cweb`) with symbolic ternary operations
+  - `.hvm` emitter (`emit_hvm.cweb`) and CLI driver (`t81lang_compiler.cweb`)
+  - `.hvm` interpreter engine (`hvm_interpreter.cweb`) for runtime execution
+  - Full integration with `STATUS.md`, `README.md`, `ROADMAP.md`, and `manifesto.cweb`
+
+### 🧪 Tests
+
+- Unit-tested `emit_hvm` and interpreter output
+- Sample `.t81` program compiled to `.hvm` and executed to completion
+
+### 🔗 Integration
+
+- Compiler CLI supports `--emit-ir`, `--emit-hvm`, `--no-analysis`
+- Modular `.cweb` units are now production-stable
+
+
 ## [v0.8] - 2025-03-26
 
 ### 🚀 Added
