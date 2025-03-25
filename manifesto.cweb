@@ -122,6 +122,7 @@ hanoivm-test.cweb              — Kernel-space test framework
 hanoivm_tests.cweb             — Test entrypoints and definitions
 hanoivm_cli.cweb               — CLI tool for execution and testing
 hvmcli.cweb                    — Command-line user interface
+hvm_interpreter.cweb           — T81Lang HVM Interpreter
 hvm_loader.cweb                — Runtime loader for `.hvm` binaries
 hvm_pcie_driver.cweb           — PCIe simulation driver for ternary co-processors
 hvm_assembler.cweb             — Assembler for `.hvm` bytecode
