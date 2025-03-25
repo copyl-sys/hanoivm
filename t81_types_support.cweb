@@ -6,6 +6,7 @@
 #include "t81.h"
 #include "hanoivm_stack.h"
 #include "hanoivm_opcode.h"
+#include "t81_types_support.h"
 #include <stdio.h>
 #include <stdlib.h>
 
