@@ -10,6 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static HanoiVM vm_core;
+
+void t81_vm_init(void) {
+    register_t81_type_opcodes(&vm_core);
+    // Additional future opcode domains can also be registered here
+}
+
 // === FRACTION OPERATIONS ===
 void op_tfadd(HanoiVM *vm) {
     T81FractionHandle a = hanoivm_stack_pop(vm);
