@@ -84,6 +84,8 @@
 - [x] `recursive_tier_execution.cweb`: Stack simulation for T81 → T243 → T729
 - [x] `logviewer.cweb`: Axion log inspection tool
 - [x] Tier-aware introspection of symbolic data (BigInt, Tensor, FSM)
+- [x] `recursion_exporter.cweb`: JSON export with Axion + tier metadata
+- [x] `FrameSceneBuilder.cweb`: 3D renderer for recursion visualization via jMonkeyEngine
 
 ---
 
@@ -94,10 +96,15 @@
   - `cuda_handle_request.cu` (CUDA)
 - [x] FFT: `t729_holotensor.h` interface and Axion dispatch
 - [x] Embedded `.h` headers extracted from `.cweb` modules
+- [x] `PulseControl` animation system for entropy Δτ hot spots
 - [ ] `hipGraphLaunch` / `cuGraphExec` macro pipelines
 - [ ] Symbolic AI Graph IR (`T729LogicGraph`)
 - [ ] Metadata blockchain for `.cweb` audit/logging integrity
-- [ ] Project Looking Glass — 3D recursion visualization
+- [ ] Project Looking Glass full interface:
+  - HUD overlays
+  - Tooltip and inspection engine
+  - Optimization timeline
+  - Axion live update streaming
 
 ---
 
@@ -133,4 +140,5 @@
 - ✅ Full tier introspection + entropy-based tier transitions
 - ✅ Modular `.cweb` headers + literate tooling infrastructure
 - ✅ New docs: `manifesto.cweb`, `t243_t729.md`, updated `README.md`, `STATUS.md`, `CHANGELOG.md`
-- 🔜 Next phase: REPL, LLVM IR, and Looking Glass GUI integration
+- ✅ Initial GUI implementation for recursion via `FrameSceneBuilder.cweb`
+- 🔜 Next phase: REPL, LLVM IR, mouse-hover controls, Axion streaming
