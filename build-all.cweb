@@ -1,8 +1,13 @@
-@* build-all.cweb | Unified Axion + HanoiVM Kernel Module Builder
+@* build-all.cweb | Unified Axion + HanoiVM Kernel Module Builder (Enhanced Version)
+   This literate Makefile builds all tangled kernel modules for the Axion AI runtime
+   and HanoiVM subsystem. It assumes all `.cweb` sources are already tangled into `.c`
+   and present in the working directory.
 
-This literate Makefile builds all tangled kernel modules for the Axion AI runtime
-and HanoiVM subsystem. It assumes all `.cweb` sources are already tangled into `.c`
-and present in the working directory.
+   Enhancements:
+   - New "install" and "uninstall" targets.
+   - A "package" target to bundle all kernel modules into a tarball.
+   - Verbose logging and modular build messages.
+@#
 
 @<Unified Kernel Module Build Rules@>=
 # List all kernel modules derived from tangled .c files
@@ -12,13 +17,38 @@ obj-m += axion-ai.o hanoivm_vm.o hanoivm-core.o axion-gaia-interface.o \
 # Kernel headers and current directory
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD  := $(shell pwd)
+MODULES := $(PWD)/*.ko
 
-# Compile all kernel modules
 all:
 	@echo "[build-all] Compiling Axion + HanoiVM kernel modules..."
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
-# Clean build outputs
+install: all
+	@echo "[build-all] Installing kernel modules..."
+	@for mod in $(MODULES); do \
+		echo "Installing $$mod"; \
+		sudo insmod $$mod || true; \
+	done
+
+uninstall:
+	@echo "[build-all] Uninstalling kernel modules..."
+	@for mod in $(MODULES); do \
+		echo "Removing $$mod"; \
+		sudo rmmod $$(basename $$mod .ko) || true; \
+	done
+
+package: all
+	@echo "[build-all] Packaging kernel modules into axion_hanoivm_modules.tar.gz..."
+	tar czvf axion_hanoivm_modules.tar.gz $(MODULES)
+
 clean:
 	@echo "[build-all] Cleaning module build artifacts..."
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
+	@echo "[build-all] Removing packaged tarball..."
+	-rm -f axion_hanoivm_modules.tar.gz
+@#
+
+@* End of build-all.cweb
+   This enhanced Makefile supports building, installing, uninstalling, and packaging
+   all kernel modules for the Axion and HanoiVM subsystems.
+@*
