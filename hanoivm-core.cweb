@@ -9,7 +9,7 @@
 use crate::libt81::{T81Digit, T81Number};
 use crate::libt243::{T243Digit, T243LogicTree, T243Node};
 use crate::libt729::{T729Digit, T729MacroEngine};
-use crate::axion_ai::{axion_parse_command, axion_tbin_execute};
+use crate::axion_ai::{axion_parse_command, axion_tbin_execute, axion_register_session};
 use crate::config::HanoiVMConfig;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
@@ -262,6 +262,7 @@ pub extern "C" fn execute_vm_from_c(config_ptr: *const HanoiVMConfig) -> c_int {
 
     let config = unsafe { *config_ptr };
     let mut vm = HanoiVM::new(config);
+    axion_register_session(&vm.session_id);
 
     if config.enable_debug_mode {
         println!("[DEBUG] Executing vm_roundtrip_test()...");
