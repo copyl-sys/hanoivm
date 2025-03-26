@@ -54,7 +54,9 @@ Modularity:
 Named code sections can be referenced multiple times. This supports the idea that the final executable code’s order may differ from the order presented in the document.
 Extraction:
 Tools like ctangle process these blocks, extracting them in a sequence dictated by cross-references.
+
 Example:
+
 @<Include Libraries@>
 #include <stdio.h>
 
@@ -69,11 +71,16 @@ int main() {
 
 ctangle Commands:
 These commands tell the extraction tool which parts of the document form the final source code. The typical usage is implicit when you define named sections.
+
+
 cweave Commands:
 Use these directives to generate formatted documentation that includes both code and commentary.
+
+
 Live and JIT Specifics:
 With AxionAI’s extensions, additional directives may be included:
 Triggering Live Updates: e.g., @live-update might signal the system to recompile immediately upon file change.
+
 JIT Compilation Hints: Tags such as @optimize or @profile can be used to influence how the JIT engine handles specific code blocks.
 
 
@@ -81,11 +88,16 @@ JIT Compilation Hints: Tags such as @optimize or @profile can be used to influen
 
 Separation of Concerns:
 Keep explanatory text and source code clearly separated by their markers. This ensures that automated tools can reliably parse and extract the desired content.
+
+
 Modular Design:
 Break your code into well-named sections so that the extraction tool can reorder them if necessary. This modularity aids in debugging and live updates.
 Documentation Consistency:
 Make sure that changes in code are accompanied by updates in the corresponding documentation. The strength of literate programming lies in its seamless integration of code and explanation.
+
+
 Example Full Structure:
+
 @* Package Metadata
 @pkg AxionAI-Module
 @version 1.0.0
