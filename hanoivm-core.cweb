@@ -1,42 +1,53 @@
-@* hanoivm-core.cweb: Recursive HanoiVM Runtime with Extended AI Integration and Step Execution *@
+@* hanoivm-core.cweb | Recursive HanoiVM Runtime with Extended AI Integration *@
+   This document defines the full HanoiVM runtime in Rust, integrated with T243 logic trees,
+   T729 macro execution, and Axion AI support. Runtime behavior is synchronized with C-side
+   configuration through `HanoiVMConfig` passed via FFI.
+@#
 
-@c
+@<Use Statements@>=
 use crate::libt81::{T81Digit, T81Number};
 use crate::libt243::{T243Digit, T243LogicTree, T243Node};
 use crate::libt729::{T729Digit, T729MacroEngine};
-use crate::axion_ai::{axion_parse_command, axion_tbin_execute}; // New AI-based functions
+use crate::axion_ai::{axion_parse_command, axion_tbin_execute};
+use crate::config::HanoiVMConfig;
+use std::ffi::CStr;
+use std::os::raw::{c_char, c_int};
+@#
 
-/// The recursive HanoiVM runtime instance
+@<Struct HanoiVM@>=
+/// The core HanoiVM execution engine with configuration and AI control
 pub struct HanoiVM {
-    pub macro_engine: T729MacroEngine, // T729 executor and registry
-    pub frame_stack: Vec<T243LogicTree>, // Active execution frames
-    pub output_log: Vec<T81Number>,      // Output from each step
-    pub ai_enabled: bool,                // New field to control AI optimizations
+    pub config: HanoiVMConfig,            // Shared runtime config
+    pub macro_engine: T729MacroEngine,    // T729 macro dispatcher and storage
+    pub frame_stack: Vec<T243LogicTree>,  // Execution stack
+    pub output_log: Vec<T81Number>,       // Symbolic execution output
+    pub ai_enabled: bool,                 // Toggle AI logic based on config
 }
+@#
 
+@<Impl HanoiVM@>=
 impl HanoiVM {
-    /// Initialize the HanoiVM with a macro engine, empty stack, and AI control
-    pub fn new(ai_enabled: bool) -> Self {
+    pub fn new(config: HanoiVMConfig) -> Self {
+        let ai = config.enable_anomaly_detection || config.enable_adaptive_mode_switching;
         HanoiVM {
+            config,
             macro_engine: T729MacroEngine::new(),
             frame_stack: Vec::new(),
             output_log: Vec::new(),
-            ai_enabled,
+            ai_enabled: ai,
         }
     }
-
-    /// Load a new logic frame (T243 tree) onto the stack
     pub fn push_frame(&mut self, tree: T243LogicTree) {
         self.frame_stack.push(tree);
     }
-
-    /// Execute the next frame on the stack (single step execution)
     pub fn step(&mut self) -> Option<T81Number> {
         if let Some(frame) = self.frame_stack.pop() {
-            let mut result = frame.evaluate(); // T243Node → T81Number
-            // If AI is enabled, perform introspective optimizations
+            if self.config.enable_debug_mode {
+                println!("[TRACE] Executing step frame: {:?}", frame);
+            }
+            let mut result = frame.evaluate();
             if self.ai_enabled {
-                result = axion_tbin_execute(result); // Optimize using AI-driven transformation
+                result = axion_tbin_execute(result);
             }
             self.output_log.push(result.clone());
             Some(result)
@@ -44,22 +55,18 @@ impl HanoiVM {
             None
         }
     }
-
-    /// Execute the entire frame stack recursively
     pub fn run(&mut self) {
         while let Some(frame) = self.frame_stack.pop() {
-            let mut result = frame.evaluate(); // T243Node → T81Number
-
-            // If AI is enabled, perform introspective optimizations
+            if self.config.enable_debug_mode {
+                println!("[TRACE] Running frame: {:?}", frame);
+            }
+            let mut result = frame.evaluate();
             if self.ai_enabled {
                 result = axion_tbin_execute(result);
             }
-
             self.output_log.push(result);
         }
     }
-
-    /// Execute a T729 macro by digit (high-level AI instruction)
     pub fn exec_macro(&mut self, digit: T729Digit, inputs: Vec<T81Number>) {
         if let Some(result) = self.macro_engine.execute(digit, inputs) {
             self.output_log.push(result);
@@ -67,34 +74,24 @@ impl HanoiVM {
             eprintln!("[WARN] Undefined T729 macro at index: {}", digit.0);
         }
     }
-
-    /// Reset the runtime: clear frame stack and output log, and reinitialize macro engine
     pub fn reset(&mut self) {
         self.frame_stack.clear();
         self.output_log.clear();
         self.macro_engine = T729MacroEngine::new();
         println!("HanoiVM runtime reset.");
     }
-
-    /// Inspect the final output after recursive execution
     pub fn final_output(&self) -> Option<&T81Number> {
         self.output_log.last()
     }
-
-    /// Print a full symbolic trace of the execution
     pub fn trace(&self) {
         println!("== HanoiVM Execution Trace ==");
         for (i, out) in self.output_log.iter().enumerate() {
             println!("Step {}: {}", i, out);
         }
     }
-
-    /// Interact with Axion AI through the NLP command interface
     pub fn interact_with_ai(&mut self, cmd: &str) {
-        axion_parse_command(cmd); // Execute AI commands like "optimize", "snapshot", etc.
+        axion_parse_command(cmd);
     }
-
-    /// Re-optimize all previous outputs using AI introspection
     pub fn reoptimize_output(&mut self) {
         if self.ai_enabled {
             for result in self.output_log.iter_mut() {
@@ -106,12 +103,67 @@ impl HanoiVM {
         }
     }
 }
+@#
 
-@*
-This module defines the full HanoiVM lifecycle:
-- Stack-based recursive execution of T243 logic trees.
-- Macro-instruction decoding through T729.
-- Output monitoring and result tracing.
-- Integration with Axion AI for introspective optimization and dynamic learning.
-- Extended support for step-by-step execution, runtime reset, and reoptimization.
+@<FFI Bindings@>=
+/// Exposed entrypoint for C FFI integration
+#[no_mangle]
+pub extern "C" fn execute_vm_from_c(config_ptr: *const HanoiVMConfig) -> c_int {
+    if config_ptr.is_null() {
+        eprintln!("[ERROR] Null configuration pointer received");
+        return -1;
+    }
+    let config = unsafe { *config_ptr };
+    let mut vm = HanoiVM::new(config);
+
+    // NOTE: Frame construction must be passed from C in production use
+    let dummy_frame = T243LogicTree::default();
+    vm.push_frame(dummy_frame);
+    vm.run();
+
+    if let Some(out) = vm.final_output() {
+        println!("[RESULT] Final output: {}", out);
+        0
+    } else {
+        eprintln!("[ERROR] No output generated");
+        1
+    }
+}
+@#
+
+@<hanoivm_core.h@>=
+#ifndef HANOIVM_CORE_H
+#define HANOIVM_CORE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "config.h"
+#include <stdint.h>
+
+// Execute HanoiVM from C, passing a runtime config pointer
+int execute_vm_from_c(const struct HanoiVMConfig* config_ptr);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // HANOIVM_CORE_H
+@#
+
+@<Main HanoiVM Runtime@>=
+@<Use Statements@>
+@<Struct HanoiVM@>
+@<Impl HanoiVM@>
+@<FFI Bindings@>
+@<hanoivm_core.h@>
+@#
+
+@* End of hanoivm-core.cweb
+   Defines the HanoiVM symbolic runtime environment with recursive execution,
+   AI-assisted transformations, macro logic, introspective tracing, and full
+   runtime configuration binding through the HanoiVMConfig interface.
+   Also includes a C-callable entrypoint via `execute_vm_from_c()` and an
+   embeddable `hanoivm_core.h` header for C/C++ integration.
 @*
