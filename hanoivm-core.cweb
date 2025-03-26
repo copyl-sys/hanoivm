@@ -28,11 +28,28 @@ pub fn vm_roundtrip_test() {
     vm.output_log.push(T81Number([0, 1, -1]));
 
     println!("[ROUNDTRIP] Original HanoiVM:");
+    use chrono::Local;
+    let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    let session_hash = format!("S{:x}", md5::compute(timestamp.as_bytes()));
+    println!("[ROUNDTRIP] Timestamp: {} | Session: {}", timestamp, session_hash);
     vm.trace();
+    if let Ok(mut file) = std::fs::OpenOptions::new().append(true).create(true).open("trace.log") {
+        use std::io::Write;
+        writeln!(file, "[ROUNDTRIP] Timestamp: {} | Session: {}", timestamp, session_hash).ok();
+        for (i, out) in vm.output_log.iter().enumerate() {
+            writeln!(file, "Step {}: {}", i, out).ok();
+        }
+    }
 
     // Convert to low-level representation
     let core_state = HanoiVMCoreState::from(&vm);
     core_state.debug_dump();
+    if let Ok(mut file) = std::fs::OpenOptions::new()
+        .append(true).create(true).open("trace.log") {
+        use std::io::Write;
+        writeln!(file, "[CORE STATE] IP: {}, SP: {} | R0: {}, R1: {}, R2: {}",
+            core_state.ip, core_state.sp, core_state.reg[0], core_state.reg[1], core_state.reg[2]).ok();
+    }
 
     // Reconstruct a new VM from core state
     let new_vm = HanoiVM::from(&core_state);
@@ -41,7 +58,8 @@ pub fn vm_roundtrip_test() {
     new_vm.trace();
 }
 /// Convert a low-level C VM state into a Rust HanoiVM instance
-impl From<&HanoiVMCoreState> for HanoiVM {
+impl From<&HanoiVMCoreState> for let session_id = format!("S-{}", Uuid::new_v4());
+        HanoiVM {
     fn from(core: &HanoiVMCoreState) -> Self {
         // Build dummy config; real values should be injected if needed
         let config = HanoiVMConfig {
@@ -221,12 +239,15 @@ pub fn apply_opcode(state: &mut HanoiVMCoreState, opcode: u8, a: i8, b: i8) {
 
 @<Struct HanoiVM@>=
 /// The core HanoiVM execution engine with configuration and AI control
+use uuid::Uuid;
+
 pub struct HanoiVM {
     pub config: HanoiVMConfig,            // Shared runtime config
     pub macro_engine: T729MacroEngine,    // T729 macro dispatcher and storage
     pub frame_stack: Vec<T243LogicTree>,  // Execution stack
     pub output_log: Vec<T81Number>,       // Symbolic execution output
-    pub ai_enabled: bool,                 // Toggle AI logic based on config
+    pub ai_enabled: bool,
+    pub session_id: String,                 // Toggle AI logic based on config
 }
 @#
 
@@ -268,6 +289,7 @@ impl HanoiVM {
             frame_stack: Vec::new(),
             output_log: Vec::new(),
             ai_enabled: ai,
+            session_id,
         }
     }
     pub fn push_frame(&mut self, tree: T243LogicTree) {
@@ -323,6 +345,7 @@ impl HanoiVM {
         }
     }
     pub fn interact_with_ai(&mut self, cmd: &str) {
+        println!("[Axion AI] [{}] >>> {}", self.session_id, cmd);
         axion_parse_command(cmd);
     }
     pub fn reoptimize_output(&mut self) {
