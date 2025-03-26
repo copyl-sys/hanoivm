@@ -13,6 +13,8 @@ and features snapshot/rollback for state recovery.
 #include <linux/mutex.h>
 #include <linux/random.h>
 #include <linux/string.h>
+#include <linux/time.h>
+@#
 
 #define AXION_NAME "axion-ai"
 #define TBIN_MAX_SIZE 729
@@ -85,6 +87,29 @@ static void axion_tbin_execute(void) {
         axion_stack_push(result);
     }
 }
+
+@d Session Registration
+@<Session Registration@>=
+static void axion_register_session(const char *session_id) {
+    if (!session_id || strlen(session_id) > 64) return;
+
+    char path[128];
+    snprintf(path, sizeof(path), "/tmp/axion_session_%s.log", session_id);
+
+    struct file *f = filp_open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (IS_ERR(f)) return;
+
+    mm_segment_t old_fs = get_fs();
+    set_fs(KERNEL_DS);
+
+    char logbuf[256];
+    int len = snprintf(logbuf, sizeof(logbuf), "[AXION] Session %s registered.\n", session_id);
+    kernel_write(f, logbuf, len, &f->f_pos);
+
+    set_fs(old_fs);
+    filp_close(f, NULL);
+}
+EXPORT_SYMBOL(axion_register_session);
 
 @d Additional NLP Commands
 @<Additional NLP Commands@>=
@@ -173,7 +198,6 @@ static ssize_t axion_debugfs_write(struct file *file, const char __user *ubuf,
     if (strncmp(buf, "cmd:", 4) == 0) {
         axion_parse_command(buf + 4);
     } else {
-        /* Default behavior: reset stack, take snapshot, then push new units */
         axion_stack.pointer = 0;
         take_snapshot();
 
