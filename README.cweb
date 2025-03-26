@@ -76,7 +76,7 @@ cat /sys/kernel/debug/hanoivm-test
 - GPU-accelerated symbolic computation (CUDA/ROCm)
 - Robust security via NIST-approved cryptographic standards (AES-NI, RSA, SHA-256)
 - Future-ready for post-quantum cryptography
-- Fully compatible with AxionOS and intelligent package management
+- Fully compatible with Alexis Linux and intelligent package management w/ AxionAI
 
 ---
 
