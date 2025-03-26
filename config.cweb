@@ -1,7 +1,8 @@
 @* config.cweb | Centralized Configuration for HanoiVM *@
 
 This file defines the global configuration settings for the HanoiVM project.
-All components will read these settings to ensure consistent behavior across the system.
+All components will read these settings to ensure consistent behavior across the system,
+while enabling dynamic AI and hardware-driven optimizations.
 
 ---
 
@@ -18,19 +19,32 @@ All components will read these settings to ensure consistent behavior across the
 // Set to false to disable GPU support.
 #define ENABLE_GPU_SUPPORT         true
 
+// Dynamic Resource Scaling
+// Automatically adjusts memory, CPU, and GPU allocation based on detected hardware.
+// This setting improves efficiency in resource-constrained or heterogeneous systems.
+#define ENABLE_DYNAMIC_RESOURCE_SCALING true
+
 ---
 
 @<AI Configuration@>=
 ## AI Configuration
 
 // AI Optimization Mode
-// Controls the optimization mode for AI-driven enhancements.
-// Options: "Basic" for basic optimizations, "Advanced" for aggressive optimizations.
+// Controls the optimization strategy used by HanoiVM's AI subsystems.
+// Options:
+//   "Basic"    - Enables conservative optimizations suitable for general-purpose computing.
+//   "Advanced" - Enables aggressive heuristics, predictive execution, and speculative analysis.
 #define AI_OPTIMIZATION_MODE       "Advanced"
 
 // Anomaly Detection
-// Enable or disable anomaly detection by the AI module.
+// Enables the AI module to monitor execution patterns for anomalies or faults.
+// These can include memory leaks, performance dips, or unpredicted behavior.
 #define ENABLE_ANOMALY_DETECTION   true
+
+// AI-Driven Log Feedback
+// If enabled, the AI can dynamically elevate logging verbosity (e.g., from INFO to DEBUG)
+// when unusual patterns or errors are detected, enhancing observability and traceability.
+#define ENABLE_AI_LOG_FEEDBACK     true
 
 ---
 
@@ -38,14 +52,26 @@ All components will read these settings to ensure consistent behavior across the
 ## Logging Configuration
 
 // Log Level
-// Sets the level of logging output.
-// Options: "DEBUG", "INFO", "WARN", "ERROR"
+// Sets the baseline verbosity for log output.
+// Options:
+//   "DEBUG" - All logs, including verbose diagnostics
+//   "INFO"  - General operational info (default)
+//   "WARN"  - Warnings only
+//   "ERROR" - Only critical errors
 #define LOG_LEVEL                  "INFO"
 
 // Log Output Format
-// Defines the format for log output.
-// Options: "TEXT" for simple text, "JSON" for JSON-formatted logs.
+// Determines how logs are formatted and emitted.
+// Options:
+//   "TEXT" - Human-readable text logs
+//   "JSON" - Structured logs suitable for parsing
 #define LOG_OUTPUT_FORMAT          "TEXT"
+
+// Secure Mode
+// If enabled, sensitive runtime logs (e.g., memory addresses, private ops)
+// will be redacted and external telemetry will be suppressed.
+// Recommended when running in restricted or audit-critical environments.
+#define ENABLE_SECURE_MODE         true
 
 ---
 
@@ -53,16 +79,24 @@ All components will read these settings to ensure consistent behavior across the
 ## Resource Management
 
 // Memory Allocation (in MB)
-// Controls the amount of memory allocated to HanoiVM.
+// Specifies the maximum memory HanoiVM is allowed to use.
+// This can be overridden by ENABLE_DYNAMIC_RESOURCE_SCALING if needed.
 #define MEMORY_ALLOCATION          4096
 
 // CPU Affinity
-// Set the CPU cores to be used by HanoiVM (e.g., "0,1,2,3" for cores 0-3).
+// Designates which CPU cores are used by the HanoiVM runtime.
+// This helps isolate workloads and tune for performance or power savings.
 #define CPU_AFFINITY               "0,1,2,3"
 
 // GPU Allocation (in MB)
-// If GPU support is enabled, set the amount of GPU memory allocated.
+// Determines how much GPU memory is reserved for HanoiVM GPU acceleration.
+// Only applies if ENABLE_GPU_SUPPORT is true.
 #define GPU_ALLOCATION             4096
+
+// Runtime Overrides
+// If enabled, HanoiVM can accept config overrides from CLI flags or environment variables.
+// Example: `--log-level=DEBUG` or `HVM_MODE=T243`
+#define ENABLE_RUNTIME_OVERRIDES   true
 
 ---
 
@@ -70,11 +104,11 @@ All components will read these settings to ensure consistent behavior across the
 ## Environment Detection
 
 // Detect GPU
-// Automatically detects whether a compatible GPU is available.
+// Automatically scans for compatible GPU devices and flags ENABLE_GPU_SUPPORT if available.
 #define DETECT_GPU                 true
 
 // Detect PCIe Accelerator
-// Automatically detects whether a PCIe accelerator is present.
+// Checks for installed PCIe accelerator hardware and toggles ENABLE_PCIE_ACCELERATION if found.
 #define DETECT_PCIE_ACCELERATOR    true
 
 ---
@@ -83,9 +117,19 @@ All components will read these settings to ensure consistent behavior across the
 ## Global Settings
 
 // Ternary Logic Mode
-// Choose the ternary logic mode for HanoiVM. Options: "T81", "T243", "T729"
+// Specifies the default execution mode for HanoiVM's ternary logic system.
+// Options:
+//   "T81"  - Basic ternary, radix-81 logic
+//   "T243" - Intermediate, AI-ready logic with matrix/tensor support
+//   "T729" - High-dimensional symbolic execution mode
 #define TERNARY_LOGIC_MODE         "T81"
 
+// Adaptive Mode Switching
+// Enables automatic promotion/demotion between T81, T243, and T729 based on runtime demands.
+// Requires both AI and hardware support. Useful for hybrid symbolic/numeric workflows.
+#define ENABLE_ADAPTIVE_MODE_SWITCHING true
+
 // Enable Debug Mode
-// Enable or disable debugging mode for additional logs and debugging tools.
+// Enables verbose diagnostics and developer utilities in runtime and CLI tools.
+// Should be disabled in production or secure environments.
 #define ENABLE_DEBUG_MODE          true
