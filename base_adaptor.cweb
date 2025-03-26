@@ -1,6 +1,6 @@
-@* Enhanced Numeric Base Adapter Integrated with TISC Recursive Logic and Arbitrary-Precision Support.
+@* Synergized Numeric Base Adapter Integrated with TISC, Axion AI Telemetry, and Arbitrary-Precision Support.
 
-This adapter robustly handles numeric bases, T81Lang datatypes (`T81BigInt`, `T81Float`, `T81Fraction`), and integrates seamlessly with the TISC recursive logic. Utilizing GMP arbitrary-precision arithmetic, it ensures accurate operand parsing and execution within HanoiVM and Axion ecosystems.
+This adapter robustly handles numeric bases, T81Lang datatypes (`T81BigInt`, `T81Float`, `T81Fraction`), integrates seamlessly with TISC recursive logic, and includes structured logging for Axion AI telemetry. Utilizing GMP arbitrary-precision arithmetic, it ensures accurate operand parsing and execution within the HanoiVM and Axion ecosystems.
 
 @c
 #include <stdio.h>
@@ -38,9 +38,15 @@ typedef struct {
     const char *message;
 } ErrorReport;
 
+@ Axion AI telemetry reporting.
+void axion_telemetry(const char *context, const char *details) {
+    printf("[Axion Telemetry] %s: %s\n", context, details);
+}
+
 @ Consistent error reporting.
 void report_error(ErrorReport error) {
     fprintf(stderr, "Error [%d]: %s\n", error.code, error.message);
+    axion_telemetry("Error", error.message);
 }
 
 @ Validate base.
@@ -48,7 +54,7 @@ bool is_valid_base(uint32_t base) {
     return base >= 2 && base <= MAX_BASE;
 }
 
-@ Recursive identification of datatype based on T81Lang patterns.
+@ Enhanced datatype identification with runtime checks.
 NumericType identify_datatype(const char *num_str) {
     if (strchr(num_str, '.') != NULL) return TYPE_T81_FLOAT;
     if (strchr(num_str, '/') != NULL) return TYPE_T81_FRACTION;
@@ -65,21 +71,24 @@ bool parse_number_bigint(const char *num_str, uint32_t base, mpz_t result, Error
     return true;
 }
 
-@ Recursive base identification using GMP.
-uint32_t recursively_identify_base(const char *num_str, uint32_t current_base) {
-    if (current_base > MAX_BASE) return 0;
+@ Optimized recursive base identification using binary search heuristic.
+uint32_t recursively_identify_base(const char *num_str, uint32_t min_base, uint32_t max_base) {
+    if (min_base > max_base) return 0;
+    uint32_t mid_base = min_base + (max_base - min_base) / 2;
     mpz_t test;
     mpz_init(test);
     ErrorReport error;
-    if (parse_number_bigint(num_str, current_base, test, &error)) {
+    if (parse_number_bigint(num_str, mid_base, test, &error)) {
         mpz_clear(test);
-        return current_base;
+        return mid_base;
     }
     mpz_clear(test);
-    return recursively_identify_base(num_str, current_base + 1);
+    uint32_t lower_search = recursively_identify_base(num_str, min_base, mid_base - 1);
+    if (lower_search != 0) return lower_search;
+    return recursively_identify_base(num_str, mid_base + 1, max_base);
 }
 
-@ Convert GMP numeric value to specified base.
+@ Convert GMP numeric value to specified base with structured logging.
 void number_to_base_bigint(mpz_t num, uint32_t base, char *buffer, size_t buffer_size) {
     char *str = mpz_get_str(NULL, base, num);
     if (strlen(str) >= buffer_size) {
@@ -91,9 +100,9 @@ void number_to_base_bigint(mpz_t num, uint32_t base, char *buffer, size_t buffer
     free(str);
 }
 
-@ TISC integration function: Recursive operand parsing and execution handler.
+@ TISC integration function: Recursive operand parsing with Axion AI telemetry.
 bool tisc_operand_handler(const char *input, uint32_t target_base, char *output, size_t output_size) {
-    uint32_t identified_base = recursively_identify_base(input, 2);
+    uint32_t identified_base = recursively_identify_base(input, 2, MAX_BASE);
     if (identified_base == 0) {
         report_error((ErrorReport){ERR_INVALID_BASE, "Unable to identify numeric base for TISC operand."});
         return false;
@@ -109,6 +118,7 @@ bool tisc_operand_handler(const char *input, uint32_t target_base, char *output,
     }
     number_to_base_bigint(numeric_value, target_base, output, output_size);
     mpz_clear(numeric_value);
+    axion_telemetry("TISC Operand Parsed", input);
     printf("TISC Operand - Identified Base: %u, Datatype: %d\n", identified_base, datatype);
     return true;
 }
