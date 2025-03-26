@@ -41,15 +41,15 @@ exploring symbolic, recursive, and secure ternary computing.
 | `t81_stack.cweb`            | Core ternary stack implementation             |
 | `cuda_handle_request.cweb`  | CUDA symbolic tensor execution backend        |
 | `gaia_handle_request.cweb`  | ROCm symbolic tensor execution backend        |
-| `advanced_ops_ext.cweb`     | Symbolic operations for T243/T729 logic tiers   |
-| `t81lang_compiler.cweb`     | Compiler pipeline: Lexer → AST → IR → `.hvm`    |
+| `advanced_ops_ext.cweb`     | Symbolic operations for T243/T729 logic tiers |
+| `t81lang_compiler.cweb`     | Compiler pipeline: Lexer → AST → IR → `.hvm`  |
 | `emit_hvm.cweb`             | IR-to-bytecode emitter for T81Lang            |
-| `hvm_interpreter.cweb`      | Bytecode interpreter for `.hvm` binaries       |
-| `disassembler.cweb`         | Bytecode decoder with symbolic introspection   |
-| `nist_encryption.cweb`      | AES-NI, RSA, SHA-256 cryptographic extensions    |
-| `recursive_exporter.cweb`   | Exports recursion state with Axion metadata     |
-| `build-all.cweb`            | Unified build script for modules               |
-| `tangle-all.sh`             | Utility to convert `.cweb` sources into `.c`    |
+| `hvm_interpreter.cweb`      | Bytecode interpreter for `.hvm` binaries      |
+| `disassembler.cweb`         | Bytecode decoder with symbolic introspection  |
+| `nist_encryption.cweb`      | AES-NI, RSA, SHA-256 cryptographic extensions |
+| `recursive_exporter.cweb`   | Exports recursion state with Axion metadata   |
+| `build-all.cweb`            | Unified build script for modules              |
+| `tangle-all.sh`             | Utility to convert `.cweb` sources into `.c`  |
 
 ---
 
