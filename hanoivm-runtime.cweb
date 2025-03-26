@@ -16,6 +16,111 @@ use std::os::raw::{c_char, c_int};
 @#
 
 @<LowLevel Adapter@>=
+/// Test roundtrip from HanoiVM -> CoreState -> HanoiVM
+pub fn vm_roundtrip_test() {
+    let mut vm = HanoiVM::new(HanoiVMConfig {
+        enable_debug_mode: true,
+        ..Default::default()
+    });
+
+    // Simulate some execution with dummy symbolic output
+    vm.output_log.push(T81Number([-1, 0, 1]));
+    vm.output_log.push(T81Number([0, 1, -1]));
+
+    println!("[ROUNDTRIP] Original HanoiVM:");
+    vm.trace();
+
+    // Convert to low-level representation
+    let core_state = HanoiVMCoreState::from(&vm);
+    core_state.debug_dump();
+
+    // Reconstruct a new VM from core state
+    let new_vm = HanoiVM::from(&core_state);
+
+    println!("[ROUNDTRIP] Reconstructed HanoiVM:");
+    new_vm.trace();
+}
+/// Convert a low-level C VM state into a Rust HanoiVM instance
+impl From<&HanoiVMCoreState> for HanoiVM {
+    fn from(core: &HanoiVMCoreState) -> Self {
+        // Build dummy config; real values should be injected if needed
+        let config = HanoiVMConfig {
+            enable_pcie_acceleration: true,
+            enable_gpu_support: false,
+            enable_dynamic_resource_scaling: false,
+            ai_optimization_mode: "Basic".into(),
+            enable_anomaly_detection: false,
+            enable_ai_log_feedback: false,
+            log_level: "INFO".into(),
+            log_output_format: "TEXT".into(),
+            enable_secure_mode: false,
+            memory_allocation: 4096,
+            cpu_affinity: "0,1".into(),
+            gpu_allocation: 0,
+            enable_runtime_overrides: false,
+            detect_gpu: false,
+            detect_pcie_accelerator: true,
+            ternary_logic_mode: "T81".into(),
+            enable_adaptive_mode_switching: false,
+            enable_debug_mode: false,
+        };
+
+        let ai_enabled = config.enable_anomaly_detection || config.enable_adaptive_mode_switching;
+
+        // Populate symbolic output_log from raw memory
+        let mut output_log = Vec::new();
+        for chunk in core.mem.chunks(3).take(27) {
+            let mut digits = [0i8; 3];
+            digits[..chunk.len()].copy_from_slice(chunk);
+            output_log.push(T81Number(digits));
+        }
+
+        HanoiVM {
+            config,
+            macro_engine: T729MacroEngine::new(),
+            frame_stack: Vec::new(),
+            output_log,
+            ai_enabled,
+        }
+    }
+}
+/// Convert a low-level C VM state into a Rust HanoiVMCoreState struct
+impl HanoiVMCoreState {
+    pub fn from_raw_ptr(ptr: *const HanoiVMCoreState) -> Option<Self> {
+        if ptr.is_null() {
+            None
+        } else {
+            unsafe { Some(*ptr) }
+        }
+    }
+
+    /// Convert the current low-level state to debug text
+    pub fn debug_dump(&self) {
+        println!("[CORE STATE] IP: {}, SP: {} | R0: {}, R1: {}, R2: {}", self.ip, self.sp, self.reg[0], self.reg[1], self.reg[2]);
+    }
+}
+
+/// Convert a Rust HanoiVM to a low-level HanoiVMCoreState for C export
+impl From<&HanoiVM> for HanoiVMCoreState {
+    fn from(vm: &HanoiVM) -> Self {
+        let mut mem = [0i8; 81];
+        let mut stack = [0i8; 64];
+
+        // Map symbolic output log into memory space for export if needed
+        for (i, val) in vm.output_log.iter().enumerate().take(81) {
+            // Placeholder: Convert T81Number into first trit for demo
+            mem[i] = val.0.get(0).copied().unwrap_or(0);
+        }
+
+        HanoiVMCoreState {
+            reg: [0, 0, 0], // Could derive from recent macro result if needed
+            mem,
+            ip: 0,
+            sp: -1,
+            stack,
+        }
+    }
+}
 /// Convert a low-level C VM state into a Rust HanoiVMCoreState struct
 impl HanoiVMCoreState {
     pub fn from_raw_ptr(ptr: *const HanoiVMCoreState) -> Option<Self> {
@@ -126,6 +231,34 @@ pub struct HanoiVM {
 @#
 
 @<Impl HanoiVM@>=
+/// C-compatible FFI entrypoint with optional debug roundtrip verification
+#[no_mangle]
+pub extern "C" fn execute_vm_from_c(config_ptr: *const HanoiVMConfig) -> c_int {
+    if config_ptr.is_null() {
+        eprintln!("[ERROR] Null configuration pointer received");
+        return -1;
+    }
+
+    let config = unsafe { *config_ptr };
+    let mut vm = HanoiVM::new(config);
+
+    if config.enable_debug_mode {
+        println!("[DEBUG] Executing vm_roundtrip_test()...");
+        vm_roundtrip_test();
+    }
+
+    let dummy_frame = T243LogicTree::default();
+    vm.push_frame(dummy_frame);
+    vm.run();
+
+    if let Some(out) = vm.final_output() {
+        println!("[RESULT] Final output: {}", out);
+        0
+    } else {
+        eprintln!("[ERROR] No output generated");
+        1
+    }
+}
 impl HanoiVM {
     pub fn new(config: HanoiVMConfig) -> Self {
         let ai = config.enable_anomaly_detection || config.enable_adaptive_mode_switching;
