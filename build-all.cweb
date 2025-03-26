@@ -64,8 +64,3 @@ clean:
 	-rm -f axion_hanoivm_modules.tar.gz axion_hanoivm_bundle.tar.gz
 	-rm -f $(COMPILER_BIN) *.o *.ko *.mod.c *.symvers *.order *.c~ *.h~
 @#
-
-@* End of build-all.cweb
-   This enhanced Makefile supports building, running, installing, and packaging
-   kernel modules and the full T81Lang + HanoiVM compiler-execution pipeline.
-@*
