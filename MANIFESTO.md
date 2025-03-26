@@ -1,8 +1,4 @@
-Here's your refined and updated **`manifesto.cweb`**, clearly integrating recent enhancements and ensuring consistency with your project's latest developments:
-
----
-
-@* HanoiVM Manifesto — Recursive Symbolic Virtual Machine *@
+**HanoiVM Manifesto — Recursive Symbolic Virtual Machine**
 
 This document declares the philosophy, architecture, and structure of the **HanoiVM** project—a recursive ternary virtual machine driven by symbolic computation, AI introspection, and modular ternary logic tiers (`T81`, `T243`, `T729`).
 
