@@ -1,122 +1,86 @@
+# 📜 CHANGELOG.md
+
 ## [v0.9] - 2025-03-27
 
 ### ✨ Added
 
-- **📦 T81Lang Compiler Pipeline**
-  - Lexer, parser, and semantic analyzer via `t81lang_parser.cweb` and `t81lang_semantic.cweb`
-  - IR generator (`t81lang_irgen.cweb`) with symbolic ternary operations
-  - `.hvm` emitter (`emit_hvm.cweb`) and CLI driver (`t81lang_compiler.cweb`)
-  - `.hvm` interpreter engine (`hvm_interpreter.cweb`) for runtime execution
-  - Full integration with `STATUS.md`, `README.md`, `ROADMAP.md`, and `manifesto.cweb`
+- **📦 LLVM Backend Integration**
+  - Target triple (`t81-unknown-none`) registered
+  - Custom 81-trit integer type (`i81`) added to LLVM IR
+  - Instruction Selection DAG patterns (`ISelLowering.cpp`, `DAGISel.cpp`)
+  - Assembly generation via `T81AsmPrinter.cpp`
+  - Machine instruction lowering (`T81MCInstLower.cpp`)
+  - Updated `.cweb` documentation (`t81_codegen.cweb`, `t81_llvm_backend.cweb`)
 
-### 🧪 Tests
+- **🔌 GPU Symbolic Execution Enhancements**
+  - CUDA backend (`cuda_handle_request.cu`) fully operational with symbolic tensor dispatch
+  - ROCm backend (`gaia_handle_request.cweb`) mirrors CUDA FFT & symbolic macro capabilities
 
-- Unit-tested `emit_hvm` and interpreter output
-- Sample `.t81` program compiled to `.hvm` and executed to completion
+- **🖥️ Developer Tooling & UX**
+  - Comprehensive recursion visualization via `FrameSceneBuilder.cweb`
+  - JSON schema-defined tier introspection for Project Looking Glass
+  - Axion log inspection enhanced with `logviewer.cweb`
 
-### 🔗 Integration
+- **📈 Profiling & Performance Benchmarks**
+  - New opcode profiling metrics (`Opcode_Execution_Frequency`, `Memory_Access_Heatmap`)
+  - VM benchmarks (`VM_Benchmark_Comparison.csv`) and acceleration analysis published
 
-- Compiler CLI supports `--emit-ir`, `--emit-hvm`, `--no-analysis`
-- Modular `.cweb` units are now production-stable
+### 🧪 Tests & Validation
 
+- LLVM backend unit tests established for instruction lowering (`lit`, `FileCheck`)
+- GPU backend validation through FFT symbolic operations
+- VM interpreter and compiler pipeline fully end-to-end tested with ternary symbolic logic
+
+### 🔧 Changed
+
+- **⚙️ LLVM IR & Opcode Refinements**
+  - Improved DataLayout (`"e-p:81:81-i81:81:81-n81:81-S81"`) for optimal ternary alignment
+  - Extended DAG instruction selection logic for comprehensive `i81` support
+
+- **🧠 GPU Integration**
+  - Consolidated symbolic tensor API calls (`T729HoloTensor`) across CUDA and ROCm
+  - Optimized GPU backend dispatch logic for reduced latency and improved symbolic entropy handling
+
+- **🌀 Symbolic Stack Optimization**
+  - Enhanced tier promotion/demotion logic based on Axion entropy signals
+  - Improved recursive depth management and symbolic overflow protection
+
+### 🐞 Fixed
+
+- **🚨 LLVM IR DataLayout**
+  - Fixed misalignment in ternary pointer arithmetic causing potential IR optimization issues
+
+- **🔍 GPU Backend Stability**
+  - Resolved memory leaks in CUDA symbolic tensor operations (`cuda_handle_request.cu`)
+  - Corrected edge-case entropy calculation overflow (`T729Intent`)
+
+- **🪵 Axion Logging Reliability**
+  - Fixed malformed metadata entries (`axion.meta.json`) for certain symbolic opcodes under rapid context switching
+
+---
 
 ## [v0.8] - 2025-03-26
 
 ### 🚀 Added
 
-- **🧠 T243 and T729 Symbolic Execution Extensions**:
-  - Introduced `advanced_ops_ext.cweb`, expanding the opcode layer to support:
-    - Finite State Machines (`T243StateVector`)
-    - Entropy-weighted symbolic AI dispatch (`T729Intent`)
-    - FFT-enabled holomorphic tensor logic (`T729HoloTensor`)
-    - Condition-aware AI meta-opcodes (`T729MetaOpcode`)
+- **🧠 Symbolic Execution Extensions (T243/T729)**
+  - FSM vectors (`T243StateVector`), entropy-aware dispatch (`T729Intent`)
+  - Symbolic FFT tensor operations (`T729HoloTensor`)
 
-  - **New opcodes introduced:**
-    - `OP_T243_STATE_ADV`: Symbolic FSM advancement for 243-state logic
-    - `OP_T729_INTENT`: Semantic AI operation intent dispatcher
-    - `OP_T729_HOLO_FFT`: FFT operation over complex ternary tensors
-    - `OP_T729_META_EXEC`: Executes symbolic meta-opcode based on context, entropy, and state fingerprint
+- **📦 Literate Documentation**
+  - Added comprehensive project philosophy and structure (`manifesto.cweb`, `t243_t729.md`)
 
-- **📦 Embedded Header Modules via `cweave`:**
-  - `t243_ops.h` — FSM vector structure and API
-  - `t729_intent.h` — Encodes symbolic intents with entropy awareness
-  - `t729_holotensor.h` — Real/imaginary/phase tensor composition
-  - `t729_metaopcode.h` — Stateful AI macro executor for dynamic opcode routing
-
-- **📄 Manifest & Literate Documentation:**
-  - Added `manifesto.cweb`: philosophical declaration, architecture index, full file listing
-  - Serves as the recursive meta-root for the HanoiVM ecosystem
-
-- **📚 Tier Architecture Documentation:**
-  - Created `t243_t729.md` to explain advanced symbolic types with diagrams and use cases:
-    - FSM execution in symbolic logic
-    - T729Intent and entropy-based decision trees
-    - FFT for ternary signal structures
-
-- **📜 Metadata + Symbolic Telemetry Logs:**
-  - All symbolic instructions now emit metadata entries in `axion.meta.json` including:
-    - Opcode path
-    - Execution tier
-    - Entropy trace
-
-- **🧪 CLI & Public Alpha Bundle:**
-  - Packaged `Release-v0.8-Public-Alpha.zip` for public distribution
-  - Includes compiler, VM, disassembler, recursive tier runner, and pattern engine
-  - Ready for developer testing, research deployment, and symbolic hacking
-
-- **🌀 Recursive Export Pipeline:**
-  - Introduced `recursion_exporter.cweb` for exporting `.t81viz` recursion trace files
-  - Includes Axion annotations, τ[27] entropy state, symbolic intent, and ternary stack traces
-
-- **🖼️ Project Looking Glass (Initial):**
-  - Created `FrameSceneBuilder.cweb`, a jMonkeyEngine-based 3D visualizer
-  - Visualizes `.t81viz` files using geometry per tier (box, box, sphere for T81, T243, T729)
-  - Includes color-coded ternary state rendering, Axion overlays, and HUD labels
-  - Added `PulseControl` animation for entropy hotspots (Δτ > 0.5)
+- **🖼️ Initial Project Looking Glass Visualization**
+  - Implemented first-generation recursive visualization via `FrameSceneBuilder.cweb`
 
 ---
 
-### 🔧 Changed
+## 🔮 Notes & Future Directions
 
-- **🌀 Symbolic Stack Promotion**:
-  - VM now auto-promotes from T81 → T243 → T729 when:
-    - Recursive depth crosses threshold
-    - Entropy exceeds symbolic execution bounds
-    - `OP_CALL` triggers `PROMOTE_THRESHOLD` via `ctx->call_depth`
+This release fully establishes HanoiVM's LLVM backend infrastructure, deep GPU integration, and developer tooling, marking a significant milestone toward the project's vision of an AI-driven recursive ternary ecosystem.
 
-- **🔐 AI Context Verification**:
-  - All symbolic instructions now verify current mode (`MODE_T243` / `MODE_T729`)
-  - Error messages suggest rollbacks or tier promotion via Axion
-
-- **🧠 Opcode Dispatch Modularization**:
-  - `evaluate_extended_opcode()` now modularly handles symbolic logic paths
-  - Forward-compatible with future symbolic microkernel calls
+Future releases will include further LLVM optimizations, GPU graph execution pipelines, enhanced Looking Glass UI capabilities, and comprehensive CI/CD automation.
 
 ---
 
-### 🐞 Fixed
-
-- **⚠️ Symbolic Entropy Overflow**:
-  - Fixed bug in `t81_to_int()` for inputs > `T81_MAX`, which corrupted `T729Intent` weights
-
-- **🧮 FSM Corruption (T243StateVector)**:
-  - Prevented undefined behavior when advancing into unallocated transition maps
-  - Runtime validation added for invalid signals (out of 0–242 range)
-
-- **📉 HoloTensor Writeback**:
-  - Fixed segmentation fault when FFT output pointer was NULL in `ctx->holo_output`
-
-- **🪵 AI Meta Logging Edge Cases**:
-  - Addressed case where `OP_T729_META_EXEC` produced malformed `axion.meta.json` entries on early returns
-
----
-
-### 🔮 Notes
-
-- This version introduces full symbolic stack tiers (T243, T729) and establishes the foundation for HanoiVM as a **literate recursive virtual machine with AI-first logic**.
-- Looking Glass now has a visual foundation via `FrameSceneBuilder.cweb`.
-- Future versions will expand `.t81` → `.hvm` REPL, mouse-hover introspection, optimization timeline overlays, and Axion streaming.
-
----
-
-> _“This is not perfect. It is recursive.”_ — `manifesto.cweb`
+> _"Recursion isn't merely repeated calls; it's the echo of infinite potential."_ — `manifesto.cweb`
