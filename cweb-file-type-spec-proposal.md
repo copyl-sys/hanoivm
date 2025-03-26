@@ -7,6 +7,8 @@ A .cweb file is a single, self-contained document that interleaves human‐reada
 Documentation Sections provide context, explanation, and formatted output (often via TeX or HTML).
 Code Sections are marked for extraction (via ctangle) and can be compiled or executed dynamically.
 Metadata Blocks extend the traditional CWEB format to include package management and runtime configuration information.
+
+
 2. File Header and Metadata
 
 At the very start of a .cweb file, you can include a metadata block. This section contains directives that describe the package and its operational context:
@@ -27,6 +29,7 @@ Example:
 @live-stream true
 This header is parsed by AxionAI’s package manager to automate build processes and manage runtime dependencies.
 
+
 3. Documentation Sections
 
 Purpose:
@@ -39,6 +42,8 @@ Example:
 @* Introduction
 This module demonstrates live streaming compilation and JIT capabilities.
 The code below implements a simple example.
+
+
 4. Code Sections
 
 Identification:
@@ -58,6 +63,8 @@ int main() {
     printf("Hello, AxionAI!");
     return 0;
 }
+
+
 5. Extraction and Compilation Directives
 
 ctangle Commands:
@@ -68,6 +75,8 @@ Live and JIT Specifics:
 With AxionAI’s extensions, additional directives may be included:
 Triggering Live Updates: e.g., @live-update might signal the system to recompile immediately upon file change.
 JIT Compilation Hints: Tags such as @optimize or @profile can be used to influence how the JIT engine handles specific code blocks.
+
+
 6. Conventions and Best Practices
 
 Separation of Concerns:
@@ -99,6 +108,8 @@ int main() {
     printf("Live JIT compilation in AxionAI!\n");
     return 0;
 }
+
+
 Summary
 
 The .cweb file-type specification for AxionAI is a robust, flexible format that combines:
