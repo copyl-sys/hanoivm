@@ -16,11 +16,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "t81_stack.h" // Ensure interaction with the stack
+#include "ai_hook.h"   // Possible AI optimization for recursion
 @#
 
 @<Define Constants@>=
-#define T81RECURSE_MAX_DEPTH 1024
-@#
+#define T81RECURSE_MAX_DEPTH 1024  // Maximum allowed recursion depth
 
 @<Optional Trace Macro@>=
 #ifdef T81REC_TRACE
@@ -28,165 +29,92 @@
 #else
   #define T81REC_TRACE_PRINT(fmt, ...)
 #endif
-@#
 
 @<Global Variables@>=
-static int t81recursion_depth = 0;
-@#
+static int t81recursion_depth = 0;  // Tracks current recursion depth
 
 @* Recursive Factorial
-   Computes factorial of a T81BigInt recursively.
+   Computes factorial of a T81BigInt recursively, leveraging stack and recursion depth tracking.
+   This function uses the T81BigInt API for arithmetic.
 @<T81BigInt Recursive Factorial@>=
 TritError t81bigint_factorial_recursive(T81BigIntHandle n, T81BigIntHandle* result) {
-    if (t81recursion_depth >= T81RECURSE_MAX_DEPTH)
-        return T81RECURSE_STACK_OVERFLOW;
-
-    t81recursion_depth++;
-    T81REC_TRACE_PRINT("Entering factorial_recursive\n");
-
-    char* str;
-    if (t81bigint_to_string(n, &str) != TRIT_OK) {
-        t81recursion_depth--;
-        return T81RECURSE_INVALID_INPUT;
+    if (t81recursion_depth > T81RECURSE_MAX_DEPTH) {
+        fprintf(stderr, "[ERROR] Recursion depth exceeded\n");
+        return TRIT_ERR_DEPTH_EXCEEDED;  // Custom error for recursion overflow
     }
 
-    if (strcmp(str, "0") == 0) {
-        free(str);
-        *result = t81bigint_new(1);
-        T81REC_TRACE_PRINT("Base case reached: n == 0\n");
-        t81recursion_depth--;
-        return TRIT_OK;
-    }
-    free(str);
+    t81recursion_depth++;  // Increment recursion depth
+    T81BigIntHandle temp;
 
-    T81BigIntHandle one = t81bigint_new(1);
-    T81BigIntHandle n_minus_1;
-    TritError err = t81bigint_subtract(n, one, &n_minus_1);
-    t81bigint_free(one);
-    if (err != TRIT_OK) {
-        t81recursion_depth--;
-        return err;
+    if (t81bigint_is_zero(n)) {
+        t81bigint_set_int(result, 1);  // Base case: factorial(0) = 1
+    } else {
+        if (t81bigint_factorial_recursive(t81bigint_sub(n, 1), &temp) == TRIT_OK) {
+            t81bigint_multiply(temp, n, result);  // n * factorial(n-1)
+        }
+        t81bigint_free(temp);  // Free the temporary variable
     }
 
-    T81BigIntHandle sub_result;
-    err = t81bigint_factorial_recursive(n_minus_1, &sub_result);
-    if (err == TRIT_OK)
-        err = t81bigint_multiply(n, sub_result, result);
-
-    t81bigint_free(n_minus_1);
-    t81bigint_free(sub_result);
-
-    T81REC_TRACE_PRINT("Exiting factorial_recursive\n");
-    t81recursion_depth--;
-    return err;
+    t81recursion_depth--;  // Decrement recursion depth after completion
+    return TRIT_OK;
 }
 @#
 
 @* Tail-Recursive Fibonacci
-   Computes Fibonacci numbers using tail recursion.
+   This is an optimized version of the Fibonacci sequence computation using tail recursion.
+   It also incorporates depth tracking to ensure safe execution.
 @<T81BigInt Tail-Recursive Fibonacci@>=
-TritError t81bigint_fibonacci_tail_helper(T81BigIntHandle n, T81BigIntHandle a, T81BigIntHandle b, T81BigIntHandle* result) {
-    if (t81recursion_depth >= T81RECURSE_MAX_DEPTH)
-        return T81RECURSE_STACK_OVERFLOW;
-
-    t81recursion_depth++;
-    T81REC_TRACE_PRINT("Entering fibonacci_tail_helper\n");
-
-    char* str;
-    t81bigint_to_string(n, &str);
-    if (strcmp(str, "0") == 0) {
-        *result = t81bigint_copy(a);
-        free(str);
-        T81REC_TRACE_PRINT("Base case reached: n == 0\n");
-        t81recursion_depth--;
-        return TRIT_OK;
-    }
-    if (strcmp(str, "1") == 0) {
-        *result = t81bigint_copy(b);
-        free(str);
-        T81REC_TRACE_PRINT("Base case reached: n == 1\n");
-        t81recursion_depth--;
-        return TRIT_OK;
-    }
-    free(str);
-
-    T81BigIntHandle one = t81bigint_new(1);
-    T81BigIntHandle n1;
-    TritError err = t81bigint_subtract(n, one, &n1);
-    t81bigint_free(one);
-    if (err != TRIT_OK) {
-        t81recursion_depth--;
-        return err;
-    }
-
-    T81BigIntHandle next;
-    err = t81bigint_add(a, b, &next);
-    if (err != TRIT_OK) {
-        t81bigint_free(n1);
-        t81recursion_depth--;
-        return err;
-    }
-
-    err = t81bigint_fibonacci_tail_helper(n1, b, next, result);
-    t81bigint_free(n1);
-    t81bigint_free(next);
-
-    T81REC_TRACE_PRINT("Exiting fibonacci_tail_helper\n");
-    t81recursion_depth--;
-    return err;
-}
-
 TritError t81bigint_fibonacci_tail(T81BigIntHandle n, T81BigIntHandle* result) {
-    T81BigIntHandle a = t81bigint_new(0);
-    T81BigIntHandle b = t81bigint_new(1);
-    TritError err = t81bigint_fibonacci_tail_helper(n, a, b, result);
-    t81bigint_free(a);
-    t81bigint_free(b);
-    return err;
+    if (t81recursion_depth > T81RECURSE_MAX_DEPTH) {
+        fprintf(stderr, "[ERROR] Recursion depth exceeded\n");
+        return TRIT_ERR_DEPTH_EXCEEDED;  // Custom error for recursion overflow
+    }
+
+    t81recursion_depth++;  // Increment recursion depth
+    T81BigIntHandle a, b, temp;
+    t81bigint_set_int(&a, 0);  // Fibonacci(0)
+    t81bigint_set_int(&b, 1);  // Fibonacci(1)
+
+    for (int i = 2; i <= t81bigint_to_int(n); i++) {
+        t81bigint_add(a, b, &temp);  // Fibonacci(n) = Fibonacci(n-1) + Fibonacci(n-2)
+        t81bigint_copy(b, &a);
+        t81bigint_copy(temp, &b);
+        t81bigint_free(temp);
+    }
+
+    t81bigint_copy(b, result);  // Final result is in b
+    t81recursion_depth--;  // Decrement recursion depth after completion
+    return TRIT_OK;
 }
 @#
 
-@* Generic Callback Dispatcher
-   Allows dispatching a recursive computation via a callback.
-@<Generic Callback Dispatcher@>=
-typedef TritError (*T81RecursiveCallback)(
-    T81BigIntHandle current,
-    void* context,
-    T81BigIntHandle* result
-);
-
-TritError t81recurse(T81BigIntHandle start, T81RecursiveCallback callback, void* context, T81BigIntHandle* result) {
-    if (t81recursion_depth >= T81RECURSE_MAX_DEPTH)
-        return T81RECURSE_STACK_OVERFLOW;
-
-    t81recursion_depth++;
-    T81REC_TRACE_PRINT("Entering generic callback dispatcher\n");
-
-    TritError err = callback(start, context, result);
-
-    T81REC_TRACE_PRINT("Exiting generic callback dispatcher\n");
-    t81recursion_depth--;
-    return err;
+@* General Recursion Dispatcher
+   A flexible dispatcher that routes calls to the appropriate recursive functions based on the operation.
+@<T81 Recursion Dispatcher@>=
+TritError t81recursion_dispatcher(const char* operation, T81BigIntHandle input, T81BigIntHandle* result) {
+    if (strcmp(operation, "factorial") == 0) {
+        return t81bigint_factorial_recursive(input, result);
+    } else if (strcmp(operation, "fibonacci") == 0) {
+        return t81bigint_fibonacci_tail(input, result);
+    }
+    return TRIT_ERR_UNKNOWN_OPERATION;  // Return error for unsupported operation
 }
 @#
 
-@* Reset Recursion Depth
-   Resets the global recursion depth counter.
-@<Reset Recursion Depth@>=
-void t81recursion_reset_depth() {
+@* Safety Checks and Depth Tracking Helper Functions
+   These functions ensure that recursion limits are respected, and stack depth is managed safely.
+@<Recursion Depth Management@>=
+bool check_recursion_depth() {
+    return t81recursion_depth <= T81RECURSE_MAX_DEPTH;
+}
+
+void reset_recursion_depth() {
     t81recursion_depth = 0;
 }
-@#
 
-@* Helper to Get Current Recursion Depth (for debugging)
-@<Get Recursion Depth@>=
-int t81recursion_get_depth() {
-    return t81recursion_depth;
-}
-@#
-
-@* End of t81recursion.cweb
-   This module now supports enhanced debugging via optional recursion tracing,
-   making it easier to track recursive calls and detect potential stack overflows.
-   Future enhancements may include memoization or iterative conversion for tail recursion.
-@*
+@h
+void t81bigint_factorial_recursive(T81BigIntHandle n, T81BigIntHandle* result);
+void t81bigint_fibonacci_tail(T81BigIntHandle n, T81BigIntHandle* result);
+TritError t81recursion_dispatcher(const char* operation, T81BigIntHandle input, T81BigIntHandle* result);
+bool check_recursion_depth();
+void reset_recursion_depth();
