@@ -133,3 +133,106 @@ while enabling dynamic AI and hardware-driven optimizations.
 // Enables verbose diagnostics and developer utilities in runtime and CLI tools.
 // Should be disabled in production or secure environments.
 #define ENABLE_DEBUG_MODE          true
+
+---
+
+@<Runtime Configuration Parser@>=
+## Runtime Configuration Parser
+
+@c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+// Define configuration structure
+typedef struct {
+    bool enable_pcie_acceleration;
+    bool enable_gpu_support;
+    bool enable_dynamic_resource_scaling;
+
+    char ai_optimization_mode[16];
+    bool enable_anomaly_detection;
+    bool enable_ai_log_feedback;
+
+    char log_level[8];
+    char log_output_format[8];
+    bool enable_secure_mode;
+
+    int memory_allocation;
+    char cpu_affinity[32];
+    int gpu_allocation;
+    bool enable_runtime_overrides;
+
+    bool detect_gpu;
+    bool detect_pcie_accelerator;
+
+    char ternary_logic_mode[8];
+    bool enable_adaptive_mode_switching;
+    bool enable_debug_mode;
+} HanoiVMConfig;
+
+// Initialize default configuration
+HanoiVMConfig default_config() {
+    HanoiVMConfig cfg = {
+        .enable_pcie_acceleration = ENABLE_PCIE_ACCELERATION,
+        .enable_gpu_support = ENABLE_GPU_SUPPORT,
+        .enable_dynamic_resource_scaling = ENABLE_DYNAMIC_RESOURCE_SCALING,
+
+        .ai_optimization_mode = AI_OPTIMIZATION_MODE,
+        .enable_anomaly_detection = ENABLE_ANOMALY_DETECTION,
+        .enable_ai_log_feedback = ENABLE_AI_LOG_FEEDBACK,
+
+        .log_level = LOG_LEVEL,
+        .log_output_format = LOG_OUTPUT_FORMAT,
+        .enable_secure_mode = ENABLE_SECURE_MODE,
+
+        .memory_allocation = MEMORY_ALLOCATION,
+        .cpu_affinity = CPU_AFFINITY,
+        .gpu_allocation = GPU_ALLOCATION,
+        .enable_runtime_overrides = ENABLE_RUNTIME_OVERRIDES,
+
+        .detect_gpu = DETECT_GPU,
+        .detect_pcie_accelerator = DETECT_PCIE_ACCELERATOR,
+
+        .ternary_logic_mode = TERNARY_LOGIC_MODE,
+        .enable_adaptive_mode_switching = ENABLE_ADAPTIVE_MODE_SWITCHING,
+        .enable_debug_mode = ENABLE_DEBUG_MODE
+    };
+    return cfg;
+}
+
+// Load overrides from environment variables (simple example)
+void apply_env_overrides(HanoiVMConfig* cfg) {
+    const char* mode = getenv("HVM_MODE");
+    if (mode) strncpy(cfg->ternary_logic_mode, mode, sizeof(cfg->ternary_logic_mode));
+
+    const char* log_level = getenv("HVM_LOG_LEVEL");
+    if (log_level) strncpy(cfg->log_level, log_level, sizeof(cfg->log_level));
+
+    const char* affinity = getenv("HVM_CPU_AFFINITY");
+    if (affinity) strncpy(cfg->cpu_affinity, affinity, sizeof(cfg->cpu_affinity));
+}
+
+// Print current config state (for debugging)
+void print_config(const HanoiVMConfig* cfg) {
+    printf("=== HanoiVM Runtime Configuration ===\n");
+    printf("PCIe Acceleration: %s\n", cfg->enable_pcie_acceleration ? "Enabled" : "Disabled");
+    printf("GPU Support: %s\n", cfg->enable_gpu_support ? "Enabled" : "Disabled");
+    printf("AI Optimization: %s\n", cfg->ai_optimization_mode);
+    printf("Anomaly Detection: %s\n", cfg->enable_anomaly_detection ? "On" : "Off");
+    printf("Log Level: %s | Format: %s\n", cfg->log_level, cfg->log_output_format);
+    printf("Secure Mode: %s\n", cfg->enable_secure_mode ? "On" : "Off");
+    printf("Ternary Mode: %s\n", cfg->ternary_logic_mode);
+    printf("Memory: %d MB | GPU: %d MB\n", cfg->memory_allocation, cfg->gpu_allocation);
+    printf("CPU Affinity: %s\n", cfg->cpu_affinity);
+    printf("=====================================\n");
+}
+
+// Example entry point for standalone testing
+int main() {
+    HanoiVMConfig cfg = default_config();
+    if (cfg.enable_runtime_overrides) apply_env_overrides(&cfg);
+    if (cfg.enable_debug_mode) print_config(&cfg);
+    return 0;
+}
