@@ -1,10 +1,17 @@
-@* HanoiVM | VM Execution Engine with Advanced Ops Integration + Recursion + Axion AI + Stack Promotion *@
+@* hanoivm_vm.cweb | HanoiVM Execution Core — AI-Aware, Recursive, and Config-Integrated *@
 
-@c
+This file defines the main execution loop for HanoiVM:
+- Executes T81, T243, and T729 instruction sets
+- Applies Axion AI hooks via axion_signal and entropy tracing
+- Supports runtime promotion/demotion between ternary levels
+- Implements recursion ops (FIB, FACT), tensor ops, and stack-aware promotion
+@#
+
+@<Include Dependencies@>=
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
+#include "config.h"
 #include "t81_stack.h"
 #include "hvm_loader.h"
 #include "ai_hook.h"
@@ -13,26 +20,25 @@
 #include "ternary_base.h"
 #include "t243bigint.h"
 #include "t81recursion.h"
-#include "hvm_promotion.h"  // NEW: Tier promotion/demotion logic
+#include "hvm_promotion.h"
+@#
 
 @<Extern τ-registers@>=
-extern int τ[28];  // τ0–τ26 + Axion-reserved τ27
+extern int τ[28];  // τ0–τ26 + τ27 for Axion AI
+@#
 
 @<VM Context Definition@>=
 typedef struct {
-    size_t ip;
-    int halted;
-    int recursion_depth;
-    int mode;
-    int mode_flags;
-    int call_depth;
+    size_t ip;               // Instruction pointer
+    int halted;              // HALT signal
+    int recursion_depth;     // Recursion tracking
+    int mode;                // Current ternary logic mode
+    int mode_flags;          // Promotion flags
+    int call_depth;          // Stack promotion metric
 } HVMContext;
+@#
 
-@<VM Execution API@>=
-void execute_vm(void);
-
-@* Ternary Operand Loader (reads 81-bit operand) *@
-@c
+@<Ternary Operand Loader@>=
 uint81_t fetch_operand(const uint8_t* buf) {
     uint81_t out;
     out.a = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) | ((uint32_t)buf[2] << 8) | buf[3];
@@ -40,24 +46,21 @@ uint81_t fetch_operand(const uint8_t* buf) {
     out.c = buf[8];
     return out;
 }
+@#
 
-@* Stack Extensions for uint81_t support *@
-@c
+@<Stack Extensions@>=
 void push81u(uint81_t val) {
-    push81(val.c);
-    push81(val.b);
-    push81(val.a);
+    push81(val.c); push81(val.b); push81(val.a);
 }
 
 uint81_t pop81u(void) {
     uint81_t val;
-    val.a = pop81();
-    val.b = pop81();
-    val.c = pop81();
+    val.a = pop81(); val.b = pop81(); val.c = pop81();
     return val;
 }
+@#
 
-@<VM Execution Function@>=
+@<Opcode Constants@>=
 #define OP_T729_DOT       0xE1
 #define OP_T729_PRINT     0xE2
 #define OP_RECURSE_FACT   0xF1
@@ -66,19 +69,30 @@ uint81_t pop81u(void) {
 #define OP_PROMOTE_T729   0xF3
 #define OP_DEMOTE_T243    0xF4
 #define OP_DEMOTE_T81     0xF5
+@#
 
+@<VM Execution Function@>=
 void execute_vm(void) {
-    HVMContext ctx = { .ip = 0, .halted = 0, .recursion_depth = 0, .mode = MODE_T81, .mode_flags = 0, .call_depth = 0 };
-    t81_vm_init();  // Register advanced T81 type opcodes once
+    HVMContext ctx = {
+        .ip = 0, .halted = 0,
+        .recursion_depth = 0,
+        .mode = MODE_T81,
+        .mode_flags = 0,
+        .call_depth = 0
+    };
+
+    t81_vm_init();  // One-time opcode extension registration
 
     while (!ctx.halted && ctx.ip < hvm_code_size) {
         uint8_t opcode = hvm_code[ctx.ip++];
-        axion_signal(opcode);
+        axion_signal(opcode);  // Hook into Axion AI
         τ[AXION_REGISTER_INDEX] = axion_get_optimization();
 
-        char trace_msg[128];
-        snprintf(trace_msg, sizeof(trace_msg), "OP[%s] @IP=%zu", opcode_name(opcode), ctx.ip - 1);
-        axion_log(trace_msg);
+        if (ENABLE_DEBUG_MODE) {
+            char trace[128];
+            snprintf(trace, sizeof(trace), "[TRACE] OP[%s] at IP=%zu", opcode_name(opcode), ctx.ip - 1);
+            axion_log(trace);
+        }
 
         TRACE_MODE(&ctx);
         PROMOTE_T243(&ctx);
@@ -109,39 +123,35 @@ void execute_vm(void) {
 
             case OP_RECURSE_FACT: {
                 T81BigIntHandle n = stack_pop();
-                T81BigIntHandle result;
-                if (t81bigint_factorial_recursive(n, &result) == TRIT_OK) {
-                    stack_push(result);
-                } else {
+                T81BigIntHandle r;
+                if (t81bigint_factorial_recursive(n, &r) == TRIT_OK)
+                    stack_push(r);
+                else
                     fprintf(stderr, "[VM] RECURSE_FACT error\n");
-                }
                 t81bigint_free(n);
                 break;
             }
 
             case OP_RECURSE_FIB: {
                 T81BigIntHandle n = stack_pop();
-                T81BigIntHandle result;
-                if (t81bigint_fibonacci_tail(n, &result) == TRIT_OK) {
-                    stack_push(result);
-                } else {
+                T81BigIntHandle r;
+                if (t81bigint_fibonacci_tail(n, &r) == TRIT_OK)
+                    stack_push(r);
+                else
                     fprintf(stderr, "[VM] RECURSE_FIB error\n");
-                }
                 t81bigint_free(n);
                 break;
             }
 
-            case OP_NOP:
-                break;
+            case OP_NOP: break;
 
             case OP_PUSH: {
                 if (ctx.ip + 8 >= hvm_code_size) {
-                    fprintf(stderr, "[VM] PUSH missing operand!\n");
-                    return;
+                    fprintf(stderr, "[VM] PUSH operand overflow\n"); return;
                 }
-                uint81_t value = fetch_operand(&hvm_code[ctx.ip]);
+                uint81_t val = fetch_operand(&hvm_code[ctx.ip]);
                 ctx.ip += 9;
-                push81u(value);
+                push81u(val);
                 break;
             }
 
@@ -157,31 +167,25 @@ void execute_vm(void) {
             case OP_TNN_ACCUM:
             case OP_T81_MATMUL: {
                 if (ctx.ip + 17 >= hvm_code_size) {
-                    fprintf(stderr, "[VM] AI opcode missing operands!\n");
-                    return;
+                    fprintf(stderr, "[VM] AI op operand overflow\n"); return;
                 }
                 uint81_t a = fetch_operand(&hvm_code[ctx.ip]);
                 uint81_t b = fetch_operand(&hvm_code[ctx.ip + 9]);
                 ctx.ip += 18;
-                uint81_t result = evaluate_opcode(opcode, a, b);
+                uint81_t result = evaluate_opcode(opcode, a, b, &ctx);
                 push81u(result);
                 break;
             }
 
-            case OP_T243_ADD: {
-                TernaryHandle b = stack_pop();
-                TernaryHandle a = stack_pop();
-                TernaryHandle r;
-                t243bigint_add(a, b, &r);
-                stack_push(r);
-                break;
-            }
-
+            case OP_T243_ADD:
             case OP_T243_MUL: {
                 TernaryHandle b = stack_pop();
                 TernaryHandle a = stack_pop();
                 TernaryHandle r;
-                t243bigint_mul(a, b, &r);
+                if (opcode == OP_T243_ADD)
+                    t243bigint_add(a, b, &r);
+                else
+                    t243bigint_mul(a, b, &r);
                 stack_push(r);
                 break;
             }
@@ -201,15 +205,32 @@ void execute_vm(void) {
                 break;
 
             default:
-                fprintf(stderr, "[VM] Unknown opcode: 0x%02X at IP=%zu\n", opcode, ctx.ip - 1);
+                fprintf(stderr, "[VM] Unknown opcode 0x%02X @IP=%zu\n", opcode, ctx.ip - 1);
                 return;
         }
     }
 }
+@#
 
-@h
-@<VM Execution API@>
-@<VM Context Definition@>
+@h VM Public API Header
+#ifndef HANOIVM_VM_H
+#define HANOIVM_VM_H
+
+#include "t81types.h"
+
+typedef struct {
+    size_t ip;
+    int halted;
+    int recursion_depth;
+    int mode;
+    int mode_flags;
+    int call_depth;
+} HVMContext;
+
+void execute_vm(void);
 uint81_t fetch_operand(const uint8_t* buf);
 void push81u(uint81_t val);
 uint81_t pop81u(void);
+
+#endif
+@#
