@@ -1,182 +1,114 @@
-@* HanoiVM | HVM Bytecode Loader (Enhanced)
-   This module defines the binary file loader for the HanoiVM virtual machine.
-   It handles reading `.hvm` files, verifying their format, loading bytecode into memory,
-   and exposing the buffer for execution by the VM core.
+@* hvm_loader.cweb | Bytecode Loader for HanoiVM — Enhanced with Config, Safety, and Axion Awareness *@
 
-   Enhancements include:
-   - Verbose debug logging (via VERBOSE_HVM_LOADER macro)
-   - A function to clear the loaded code buffer
-   - Additional file size checks for robust file reading
-   - A symbolic bytecode dump for debugging purposes
+This module loads `.hvm` binary files into memory, checks for Axion session markers,
+and supports logging and integration with global configuration flags.
+
+It is used by:
+- `main_driver.cweb` for execution
+- `disassembler.cweb` for disassembly
+- `hanoivm_vm.cweb` for interpretation
+
+Future extensions include:
+- Metadata hashing
+- AI session fingerprinting
+- Ternary tag validation
 @#
 
 @<Include Dependencies@>=
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
-@#
-
-@<Define Constants and Macros@>=
-#define HVM_MAGIC_0 0x48  // 'H'
-#define HVM_MAGIC_1 0x56  // 'V'
-#define HVM_MAGIC_2 0x4D  // 'M'
-#define HVM_MAGIC_3 0x01  // Version 1
-
-#define HVM_MAX_CODE_SIZE 8192
-
-/* Verbose flag for loader debugging */
-#ifndef VERBOSE_HVM_LOADER
-  #define VERBOSE_HVM_LOADER 0
-#endif
-
-#if VERBOSE_HVM_LOADER
-  #define DEBUG_PRINT(fmt, ...) fprintf(stderr, "[HVM_LOADER DEBUG] " fmt, ##__VA_ARGS__)
-#else
-  #define DEBUG_PRINT(fmt, ...) 
+#include <errno.h>
+#include "config.h"         // To enforce bytecode size, toggles
+#include "hvm_loader.h"     // Self-header
+#ifdef ENABLE_AXION_SUPPORT
+#include "axion_session.h"  // Register AI runtime session (optional)
 #endif
 @#
 
-@<HVM Loader Globals@>=
-uint8_t hvm_code[HVM_MAX_CODE_SIZE];
+@<Global Bytecode Buffers@>=
+uint8_t* hvm_code = NULL;
 size_t hvm_code_size = 0;
 @#
 
-@<Opcode Enum@>=
-typedef enum {
-    OP_NOP   = 0x00,
-    OP_PUSH  = 0x01,
-    OP_ADD   = 0x02,
-    OP_SUB   = 0x03,
-    OP_MOD   = 0x04,
-    OP_NEG   = 0x05,
-    OP_DUP   = 0x06,
-    OP_SWAP  = 0x07,
-    OP_DROP  = 0x08,
-    OP_HALT  = 0xFF
-} Opcode;
-@#
-
-@<HVM Loader API@>=
-int load_hvm_file(const char* path);
-void print_hvm_code(void);
-void clear_hvm_code(void);
-void print_hvm_symbolic(void);
-@#
-
-@<HVM Loader Functions@>=
-int load_hvm_file(const char* path) {
-    FILE* file = fopen(path, "rb");
-    if (!file) {
-        fprintf(stderr, "[HVM] Error: Cannot open %s\n", path);
-        return 0;
-    }
-    DEBUG_PRINT("Opened file %s\n", path);
-
-    uint8_t header[4];
-    if (fread(header, 1, 4, file) != 4) {
-        fprintf(stderr, "[HVM] Error: Cannot read header\n");
-        fclose(file);
+@<Load Bytecode Function@>=
+int load_hvm(const char* path) {
+    FILE* f = fopen(path, "rb");
+    if (!f) {
+        perror("[ERROR] fopen");
         return 0;
     }
 
-    if (header[0] != HVM_MAGIC_0 || header[1] != HVM_MAGIC_1 ||
-        header[2] != HVM_MAGIC_2 || header[3] != HVM_MAGIC_3) {
-        fprintf(stderr, "[HVM] Error: Invalid magic bytes in %s\n", path);
-        fclose(file);
-        return 0;
-    }
-    DEBUG_PRINT("Header validation passed\n");
+    fseek(f, 0, SEEK_END);
+    hvm_code_size = ftell(f);
+    rewind(f);
 
-    uint32_t code_len = 0;
-    if (fread(&code_len, sizeof(uint32_t), 1, file) != 1) {
-        fprintf(stderr, "[HVM] Error: Cannot read code length\n");
-        fclose(file);
-        return 0;
-    }
-    DEBUG_PRINT("Code length read: %u bytes\n", code_len);
-
-    if (code_len > HVM_MAX_CODE_SIZE) {
-        fprintf(stderr, "[HVM] Error: Code too large (%u bytes)\n", code_len);
-        fclose(file);
+    if (hvm_code_size > MAX_BYTECODE_SIZE) {
+        fprintf(stderr, "[ERROR] Bytecode exceeds max size (%zu > %d)\n", hvm_code_size, MAX_BYTECODE_SIZE);
+        fclose(f);
         return 0;
     }
 
-    /* Verify that file size matches expected length */
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    if ((long)(4 + sizeof(uint32_t) + code_len) != file_size) {
-        fprintf(stderr, "[HVM] Error: File size mismatch (expected %u bytes, got %ld bytes)\n",
-                4 + sizeof(uint32_t) + code_len, file_size);
-        fclose(file);
-        return 0;
-    }
-    fseek(file, 4 + sizeof(uint32_t), SEEK_SET);
-
-    if (fread(hvm_code, 1, code_len, file) != code_len) {
-        fprintf(stderr, "[HVM] Error: Incomplete bytecode read\n");
-        fclose(file);
+    hvm_code = malloc(hvm_code_size);
+    if (!hvm_code) {
+        perror("[ERROR] malloc");
+        fclose(f);
         return 0;
     }
 
-    hvm_code_size = code_len;
-    fclose(file);
-    printf("[HVM] Loaded %zu bytes from %s\n", hvm_code_size, path);
+    if (fread(hvm_code, 1, hvm_code_size, f) != hvm_code_size) {
+        perror("[ERROR] fread");
+        free(hvm_code);
+        hvm_code = NULL;
+        hvm_code_size = 0;
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+
+#if ENABLE_DEBUG_MODE
+    printf("[LOADER] Loaded %s (%zu bytes)\n", path, hvm_code_size);
+#endif
+
+#ifdef ENABLE_AXION_SUPPORT
+    if (memcmp(hvm_code, "AXION", 5) == 0) {
+        printf("[AXION] Session header detected in bytecode\n");
+        axion_register_session("AUTO-DETECTED");
+    }
+#endif
+
+#if AUTO_DISASSEMBLE_ON_LOAD
+    extern void disassemble_vm(void);
+    disassemble_vm();
+#endif
+
     return 1;
 }
+@#
 
-void print_hvm_code(void) {
-    printf("[HVM] Bytecode Dump (%zu bytes):\n", hvm_code_size);
-    for (size_t i = 0; i < hvm_code_size; i++) {
-        printf(" %02X", hvm_code[i]);
-        if ((i + 1) % 16 == 0) printf("\n");
+@<Optional Cleanup Function@>=
+void free_hvm(void) {
+    if (hvm_code) {
+        free(hvm_code);
+        hvm_code = NULL;
+        hvm_code_size = 0;
     }
-    if (hvm_code_size % 16 != 0) printf("\n");
-}
-
-/* Clears the loaded code buffer and resets size */
-void clear_hvm_code(void) {
-    memset(hvm_code, 0, HVM_MAX_CODE_SIZE);
-    hvm_code_size = 0;
-    DEBUG_PRINT("Cleared HVM code buffer\n");
-}
-
-/* Optional: Print symbolic opcodes for debugging */
-void print_hvm_symbolic(void) {
-    printf("[HVM] Symbolic Disassembly (%zu bytes):\n", hvm_code_size);
-    for (size_t i = 0; i < hvm_code_size; i++) {
-        uint8_t op = hvm_code[i];
-        const char* opname = "UNKNOWN";
-        switch(op) {
-            case OP_NOP:   opname = "NOP"; break;
-            case OP_PUSH:  opname = "PUSH"; break;
-            case OP_ADD:   opname = "ADD"; break;
-            case OP_SUB:   opname = "SUB"; break;
-            case OP_MOD:   opname = "MOD"; break;
-            case OP_NEG:   opname = "NEG"; break;
-            case OP_DUP:   opname = "DUP"; break;
-            case OP_SWAP:  opname = "SWAP"; break;
-            case OP_DROP:  opname = "DROP"; break;
-            case OP_HALT:  opname = "HALT"; break;
-        }
-        printf("%s ", opname);
-    }
-    printf("\n");
 }
 @#
 
-@* Header Export for External Modules
-   Other modules (such as hanoivm_cli.cweb or the VM dispatcher) may include
-   this file's header to access the load_hvm_file(), print_hvm_code(), and clear_hvm_code() functions,
-   as well as the Opcode enum.
-@h
-@<Opcode Enum@>
-@<HVM Loader API@>
-@#
+@h Header for External Use
+#ifndef HVM_LOADER_H
+#define HVM_LOADER_H
 
-@* End of hvm_loader.cweb
-   This module robustly loads an HVM bytecode file, verifying its header, size,
-   and content. It provides debug-friendly routines for dumping bytecode in both hex
-   and symbolic forms and includes a helper to clear the loaded code.
-@*
+#include <stdint.h>
+#include <stddef.h>
+
+extern uint8_t* hvm_code;
+extern size_t hvm_code_size;
+
+int load_hvm(const char* path);
+void free_hvm(void);
+
+#endif
+@#
