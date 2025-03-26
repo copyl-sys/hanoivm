@@ -87,83 +87,71 @@ This appendix catalogs the comprehensive set of `.cweb` modules, configuration f
 
 For detailed categorization, refer to `README.md`. All modules contain inline documentation, pattern definitions, and integration points for AI-enhanced workflows.
 
-Alphabetically listed for easy reference:
+Here's a cleaned-up and refined version of the file descriptions in your **`manifesto.cweb`**, condensed to two clear columns for readability and quick reference:
 
-README.md                    — Top-level overview and usage guide
-README.cweb                  — Literate companion documentation
+For detailed categorization, refer to the main `README.md`.
 
-LICENSE                      — MIT License declaration
-BUILD / Makefile             — Compilation instructions for VM and utilities
-
-CHANGELOG.md                 — Feature history and version log
-ROADMAP.md                   — Project milestones and next development phases
-manifesto.cweb               — (Current Document) Philosophy, architecture, module index
-
-advanced_ops.cweb            — Base symbolic T81-level operations
-advanced_ops_ext.cweb        — Extended T243/T729 symbolic execution logic
-ai_hook.cweb                 — AI symbolic pattern integration hook
-axion-ai.cweb                — AI-driven kernel optimization module
-axion-api.cweb               — Contextual Axion integration (Recursion Exporter)
-axion_gpu_request.cweb       — GPU dispatch abstraction for Axion
-axion-gaia-interface.cweb    — Unified ROCm/HIP GPU interface
-
-build-all.cweb               — Comprehensive build orchestration script
-
-config.cweb                  — VM configuration definitions
-cuda_handle_request.cweb     — CUDA GPU symbolic execution backend
-
-disassembler.cweb            — Bytecode decoder with symbolic introspection
-disasm_hvm.cweb              — Recursive `.hvm` symbolic disassembler
-
-emit_hvm.cweb                — T81Lang compiler bytecode emitter
-
-gaia_handle_request.cweb     — GPU dispatch logic for ROCm/HIP
-ghidra_hvm_plugin.cweb       — Ghidra plugin for VM analysis and reverse engineering
-
-hanoivm_vm.cweb              — Core recursive VM interpreter
-hanoivm-runtime.cweb         — VM control and execution loop
-hanoivm-core.cweb            — Memory, instruction, context handling
-hanoivm-test.cweb            — Kernel-space VM test framework
-hanoivm_tests.cweb           — Comprehensive test definitions
-hanoivm_cli.cweb             — CLI interaction for execution and testing
-hvmcli.cweb                  — VM command-line utility
-hvm_interpreter.cweb         — Bytecode interpreter for `.hvm`
-hvm_loader.cweb              — Runtime loader for `.hvm` binaries
-hvm_pcie_driver.cweb         — PCIe simulation for ternary accelerator
-hvm_assembler.cweb           — Bytecode assembler tool
-
-libt81.cweb                  — Core ternary data type operations
-libt243.cweb                 — BigInt arithmetic and ternary logic (T243)
-libt729.cweb                 — Symbolic tensor logic for AI execution (T729)
-logviewer.cweb               — AI-driven event viewer and logger
-
-main_driver.cweb             — VM entry point and bytecode executor
-meta.cweb                    — Identity and metadata declarations
-
-nist_encryption.cweb         — Ternary-compatible encryption utilities
-
-recursive_exporter.cweb      — Recursion trace export with Axion annotations
-recursive_tier_execution.cweb— VM recursion and tier promotion simulation
-
-simple_add.cweb              — Introductory ternary addition example
-
-telemetry-cli.cweb           — Profiling and introspection command line
-ternary_arithmetic_optimization.cweb — Optimized ternary arithmetic operations
-test_advanced_hvm.cweb       — Advanced symbolic opcode test suite
-test_controlflow_hvm.cweb    — Recursive control flow test cases
-t81_patterns.cweb            — Symbolic ternary logic pattern templates
-t81_stack.cweb               — T81 stack manipulation operations
-t81_test_suite.cweb          — Comprehensive tests for T81 operations
-t81_to_hvm.cweb              — T81Lang to `.hvm` compiler module
-t81asm.cweb                  — Assembly language frontend for T81Lang
-t81lang.cweb                 — T81Lang Grammar Specification
-t81lang_compiler.cweb        — Compiler frontend and full pipeline
-t81lang_irgen.cweb           — Intermediate Representation (IR) generator
-t81lang_lexer.cweb           — Lexer for language parsing
-t81lang_parser.cweb          — Parser implementation for AST construction
-tisc_backend.cweb            — IR backend emitter for TISC to `.hvm`
-tisc_compiler.cweb           — Compiler logic for `.tisc` language
-tisc_ir.cweb                 — TISC intermediate representation module
-tisc_stdlib.cweb             — TISC standard library definitions
-
-write_simple_add.cweb        — Basic ternary language example project
+File                         | Description
+-----------------------------|-----------------------------------------------
+README.md                    | Project overview and usage instructions
+README.cweb                  | Literate companion documentation
+LICENSE                      | MIT License terms
+BUILD / Makefile             | Build scripts for VM, tools, and tests
+CHANGELOG.md                 | Version history and detailed release notes
+ROADMAP.md                   | Project development phases and next steps
+MANIFESTO.md                 | (This Document) Philosophy and file index
+advanced_ops.cweb            | T81 extended symbolic operations
+advanced_ops_ext.cweb        | Advanced symbolic logic for T243/T729 tiers
+ai_hook.cweb                 | AI pattern integration hooks
+axion-ai.cweb                | Kernel-level AI optimization and rollback
+axion-api.cweb               | Axion context integration (Recursion Exporter)
+axion_gpu_request.cweb       | GPU dispatch interface for Axion AI
+axion-gaia-interface.cweb    | ROCm/HIP GPU symbolic execution interface
+build-all.cweb               | Complete build orchestration script
+config.cweb                  | VM system-wide configuration definitions
+cuda_handle_request.cweb     | CUDA GPU symbolic tensor dispatcher
+disassembler.cweb            | Bytecode and symbolic data decoder
+disasm_hvm.cweb              | Recursive symbolic bytecode disassembler
+emit_hvm.cweb                | T81Lang bytecode generation tool
+gaia_handle_request.cweb     | ROCm/HIP GPU execution dispatcher
+ghidra_hvm_plugin.cweb       | Ghidra plugin for `.hvm` analysis
+hanoivm_vm.cweb              | Core VM interpreter and recursion engine
+hanoivm-runtime.cweb         | VM execution loop and runtime control
+hanoivm-core.cweb            | VM memory, instructions, context handling
+hanoivm-test.cweb            | Kernel-space VM testing framework
+hanoivm_tests.cweb           | Comprehensive test definitions and cases
+hanoivm_cli.cweb             | VM CLI tools and user interface
+hvmcli.cweb                  | VM command-line execution utility
+hvm_interpreter.cweb         | Interpreter for executing `.hvm` binaries
+hvm_loader.cweb              | `.hvm` runtime binary loader
+hvm_pcie_driver.cweb         | PCIe interface simulation for ternary hardware
+hvm_assembler.cweb           | `.hvm` bytecode assembly tool
+libt81.cweb                  | Core T81 ternary arithmetic library
+libt243.cweb                 | BigInt arithmetic library (T243 tier)
+libt729.cweb                 | Symbolic tensor operations library (T729 tier)
+logviewer.cweb               | Interactive log viewer with AI filters
+main_driver.cweb             | Primary VM execution entry point
+meta.cweb                    | Metadata constants and identity signatures
+nist_encryption.cweb         | Ternary-compatible cryptographic utilities
+recursive_exporter.cweb      | Recursion state export with Axion metadata
+recursive_tier_execution.cweb| VM recursive stack tier promotion simulator
+simple_add.cweb              | Example program demonstrating ternary addition
+telemetry-cli.cweb           | VM introspection and profiling CLI tool
+ternary_arithmetic_optimization.cweb | Optimized ternary arithmetic routines
+test_advanced_hvm.cweb       | Test suite for symbolic and AI opcodes
+test_controlflow_hvm.cweb    | Recursive control-flow operation tests
+t81_patterns.cweb            | Symbolic ternary logic transformation templates
+t81_stack.cweb               | T81 stack management operations
+t81_test_suite.cweb          | Unit tests for T81 logic operations
+t81_to_hvm.cweb              | Compiler module (T81Lang → `.hvm`)
+t81asm.cweb                  | Assembly frontend for T81Lang
+t81lang.cweb                 | T81Lang grammar specification
+t81lang_compiler.cweb        | Complete compiler frontend and pipeline
+t81lang_irgen.cweb           | IR generation from AST for T81Lang
+t81lang_lexer.cweb           | Lexer for parsing T81Lang syntax
+t81lang_parser.cweb          | Parser for generating AST structures
+tisc_backend.cweb            | Compiler backend IR emitter for `.tisc` to `.hvm`
+tisc_compiler.cweb           | Frontend compiler logic for `.tisc` language
+tisc_ir.cweb                 | TISC intermediate representation structures
+tisc_stdlib.cweb             | Standard library for TISC symbolic logic
+write_simple_add.cweb        | Simple ternary arithmetic example program
