@@ -1,21 +1,30 @@
 @* README.cweb | HanoiVM + Axion AI Literate Documentation *@
 
-This document provides detailed information about the architecture, capabilities, and usage of the **HanoiVM** project—a recursive, symbolic ternary virtual machine integrated with **Axion AI** for intelligent execution, symbolic computation, GPU acceleration, and enhanced security.
+This document provides detailed information about the architecture,
+capabilities, and usage of the **HanoiVM** project—a recursive,
+symbolic ternary virtual machine integrated with **Axion AI** for
+intelligent execution, symbolic computation, GPU acceleration, and 
+enhanced security.
 
 ---
 
 @<Project Overview@>=
 ## 🧠 Project Overview
 
-**HanoiVM** is a symbolic, recursive, ternary virtual machine designed for next-generation computing paradigms, integrating advanced ternary arithmetic, symbolic AI-driven execution, and high-dimensional GPU computations.
+**HanoiVM** is a symbolic, recursive, ternary virtual machine
+designed for next-generation computing paradigms, integrating
+advanced ternary arithmetic, symbolic AI-driven execution, and
+high-dimensional GPU computations.
 
-**Axion AI** is HanoiVM's intelligent kernel module, enhancing execution by offering:
+**Axion AI** is HanoiVM's intelligent kernel module, enhancing
+execution by offering:
 - Ternary-based symbolic stack execution
 - Real-time optimization and rollback
 - Entropy-driven anomaly detection
 - NLP-enabled interactive interfaces
 
-Together, these components form an AI-augmented platform for exploring symbolic, recursive, and secure ternary computing.
+Together, these components form an AI-augmented platform for 
+exploring symbolic, recursive, and secure ternary computing.
 
 ---
 
