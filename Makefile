@@ -12,14 +12,15 @@ CWEB_SOURCES = \
 	t243bigint.cweb \
 	t729tensor_ops.cweb \
 	axion_ai.cweb \
-	project_looking_glass.cweb
+	project_looking_glass.cweb \
+	hanoivm_ffi.cweb
 
 # Corresponding C and H objects for CWEB sources
 C_OBJS = $(CWEB_SOURCES:.cweb=.c)
 H_OBJS = $(CWEB_SOURCES:.cweb=.h)
 
 # Default target: build all necessary components
-all: hanoivm write_simple_add t81_test_suite
+all: hanoivm write_simple_add t81_test_suite libhanoivm_ffi.so
 
 # Rule for generating C and H files from CWEB files
 %.c %.h: %.cweb
@@ -29,6 +30,10 @@ all: hanoivm write_simple_add t81_test_suite
 # Build the HanoiVM executable
 hanoivm: hvm_loader.c disassembler.c hanoivm_vm.c main_driver.c advanced_ops.c t243bigint.c t729tensor_ops.c axion_ai.c
 	gcc -o hanoivm hvm_loader.c disassembler.c hanoivm_vm.c main_driver.c advanced_ops.c t243bigint.c t729tensor_ops.c axion_ai.c -Wall -Wextra -O2
+
+# Build the FFI shared library
+libhanoivm_ffi.so: hanoivm_ffi.c t81_stack.c t81types.c
+	gcc -fPIC -shared -o libhanoivm_ffi.so hanoivm_ffi.c t81_stack.c t81types.c -Wall -O2
 
 # Build the simple add example
 write_simple_add: write_simple_add.c
@@ -65,7 +70,8 @@ check: all run-test-suite ghidra-test
 clean:
 	rm -f *.c *.h *.tex *.log *.scn *.dvi *.pdf *.o \
 	      hanoivm write_simple_add t81_test_suite \
-	      simple_add.hvm test_all_types.hvm ghidra_output.log
+	      simple_add.hvm test_all_types.hvm ghidra_output.log \
+	      libhanoivm_ffi.so
 
 # Declare phony targets
 .PHONY: all clean run run-test-suite modules ghidra-test check
