@@ -1,1 +1,1 @@
-
+Markdown, diagrams, research notes
