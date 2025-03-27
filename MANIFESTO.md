@@ -87,8 +87,6 @@ This appendix catalogs the comprehensive set of `.cweb` modules, configuration f
 
 For detailed categorization, refer to `README.md`. All modules contain inline documentation, pattern definitions, and integration points for AI-enhanced workflows.
 
-Here's a cleaned-up and refined version of the file descriptions in your **`manifesto.cweb`**, condensed to two clear columns for readability and quick reference:
-
 For detailed categorization, refer to the main `README.md`.
 
 File                         | Description
