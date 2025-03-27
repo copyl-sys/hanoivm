@@ -118,6 +118,7 @@ hanoivm-core.cweb            | VM memory, instructions, context handling
 hanoivm-test.cweb            | Kernel-space VM testing framework
 hanoivm_tests.cweb           | Comprehensive test definitions and cases
 hanoivm_cli.cweb             | VM CLI tools and user interface
+hanoivm_ffi.cweb             | Portable C ABI interface across Rust, C, and C++
 hvmcli.cweb                  | VM command-line execution utility
 hvm_interpreter.cweb         | Interpreter for executing `.hvm` binaries
 hvm_loader.cweb              | `.hvm` runtime binary loader
