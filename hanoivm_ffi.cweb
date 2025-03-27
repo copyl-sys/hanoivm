@@ -1,99 +1,117 @@
-@* HanoiVM FFI Interface | One VM, Many Languages.
+@* hanoivm_ffi.cweb | One VM, Many Languages — FFI Layer for HanoiVM *@
+
+This literate module defines a C ABI-compatible interface for embedding HanoiVM into Rust, C, and C++ environments.
+It exposes:
+- VM lifecycle controls (`hvm_create`, `hvm_destroy`)
+- T81-based stack manipulation (`push`, `pop`, `peek`)
+- Optional event hook (`hvm_set_event_callback`) for Axion AI or external logging
+
+All stack logic is delegated to the unified `t81_stack.cweb` backend, ensuring shared safety and introspection.
+
 @c
 
+@<Include Dependencies@>
+@<Export Macros@>
+@<Type Definitions@>
+@<HVM Public API@>
+@<Event Callback API@>
+
+@#
+
+@<Include Dependencies@>=
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "t81types.h"
+#include "t81_stack.h"
+@#
 
-/* Define macros for export visibility */
+@<Export Macros@>=
 #ifdef _WIN32
 #define HVM_EXPORT __declspec(dllexport)
 #else
 #define HVM_EXPORT __attribute__((visibility("default")))
 #endif
+@#
 
-/* Forward declaration */
-typedef struct HanoiVM HanoiVM;
+@<Type Definitions@>=
+typedef enum {
+    T81_TYPE = 0,
+    T243_TYPE = 1,
+    T729_TYPE = 2
+} HVMValueType;
 
-/* Enum representing the value types for T81 → T243 → T729 */
-#define T81_TYPE  0
-#define T243_TYPE 1
-#define T729_TYPE 2
-
-typedef uint8_t HVMValueType;
-
-/* Base union-based value container */
 typedef struct {
     HVMValueType type;
     union {
         uint64_t t81_value;
-        void* t243_ptr;     // Reserved for T243BigInt struct
-        void* t729_tensor;  // Reserved for T729Tensor struct
+        void* t243_ptr;
+        void* t729_tensor;
     } data;
 } HVMValue;
 
-/* Opaque VM pointer */
-struct HanoiVM {
-    void* stack;       // Pointer to stack frame
+typedef struct HanoiVM {
     int recursion_depth;
-    void* ai_context;  // Reserved AI extension
-    // Add other fields here as needed
-};
+    int halted;
+    int mode;
+    int call_depth;
+    void* ai_context;
+} HanoiVM;
+@#
 
-/* Create and destroy the VM */
+@<HVM Public API@>=
 HVM_EXPORT HanoiVM* hvm_create() {
     HanoiVM* vm = (HanoiVM*)malloc(sizeof(HanoiVM));
     if (!vm) return NULL;
     memset(vm, 0, sizeof(HanoiVM));
-    // TODO: Initialize stack and context
     return vm;
 }
 
 HVM_EXPORT void hvm_destroy(HanoiVM* vm) {
     if (!vm) return;
-    // TODO: Free stack, tensors, AI contexts
     free(vm);
 }
 
-/* Example: Load `.hvm` bytecode file (placeholder stub) */
-HVM_EXPORT int hvm_load_bytecode(HanoiVM* vm, const char* filename) {
-    if (!vm || !filename) return -1;
-    // TODO: Load and parse .hvm into stack/memory
-    return 0;
-}
-
-/* Execute the VM for N steps */
 HVM_EXPORT int hvm_execute(HanoiVM* vm, int max_steps) {
     if (!vm) return -1;
     int steps = 0;
-    while (steps < max_steps) {
-        // TODO: Evaluate opcode at current IP (instruction pointer)
+    while (!vm->halted && steps < max_steps) {
+        // TODO: Connect to HanoiVM opcode evaluation
         steps++;
     }
     return steps;
 }
 
-/* Stack operations */
 HVM_EXPORT int hvm_stack_push(HanoiVM* vm, HVMValue val) {
     if (!vm) return -1;
-    // TODO: Push onto ternary stack
-    return 0;
+    if (val.type == T81_TYPE) {
+        uint81_t packed;
+        packed.a = (val.data.t81_value >> 32) & 0xFFFFFFFF;
+        packed.b = (val.data.t81_value >> 8)  & 0xFFFFFFFF;
+        packed.c = val.data.t81_value & 0xFF;
+        push81u(packed);
+        return 0;
+    }
+    return -2;
 }
 
 HVM_EXPORT HVMValue hvm_stack_peek(HanoiVM* vm) {
-    HVMValue empty = { .type = T81_TYPE, .data.t81_value = 0 };
-    if (!vm) return empty;
-    // TODO: Return top of stack
-    return empty;
+    HVMValue val = { .type = T81_TYPE, .data.t81_value = 0 };
+    if (!vm) return val;
+    uint81_t top = pop81u();  // simulate peek via pop+push
+    push81u(top);
+    val.data.t81_value = ((uint64_t)top.a << 32) | ((uint64_t)top.b << 8) | (uint64_t)top.c;
+    return val;
 }
 
 HVM_EXPORT int hvm_stack_pop(HanoiVM* vm) {
     if (!vm) return -1;
-    // TODO: Pop from stack
+    pop81u();
     return 0;
 }
+@#
 
-/* Optional: Callback registration for AI/entropy events */
+@<Event Callback API@>=
 typedef void (*HVMEventCallback)(HanoiVM* vm, const char* event);
 static HVMEventCallback g_callback = NULL;
 
@@ -101,9 +119,7 @@ HVM_EXPORT void hvm_set_event_callback(HVMEventCallback cb) {
     g_callback = cb;
 }
 
-/* Trigger an event manually */
 void hvm_trigger_event(HanoiVM* vm, const char* msg) {
     if (g_callback) g_callback(vm, msg);
 }
-
-/* End of file */
+@#
