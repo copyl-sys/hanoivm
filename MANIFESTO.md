@@ -68,8 +68,7 @@ an ally embraced in the quest for innovative computational frontiers.
 
 ## 🏴 Final Word
 
-We inhabit complex computational waters—recursive, symbolic, and increasingly entropic.  
-Instead of fearing them, HanoiVM navigates directly into their depths.
+We inhabit complex computational waters—recursive, symbolic, and increasingly entropic. Instead of fearing them, HanoiVM navigates directly into their depths.
 
 This project declares we can build computing differently:  
 - **Modularly**  
