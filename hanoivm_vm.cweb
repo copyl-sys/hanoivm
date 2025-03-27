@@ -5,6 +5,7 @@ This file defines the main execution loop for HanoiVM:
 - Applies Axion AI hooks via axion_signal and entropy tracing
 - Supports runtime promotion/demotion between ternary levels
 - Implements recursion ops (FIB, FACT), tensor ops, and stack-aware promotion
+- Refactored for FFI: shared stack ops, opcode execution, and context structs
 @#
 
 @<Include Dependencies@>=
@@ -48,18 +49,6 @@ uint81_t fetch_operand(const uint8_t* buf) {
 }
 @#
 
-@<Stack Extensions@>=
-void push81u(uint81_t val) {
-    push81(val.c); push81(val.b); push81(val.a);
-}
-
-uint81_t pop81u(void) {
-    uint81_t val;
-    val.a = pop81(); val.b = pop81(); val.c = pop81();
-    return val;
-}
-@#
-
 @<Opcode Constants@>=
 #define OP_T729_DOT       0xE1
 #define OP_T729_PRINT     0xE2
@@ -71,39 +60,31 @@ uint81_t pop81u(void) {
 #define OP_DEMOTE_T81     0xF5
 @#
 
-@<VM Execution Function@>=
-void execute_vm(void) {
-    HVMContext ctx = {
-        .ip = 0, .halted = 0,
-        .recursion_depth = 0,
-        .mode = MODE_T81,
-        .mode_flags = 0,
-        .call_depth = 0
-    };
-
-    t81_vm_init();  // One-time opcode extension registration
-
-    while (!ctx.halted && ctx.ip < hvm_code_size) {
-        uint8_t opcode = hvm_code[ctx.ip++];
-        axion_signal(opcode);  // Hook into Axion AI
+@<Opcode Execution Helper@>=
+int vm_run_max_steps(HVMContext* ctx, int max_steps) {
+    t81_vm_init();
+    int steps = 0;
+    while (!ctx->halted && ctx->ip < hvm_code_size && steps < max_steps) {
+        uint8_t opcode = hvm_code[ctx->ip++];
+        axion_signal(opcode);
         τ[AXION_REGISTER_INDEX] = axion_get_optimization();
 
         if (ENABLE_DEBUG_MODE) {
             char trace[128];
-            snprintf(trace, sizeof(trace), "[TRACE] OP[%s] at IP=%zu", opcode_name(opcode), ctx.ip - 1);
+            snprintf(trace, sizeof(trace), "[TRACE] OP[%s] at IP=%zu", opcode_name(opcode), ctx->ip - 1);
             axion_log(trace);
         }
 
-        TRACE_MODE(&ctx);
-        PROMOTE_T243(&ctx);
-        PROMOTE_T729(&ctx);
-        DEMOTE_STACK(&ctx);
+        TRACE_MODE(ctx);
+        PROMOTE_T243(ctx);
+        PROMOTE_T729(ctx);
+        DEMOTE_STACK(ctx);
 
         switch (opcode) {
-            case OP_PROMOTE_T243: promote_to_t243(&ctx); break;
-            case OP_PROMOTE_T729: promote_to_t729(&ctx); break;
+            case OP_PROMOTE_T243: promote_to_t243(ctx); break;
+            case OP_PROMOTE_T729: promote_to_t729(ctx); break;
             case OP_DEMOTE_T243:
-            case OP_DEMOTE_T81: demote_stack(&ctx); break;
+            case OP_DEMOTE_T81: demote_stack(ctx); break;
 
             case OP_T729_DOT: {
                 TernaryHandle b = stack_pop();
@@ -146,11 +127,11 @@ void execute_vm(void) {
             case OP_NOP: break;
 
             case OP_PUSH: {
-                if (ctx.ip + 8 >= hvm_code_size) {
-                    fprintf(stderr, "[VM] PUSH operand overflow\n"); return;
+                if (ctx->ip + 8 >= hvm_code_size) {
+                    fprintf(stderr, "[VM] PUSH operand overflow\n"); return steps;
                 }
-                uint81_t val = fetch_operand(&hvm_code[ctx.ip]);
-                ctx.ip += 9;
+                uint81_t val = fetch_operand(&hvm_code[ctx->ip]);
+                ctx->ip += 9;
                 push81u(val);
                 break;
             }
@@ -166,13 +147,13 @@ void execute_vm(void) {
 
             case OP_TNN_ACCUM:
             case OP_T81_MATMUL: {
-                if (ctx.ip + 17 >= hvm_code_size) {
-                    fprintf(stderr, "[VM] AI op operand overflow\n"); return;
+                if (ctx->ip + 17 >= hvm_code_size) {
+                    fprintf(stderr, "[VM] AI op operand overflow\n"); return steps;
                 }
-                uint81_t a = fetch_operand(&hvm_code[ctx.ip]);
-                uint81_t b = fetch_operand(&hvm_code[ctx.ip + 9]);
-                ctx.ip += 18;
-                uint81_t result = evaluate_opcode(opcode, a, b, &ctx);
+                uint81_t a = fetch_operand(&hvm_code[ctx->ip]);
+                uint81_t b = fetch_operand(&hvm_code[ctx->ip + 9]);
+                ctx->ip += 18;
+                uint81_t result = evaluate_opcode(opcode, a, b, ctx);
                 push81u(result);
                 break;
             }
@@ -201,14 +182,31 @@ void execute_vm(void) {
             }
 
             case OP_HALT:
-                ctx.halted = 1;
+                ctx->halted = 1;
                 break;
 
             default:
-                fprintf(stderr, "[VM] Unknown opcode 0x%02X @IP=%zu\n", opcode, ctx.ip - 1);
-                return;
+                fprintf(stderr, "[VM] Unknown opcode 0x%02X @IP=%zu\n", opcode, ctx->ip - 1);
+                return steps;
         }
+
+        steps++;
     }
+
+    return steps;
+}
+@#
+
+@<VM Execution Function@>=
+void execute_vm(void) {
+    HVMContext ctx = {
+        .ip = 0, .halted = 0,
+        .recursion_depth = 0,
+        .mode = MODE_T81,
+        .mode_flags = 0,
+        .call_depth = 0
+    };
+    vm_run_max_steps(&ctx, 100000);  // default step limit
 }
 @#
 
@@ -228,6 +226,7 @@ typedef struct {
 } HVMContext;
 
 void execute_vm(void);
+int vm_run_max_steps(HVMContext* ctx, int max_steps);
 uint81_t fetch_operand(const uint8_t* buf);
 void push81u(uint81_t val);
 uint81_t pop81u(void);
