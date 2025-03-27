@@ -28,6 +28,7 @@ HanoiVM integrates:
 - **GPU Dispatch (CUDA/GAIA)**: High-performance symbolic tensor operations
 - **Pattern Engines (`t81_patterns.cweb`)**: Recursive symbolic transformations
 - **Hardware Interfaces (PCIe/Firmware)**: Future compatibility with ternary hardware accelerators
+- **Language Bindings via FFI (`hanoivm_ffi.cweb`)**: Portable C ABI for multi-language support (Rust, C++, Python)
 
 ---
 
@@ -37,6 +38,7 @@ HanoiVM integrates:
 - **Compiler Backend**: Compiles T81Lang source directly into `.hvm` symbolic bytecode.
 - **Hardware Prototyping**: Simulates potential ternary hardware accelerators.
 - **Security Research**: Utilizes rollback, entropy-monitoring, and symbolic opcode introspection.
+- **Cross-Language Integration**: Exposes VM via `libhanoivm_ffi.so` for Rust/C++/Python analysis tools and symbolic AI workflows.
 
 ---
 
@@ -80,7 +82,7 @@ Use this project wisely, explore bravely, and innovate responsibly.
 
 ---
 
-**File List and Descriptions**
+## 🗂️ File List and Descriptions
 
 This appendix catalogs the comprehensive set of `.cweb` modules, configuration files, tests, and utilities composing HanoiVM. Each component contributes explicitly to recursive execution, symbolic logic, AI-driven transformations, or ternary programming ecosystems.
 
