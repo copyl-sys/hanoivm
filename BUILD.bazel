@@ -240,3 +240,16 @@ cc_binary(
     srcs = ["hvm_interpreter.cweb"],
     deps = [],
 )
+
+# --------------------------- HANOI FOREIGN FUNCTION INTERFACE -------------------------
+
+cc_binary(
+    name = "libhanoivm_ffi",
+    srcs = ["hanoivm_ffi.cweb"],
+    deps = [
+        "//t81_stack:t81_stack",
+        "//t81types:t81types",
+    ],
+    linkshared = 1,
+    visibility = ["//visibility:public"],
+)
