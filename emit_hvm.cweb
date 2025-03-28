@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "config.cweb"  // Include centralized config
+#include "config.h"  // Include centralized config
 
 @d IRType Codes
 #define IR_NOP      0
