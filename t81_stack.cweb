@@ -9,21 +9,20 @@ Included Features:
 - Stack control operations: `dup81`, `swap81`, `drop81`.
 - Future extension for stack promotion (T243 / T729).
 - External function headers via `@h` block for linkage.
-
-This module improves safety and traceability, integrates with Axion AI for monitoring, and ensures that stack operations cannot exceed the predefined limits.
 @#
 
 @<Include Dependencies@>=
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h> // For boolean type support
-#include "config.h"        // Configuration constants (e.g., stack size, thresholds).
-#include "ai_hook.h"       // AI integration for stack monitoring and logging.
-#include "hvm_loader.h"    // Loader for the HanoiVM context.
-#include "t81types.h"      // T81-specific types such as uint81_t.
+#include "config.cweb"   // Configuration constants (e.g., stack size, thresholds)
+#include "ai_hook.h"     // AI integration for stack monitoring and logging
+#include "hvm_loader.h"  // Loader for the HanoiVM context
+#include "t81types.h"    // T81-specific types such as uint81_t
 @#
 
-#define T81_STACK_SIZE 2187
+// Dynamic Stack Size from config.cweb
+#define T81_STACK_SIZE config.stack_size
 #define STACK_OVERFLOW_ERR -1
 #define STACK_UNDERFLOW_ERR -2
 
@@ -53,30 +52,30 @@ void drop81(void);
 
 @<T81 Stack Core Functions@>=
 void push81(int value) {
-    if (t81_sp >= T81_STACK_SIZE - 1) {
+    if (config.safe_stack_enabled && t81_sp >= T81_STACK_SIZE - 1) {
         fprintf(stderr, "[T81] Stack overflow!\n");
-        axion_log("[T81 Error] Stack overflow during push operation");
+        if (config.enable_debug_mode) axion_log("[T81 Error] Stack overflow during push operation");
         exit(STACK_OVERFLOW_ERR);
     }
     t81_stack[++t81_sp] = value;
-    axion_log("[Stack Push] Value pushed to stack");
+    if (config.log_level >= 2) axion_log("[Stack Push] Value pushed to stack");
 }
 
 int pop81(void) {
-    if (t81_sp < 0) {
+    if (config.safe_stack_enabled && t81_sp < 0) {
         fprintf(stderr, "[T81] Stack underflow!\n");
-        axion_log("[T81 Error] Stack underflow during pop operation");
+        if (config.enable_debug_mode) axion_log("[T81 Error] Stack underflow during pop operation");
         exit(STACK_UNDERFLOW_ERR);
     }
     int value = t81_stack[t81_sp--];
-    axion_log("[Stack Pop] Value popped from stack");
+    if (config.log_level >= 2) axion_log("[Stack Pop] Value popped from stack");
     return value;
 }
 
 int peek81(void) {
-    if (t81_sp < 0) {
+    if (config.safe_stack_enabled && t81_sp < 0) {
         fprintf(stderr, "[T81] Stack empty (peek)\n");
-        axion_log("[T81 Error] Attempted peek on empty stack");
+        if (config.enable_debug_mode) axion_log("[T81 Error] Attempted peek on empty stack");
         exit(STACK_UNDERFLOW_ERR);
     }
     return t81_stack[t81_sp];
@@ -86,7 +85,7 @@ void push81u(uint81_t val) {
     push81(val.c);
     push81(val.b);
     push81(val.a);
-    axion_log("[T81 Push81u] Packed uint81_t pushed");
+    if (config.log_level >= 2) axion_log("[T81 Push81u] Packed uint81_t pushed");
 }
 
 uint81_t pop81u(void) {
@@ -94,7 +93,7 @@ uint81_t pop81u(void) {
     val.a = pop81();
     val.b = pop81();
     val.c = pop81();
-    axion_log("[T81 Pop81u] Packed uint81_t popped");
+    if (config.log_level >= 2) axion_log("[T81 Pop81u] Packed uint81_t popped");
     return val;
 }
 @#
@@ -105,7 +104,7 @@ void add81(void) {
     int b = pop81();
     int result = a + b;
     push81(result);
-    axion_log("[T81 Arithmetic] add81: %d + %d = %d", a, b, result);
+    if (config.log_level >= 1) axion_log("[T81 Arithmetic] add81: %d + %d = %d", a, b, result);
 }
 
 void mod81(void) {
@@ -113,24 +112,24 @@ void mod81(void) {
     int b = pop81();
     if (b == 0) {
         fprintf(stderr, "[T81] mod81: Division by zero!\n");
-        axion_log("[T81 Error] mod81: Division by zero");
+        if (config.log_level >= 1) axion_log("[T81 Error] mod81: Division by zero");
         exit(1);
     }
     int result = a % b;
     push81(result);
-    axion_log("[T81 Arithmetic] mod81: %d %% %d = %d", a, b, result);
+    if (config.log_level >= 1) axion_log("[T81 Arithmetic] mod81: %d %% %d = %d", a, b, result);
 }
 
 void neg81(void) {
     int a = pop81();
     int result = -a;
     push81(result);
-    axion_log("[T81 Arithmetic] neg81: -%d = %d", a, result);
+    if (config.log_level >= 1) axion_log("[T81 Arithmetic] neg81: -%d = %d", a, result);
 }
 
 bool ifz81(void) {
     int a = peek81();
-    axion_log("[T81 Conditional] ifz81: top = %d (%s)", a, a == 0 ? "TRUE" : "FALSE");
+    if (config.log_level >= 1) axion_log("[T81 Conditional] ifz81: top = %d (%s)", a, a == 0 ? "TRUE" : "FALSE");
     return a == 0;
 }
 @#
@@ -139,30 +138,30 @@ bool ifz81(void) {
 void dup81(void) {
     int val = peek81();
     push81(val);
-    axion_log("[T81 Stack Control] dup81: duplicated %d", val);
+    if (config.log_level >= 1) axion_log("[T81 Stack Control] dup81: duplicated %d", val);
 }
 
 void swap81(void) {
     if (t81_sp < 1) {
         fprintf(stderr, "[T81] swap81: Not enough elements\n");
-        axion_log("[T81 Error] swap81: Not enough elements on stack");
+        if (config.log_level >= 1) axion_log("[T81 Error] swap81: Not enough elements on stack");
         exit(1);
     }
     int a = pop81();
     int b = pop81();
     push81(a);
     push81(b);
-    axion_log("[T81 Stack Control] swap81: swapped top two values");
+    if (config.log_level >= 1) axion_log("[T81 Stack Control] swap81: swapped top two values");
 }
 
 void drop81(void) {
     if (t81_sp < 0) {
         fprintf(stderr, "[T81] drop81: Stack empty\n");
-        axion_log("[T81 Error] drop81: Stack empty");
+        if (config.log_level >= 1) axion_log("[T81 Error] drop81: Stack empty");
         exit(1);
     }
     int val = pop81();
-    axion_log("[T81 Stack Control] drop81: dropped %d", val);
+    if (config.log_level >= 1) axion_log("[T81 Stack Control] drop81: dropped %d", val);
 }
 @#
 
