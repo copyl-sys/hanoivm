@@ -22,6 +22,7 @@ This file defines the main execution loop for HanoiVM:
 #include "t243bigint.h"
 #include "t81recursion.h"
 #include "hvm_promotion.h"
+#include "recurse81.h"
 @#
 
 @<Extern τ-registers@>=
@@ -50,14 +51,16 @@ uint81_t fetch_operand(const uint8_t* buf) {
 @#
 
 @<Opcode Constants@>=
-#define OP_T729_DOT       0xE1
-#define OP_T729_PRINT     0xE2
-#define OP_RECURSE_FACT   0xF1
-#define OP_RECURSE_FIB    0xF2
-#define OP_PROMOTE_T243   0xF0
-#define OP_PROMOTE_T729   0xF3
-#define OP_DEMOTE_T243    0xF4
-#define OP_DEMOTE_T81     0xF5
+#define OP_T729_DOT          0xE1
+#define OP_T729_PRINT        0xE2
+#define OP_RECURSE_FACT      0xF1
+#define OP_RECURSE_FIB       0xF2
+#define OP_PROMOTE_T243      0xF0
+#define OP_PROMOTE_T729      0xF3
+#define OP_DEMOTE_T243       0xF4
+#define OP_DEMOTE_T81        0xF5
+#define OP_RECURSE_DISPATCH  0x1E
+#define OP_RECURSE_ENTROPY   0x1F
 @#
 
 @<Opcode Execution Helper@>=
@@ -123,6 +126,14 @@ int vm_run_max_steps(HVMContext* ctx, int max_steps) {
                 t81bigint_free(n);
                 break;
             }
+
+            case OP_RECURSE_DISPATCH:
+                dispatch_recursive_symbolic();
+                break;
+
+            case OP_RECURSE_ENTROPY:
+                dispatch_entropy_recursive();
+                break;
 
             case OP_NOP: break;
 
