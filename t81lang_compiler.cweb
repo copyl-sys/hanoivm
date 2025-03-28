@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "config.cweb"  // Include configuration for runtime flags
+#include "config.h"  // Include configuration for runtime flags
 
 @d External Modules
 extern void set_source(const char* code);
