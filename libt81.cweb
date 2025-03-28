@@ -10,7 +10,7 @@ in Rust and wrapped in literate programming format for clarity and documentation
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "config.cweb"  // Include configuration for runtime flags
+#include "config.h"  // Include configuration for runtime flags
 
 @d Ternary Types and Stack
 @<Ternary AI Stack Types@>=
