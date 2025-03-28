@@ -15,7 +15,7 @@ Extended with:
 #include "advanced_ops.h"
 #include "t81types.h"
 #include "t81_types_support.h"
-#include "config.cweb"  // Include centralized config
+#include "config.h"  // Include centralized config
 
 @<Define Verbose Flag and Macros@>=
 #if config.verbosity_level >= 1
