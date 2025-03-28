@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include "config.cweb"  // Include centralized config
 
 @d IRType Codes
 #define IR_NOP      0
@@ -25,39 +26,45 @@ void emit_hvm_text(FILE* in, FILE* out) {
         int opcode;
         char arg1[64] = {0}, arg2[64] = {0}, result[64] = {0};
         if (sscanf(line, "%d %63s %63s -> %63s", &opcode, arg1, arg2, result) >= 1) {
+            // Check config for symbolic expansion and verbosity
+            if (config.symbolic_expansion_enabled) {
+                // Add symbolic expansion if enabled (future implementation)
+                // e.g., replace arguments with symbolic names
+            }
+            
             switch (opcode) {
                 case IR_NOP:
-                    fprintf(out, "; NOP\n");
+                    if (config.verbosity_level >= 2) fprintf(out, "; NOP\n");
                     break;
                 case IR_LOAD:
-                    fprintf(out, "LOAD %s -> %s\n", arg1, result);
+                    if (config.verbosity_level >= 1) fprintf(out, "LOAD %s -> %s\n", arg1, result);
                     break;
                 case IR_STORE:
-                    fprintf(out, "STORE %s -> %s\n", arg1, result);
+                    if (config.verbosity_level >= 1) fprintf(out, "STORE %s -> %s\n", arg1, result);
                     break;
                 case IR_ADD:
-                    fprintf(out, "ADD %s %s -> %s\n", arg1, arg2, result);
+                    if (config.verbosity_level >= 1) fprintf(out, "ADD %s %s -> %s\n", arg1, arg2, result);
                     break;
                 case IR_SUB:
-                    fprintf(out, "SUB %s %s -> %s\n", arg1, arg2, result);
+                    if (config.verbosity_level >= 1) fprintf(out, "SUB %s %s -> %s\n", arg1, arg2, result);
                     break;
                 case IR_MUL:
-                    fprintf(out, "MUL %s %s -> %s\n", arg1, arg2, result);
+                    if (config.verbosity_level >= 1) fprintf(out, "MUL %s %s -> %s\n", arg1, arg2, result);
                     break;
                 case IR_DIV:
-                    fprintf(out, "DIV %s %s -> %s\n", arg1, arg2, result);
+                    if (config.verbosity_level >= 1) fprintf(out, "DIV %s %s -> %s\n", arg1, arg2, result);
                     break;
                 case IR_RETURN:
-                    fprintf(out, "RETURN %s\n", arg1);
+                    if (config.verbosity_level >= 1) fprintf(out, "RETURN %s\n", arg1);
                     break;
                 case IR_LABEL:
-                    fprintf(out, "LABEL %s:\n", result);
+                    if (config.verbosity_level >= 2) fprintf(out, "LABEL %s:\n", result);
                     break;
                 case IR_JUMP:
-                    fprintf(out, "JUMP %s\n", result);
+                    if (config.verbosity_level >= 2) fprintf(out, "JUMP %s\n", result);
                     break;
                 case IR_JUMP_IF:
-                    fprintf(out, "JUMP_IF %s -> %s\n", arg1, result);
+                    if (config.verbosity_level >= 2) fprintf(out, "JUMP_IF %s -> %s\n", arg1, result);
                     break;
                 default:
                     fprintf(out, "; UNKNOWN OPCODE %d\n", opcode);
@@ -83,15 +90,15 @@ void emit_hvm_binary(FILE* in, FILE* out) {
 }
 
 @d Emit HVM Dispatcher
-void emit_hvm(const char* ir_file, const char* out_file, bool binary_mode) {
+void emit_hvm(const char* ir_file, const char* out_file) {
     FILE* in = fopen(ir_file, "r");
-    FILE* out = fopen(out_file, binary_mode ? "wb" : "w");
+    FILE* out = fopen(out_file, config.hvm_binary_mode ? "wb" : "w");  // Use config for binary mode
     if (!in || !out) {
         fprintf(stderr, "[Error] Could not open IR or HVM output file.\n");
         return;
     }
 
-    if (binary_mode) {
+    if (config.hvm_binary_mode) {
         emit_hvm_binary(in, out);
     } else {
         emit_hvm_text(in, out);
@@ -100,14 +107,14 @@ void emit_hvm(const char* ir_file, const char* out_file, bool binary_mode) {
     fclose(in);
     fclose(out);
 
-    printf("[emit_hvm] HVM output written to %s (%s mode)\n", out_file, binary_mode ? "binary" : "text");
+    printf("[emit_hvm] HVM output written to %s (%s mode)\n", out_file, config.hvm_binary_mode ? "binary" : "text");
 }
 
 @d Unit Test Entry (Optional)
 #ifdef TEST_HVM_EMIT
 int main(int argc, char** argv) {
     bool binary = argc > 1 && strcmp(argv[1], "--binary") == 0;
-    emit_hvm("output.ir", binary ? "test.hvm.bin" : "test.hvm", binary);
+    emit_hvm("output.ir", binary ? "test.hvm.bin" : "test.hvm");
     return 0;
 }
 #endif
