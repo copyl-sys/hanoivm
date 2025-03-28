@@ -31,7 +31,8 @@ void emit_hvm_text(FILE* in, FILE* out) {
                 // Add symbolic expansion if enabled (future implementation)
                 // e.g., replace arguments with symbolic names
             }
-            
+
+            // Print based on verbosity level
             switch (opcode) {
                 case IR_NOP:
                     if (config.verbosity_level >= 2) fprintf(out, "; NOP\n");
