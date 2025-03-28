@@ -15,7 +15,7 @@ Included Features:
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h> // For boolean type support
-#include "config.cweb"   // Configuration constants (e.g., stack size, thresholds)
+#include "config.h"   // Configuration constants (e.g., stack size, thresholds)
 #include "ai_hook.h"     // AI integration for stack monitoring and logging
 #include "hvm_loader.h"  // Loader for the HanoiVM context
 #include "t81types.h"    // T81-specific types such as uint81_t
