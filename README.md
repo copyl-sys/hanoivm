@@ -13,7 +13,13 @@ Designed for research, language development, and future ternary hardware acceler
 ## 🔍 Core Features
 
 - 🔢 **Ternary Operand Architecture**:
-  - Supports `uint81_t`, `T243BigInt`, and `T729Tensor` data types
+  - Supports `uint81_t`, `T243BigInt`, `T729Tensor` data types
+  - Supports advanced ternary data types including:
+    - **T81**: `T81BigInt`, `T81Float`, `T81Fraction`, `T81Matrix`, `T81Vector`, `T81Quaternion`, `T81Polynomial`, `T81Tensor`, `T81Graph`, `T81Opcode`
+    - **T243**: `T243MarkovMatrix`, `T243StateVector`, `T243Symbol`, `T243Circuit`, `T243MorphicTag`, `T243SymbolicVector`
+    - **T729**: `T729HoloTensor`, `T729MindMap`, `T729EntropyBlob`, `T729LogicGraph`, `T729Intent`
+  - **Cross-Base Types**: `T81T243Transition`, `T243T729SymbolicLink`, `T81T729Interaction`
+  
 - 🌀 **Recursive Stack Tiering**:
   - Auto-promotes through `T81 → T243 → T729` based on depth/entropy
 - 🧠 **Symbolic AI Execution**:
@@ -36,7 +42,6 @@ Designed for research, language development, and future ternary hardware acceler
   - Disassembles `.hvm` with symbolic introspection
   - CI-compatible tests + kernel-mode driver for system-level validation
 
-
 ---
 
 ## 📦 New: T81Lang Compiler Stack
@@ -49,6 +54,7 @@ The T81Lang toolchain is now fully integrated with HanoiVM:
 - ✅ **.hvm Emitter** for virtual machine execution
 - ✅ **HVM Interpreter** with register-based runtime
 - ✅ **CLI Compiler** via `t81lang_compiler.cweb`
+
 ---
 
 ## 🗂️ Repository Overview
