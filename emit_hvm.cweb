@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 @d IRType Codes
 #define IR_NOP      0
@@ -17,21 +18,17 @@
 #define IR_JUMP     9
 #define IR_JUMP_IF 10
 
-@d Emit HVM Binary Format
-void emit_hvm(const char* ir_file, const char* out_file) {
-    FILE* in = fopen(ir_file, "r");
-    FILE* out = fopen(out_file, "w");
-    if (!in || !out) {
-        fprintf(stderr, "[Error] Could not open IR or HVM output file.\n");
-        return;
-    }
-
+@d Emit HVM Text Format
+void emit_hvm_text(FILE* in, FILE* out) {
     char line[256];
     while (fgets(line, sizeof(line), in)) {
         int opcode;
         char arg1[64] = {0}, arg2[64] = {0}, result[64] = {0};
         if (sscanf(line, "%d %63s %63s -> %63s", &opcode, arg1, arg2, result) >= 1) {
             switch (opcode) {
+                case IR_NOP:
+                    fprintf(out, "; NOP\n");
+                    break;
                 case IR_LOAD:
                     fprintf(out, "LOAD %s -> %s\n", arg1, result);
                     break;
@@ -68,17 +65,49 @@ void emit_hvm(const char* ir_file, const char* out_file) {
             }
         }
     }
+}
+
+@d Emit HVM Binary Format
+void emit_hvm_binary(FILE* in, FILE* out) {
+    char line[256];
+    while (fgets(line, sizeof(line), in)) {
+        int opcode;
+        char arg1[64] = {0}, arg2[64] = {0}, result[64] = {0};
+        if (sscanf(line, "%d %63s %63s -> %63s", &opcode, arg1, arg2, result) >= 1) {
+            fwrite(&opcode, sizeof(int), 1, out);
+            fwrite(arg1, sizeof(char), 64, out);
+            fwrite(arg2, sizeof(char), 64, out);
+            fwrite(result, sizeof(char), 64, out);
+        }
+    }
+}
+
+@d Emit HVM Dispatcher
+void emit_hvm(const char* ir_file, const char* out_file, bool binary_mode) {
+    FILE* in = fopen(ir_file, "r");
+    FILE* out = fopen(out_file, binary_mode ? "wb" : "w");
+    if (!in || !out) {
+        fprintf(stderr, "[Error] Could not open IR or HVM output file.\n");
+        return;
+    }
+
+    if (binary_mode) {
+        emit_hvm_binary(in, out);
+    } else {
+        emit_hvm_text(in, out);
+    }
 
     fclose(in);
     fclose(out);
 
-    printf("[emit_hvm] HVM output written to %s\n", out_file);
+    printf("[emit_hvm] HVM output written to %s (%s mode)\n", out_file, binary_mode ? "binary" : "text");
 }
 
 @d Unit Test Entry (Optional)
 #ifdef TEST_HVM_EMIT
-int main() {
-    emit_hvm("output.ir", "test.hvm");
+int main(int argc, char** argv) {
+    bool binary = argc > 1 && strcmp(argv[1], "--binary") == 0;
+    emit_hvm("output.ir", binary ? "test.hvm.bin" : "test.hvm", binary);
     return 0;
 }
 #endif
