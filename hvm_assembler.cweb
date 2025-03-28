@@ -1,7 +1,7 @@
 @* hvm_assembler.cweb - Assembles Ternary VM Assembly into .hvm Bytecode (Enhanced Version)
    This module converts human-readable `.asm` source code for the HanoiVM into binary `.hvm` bytecode.
    Supported instructions include:
-     - NOP, PUSH, POP, ADD, RECURSE_FACT, RECURSE_FIB, etc.
+     - NOP, PUSH, POP, ADD, RECURSE_FACT, RECURSE_FIB, RECURSE_DISPATCH, RECURSE_ENTROPY, etc.
    Enhancements in this version:
      - Verbose debugging (via VERBOSE_ASM environment variable)
      - Robust error checking on token parsing and file writes.
@@ -29,8 +29,10 @@ typedef enum {
     OP_SWAP  = 0x08,
     OP_DROP  = 0x09,
     /* Extended opcodes for recursion */
-    OP_RECURSE_FACT = 0xF1,
-    OP_RECURSE_FIB  = 0xF2,
+    OP_RECURSE_FACT     = 0xF1,
+    OP_RECURSE_FIB      = 0xF2,
+    OP_RECURSE_DISPATCH = 0x1E,
+    OP_RECURSE_ENTROPY  = 0x1F,
     OP_HALT  = 0xFF
 } Opcode;
 
@@ -47,6 +49,8 @@ uint8_t parse_opcode(const char* mnemonic) {
     if (strcmp(mnemonic, "DROP") == 0) return OP_DROP;
     if (strcmp(mnemonic, "RECURSE_FACT") == 0) return OP_RECURSE_FACT;
     if (strcmp(mnemonic, "RECURSE_FIB") == 0) return OP_RECURSE_FIB;
+    if (strcmp(mnemonic, "RECURSE_DISPATCH") == 0) return OP_RECURSE_DISPATCH;
+    if (strcmp(mnemonic, "RECURSE_ENTROPY") == 0) return OP_RECURSE_ENTROPY;
     if (strcmp(mnemonic, "HALT") == 0) return OP_HALT;
     return 0xFF; // Unknown opcode
 }
@@ -103,8 +107,6 @@ void assemble_line(char* line) {
             fprintf(stderr, "[T81ASM] Error: Code buffer overflow during PUSH operand write\n");
             exit(1);
         }
-        /* Write operand a, b, c as 4 bytes each */
-        fwrite(&a, 4, 1, stdout); // for debugging; remove these writes to stdout in production
         /* Instead, copy bytes to our code buffer */
         memcpy(code + code_size, &a, 4);
         code_size += 4;
