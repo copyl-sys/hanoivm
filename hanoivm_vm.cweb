@@ -12,7 +12,7 @@ This file defines the main execution loop for HanoiVM:
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "config.h"
+#include "config.cweb"  // Include centralized config
 #include "t81_stack.h"
 #include "hvm_loader.h"
 #include "ai_hook.h"
@@ -72,7 +72,8 @@ int vm_run_max_steps(HVMContext* ctx, int max_steps) {
         axion_signal(opcode);
         τ[AXION_REGISTER_INDEX] = axion_get_optimization();
 
-        if (ENABLE_DEBUG_MODE) {
+        // Check if debug mode is enabled in config
+        if (config.enable_debug_mode) {
             char trace[128];
             snprintf(trace, sizeof(trace), "[TRACE] OP[%s] at IP=%zu", opcode_name(opcode), ctx->ip - 1);
             axion_log(trace);
@@ -83,6 +84,7 @@ int vm_run_max_steps(HVMContext* ctx, int max_steps) {
         PROMOTE_T729(ctx);
         DEMOTE_STACK(ctx);
 
+        // Adjust operation execution based on config
         switch (opcode) {
             case OP_PROMOTE_T243: promote_to_t243(ctx); break;
             case OP_PROMOTE_T729: promote_to_t729(ctx); break;
@@ -206,20 +208,18 @@ int vm_run_max_steps(HVMContext* ctx, int max_steps) {
 
     return steps;
 }
-@#
 
 @<VM Execution Function@>=
 void execute_vm(void) {
     HVMContext ctx = {
         .ip = 0, .halted = 0,
         .recursion_depth = 0,
-        .mode = MODE_T81,
+        .mode = config.ternary_logic_mode == "T243" ? MODE_T243 : (config.ternary_logic_mode == "T729" ? MODE_T729 : MODE_T81),
         .mode_flags = 0,
         .call_depth = 0
     };
     vm_run_max_steps(&ctx, 100000);  // default step limit
 }
-@#
 
 @h VM Public API Header
 #ifndef HANOIVM_VM_H
