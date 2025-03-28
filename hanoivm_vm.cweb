@@ -12,7 +12,7 @@ This file defines the main execution loop for HanoiVM:
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "config.cweb"  // Include centralized config
+#include "config.h"  // Include centralized config
 #include "t81_stack.h"
 #include "hvm_loader.h"
 #include "ai_hook.h"
