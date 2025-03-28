@@ -16,6 +16,12 @@
   - CUDA backend (`cuda_handle_request.cu`) fully operational with symbolic tensor dispatch
   - ROCm backend (`gaia_handle_request.cweb`) mirrors CUDA FFT & symbolic macro capabilities
 
+- **🧠 Symbolic AI & Advanced Data Types**
+  - **T243MarkovMatrix** for symbolic state transitions
+  - **T729HoloTensor** supporting advanced tensor operations and recursive symbolic computation
+  - **T243SymbolicVector** and **T729Intent** integrated for symbolic AI dispatch and inference
+  - **T729LogicGraph** and **T243AIStateVector** for enhanced logical reasoning and state management
+
 - **🖥️ Developer Tooling & UX**
   - Comprehensive recursion visualization via `FrameSceneBuilder.cweb`
   - JSON schema-defined tier introspection for Project Looking Glass
