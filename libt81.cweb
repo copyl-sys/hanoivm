@@ -1,179 +1,148 @@
 @* libt81.cweb: Base-81 Arithmetic Core
-
 This module implements the foundational data structures and arithmetic operations for
 Base-81 (T81) logic. Each T81 digit encodes 4 ternary digits (trits), and operations
 are optimized for both compact representation and performance. This module is written
 in Rust and wrapped in literate programming format for clarity and documentation.
+@#
 
-@c
-// Import core dependencies
-use std::fmt;
-use std::ops::{Add, Sub, Mul};
+@<Include Dependencies@>=
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "config.cweb"  // Include configuration for runtime flags
 
-/// T81Digit represents a single Base-81 digit (0–80 inclusive).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct T81Digit(pub u8);
+@d Ternary Types and Stack
+@<Ternary AI Stack Types@>=
+typedef enum { TERN_LOW = 0, TERN_MID = 1, TERN_HIGH = 2 } t81_ternary_t;
 
-/// T81Number represents a multi-digit base-81 number, stored little-endian.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct T81Number {
-    pub digits: Vec<T81Digit>, // Least significant digit first
-    pub negative: bool,
+typedef struct {
+    t81_ternary_t value;
+    unsigned char entropy;
+} t81_unit_t;
+
+typedef struct {
+    t81_unit_t stack[TBIN_MAX_SIZE];
+    int pointer;
+} t81_stack_t;
+
+@d Global Variables
+@<Global Variables@>=
+static t81_stack_t axion_stack;
+@#
+
+@d Base-81 Arithmetic Helper Functions
+@<Arithmetic Helper Functions@>=
+/**
+ * Ensure the value is within valid Base-81 digit range.
+ */
+static bool is_valid_t81_digit(uint8_t val) {
+    return val < 81;
 }
 
-impl T81Digit {
-    /// Ensures that the value is within valid Base-81 digit range.
-    pub fn new(val: u8) -> Option<T81Digit> {
-        if val < 81 {
-            Some(T81Digit(val))
-        } else {
-            None
-        }
-    }
-}
-
-impl fmt::Display for T81Number {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut digits = self.digits.iter().rev().map(|d| d.0.to_string()).collect::<Vec<_>>().join(" ");
-        if self.negative {
-            digits = format!("-{}", digits);
-        }
-        write!(f, "{}", digits)
-    }
-}
-
-impl T81Number {
-    /// Creates a new T81Number from a list of digits (little-endian).
-    pub fn from_digits(digits: Vec<T81Digit>, negative: bool) -> Self {
-        T81Number { digits, negative }
-    }
-
-    /// Normalize removes leading zeros.
-    pub fn normalize(&mut self) {
-        while self.digits.len() > 1 && self.digits.last().unwrap().0 == 0 {
-            self.digits.pop();
-        }
-        if self.digits.len() == 1 && self.digits[0].0 == 0 {
-            self.negative = false;
-        }
-    }
-
-    /// Zero value
-    pub fn zero() -> Self {
-        T81Number::from_digits(vec![T81Digit(0)], false)
-    }
-
-    /// One value
-    pub fn one() -> Self {
-        T81Number::from_digits(vec![T81Digit(1)], false)
+static void log_arithmetic_op(const char *op, int a, int b, int result) {
+    if (config.log_level >= 1) {
+        printf("[T81 Arithmetic] %s: %d %s %d = %d\n", op, a, op, b, result);
     }
 }
 
-/// Base-81 addition (no carry optimization).
-impl Add for T81Number {
-    type Output = T81Number;
-
-    fn add(self, other: T81Number) -> T81Number {
-        if self.negative != other.negative {
-            return self - other.negate(); // Subtraction handles sign mismatch
-        }
-
-        let mut result = Vec::new();
-        let mut carry = 0;
-        let max_len = self.digits.len().max(other.digits.len());
-
-        for i in 0..max_len {
-            let a = self.digits.get(i).map_or(0, |d| d.0);
-            let b = other.digits.get(i).map_or(0, |d| d.0);
-            let sum = a + b + carry;
-            result.push(T81Digit(sum % 81));
-            carry = sum / 81;
-        }
-
-        if carry > 0 {
-            result.push(T81Digit(carry));
-        }
-
-        T81Number::from_digits(result, self.negative)
+static void log_error(const char *msg) {
+    if (config.enable_error_handling) {
+        fprintf(stderr, "[T81 Error] %s\n", msg);
     }
 }
 
-/// Subtraction using additive inverse
-impl Sub for T81Number {
-    type Output = T81Number;
-
-    fn sub(self, other: T81Number) -> T81Number {
-        if self.negative != other.negative {
-            return self + other.negate();
-        }
-
-        let mut result = Vec::new();
-        let mut borrow = 0;
-        let mut negative = false;
-
-        // Determine which is larger
-        let (larger, smaller, flip_sign) = if self >= other {
-            (self.clone(), other, false)
-        } else {
-            (other.clone(), self, true)
-        };
-
-        for i in 0..larger.digits.len() {
-            let a = larger.digits[i].0 as i16;
-            let b = smaller.digits.get(i).map_or(0, |d| d.0 as i16);
-            let mut diff = a - b - borrow;
-            if diff < 0 {
-                diff += 81;
-                borrow = 1;
-            } else {
-                borrow = 0;
-            }
-            result.push(T81Digit(diff as u8));
-        }
-
-        let mut final_result = T81Number::from_digits(result, flip_sign ^ self.negative);
-        final_result.normalize();
-        final_result
-    }
+@d Arithmetic Operations
+@<Base-81 Arithmetic Operations@>=
+/**
+ * Base-81 addition with no carry optimization.
+ */
+static int add81(int a, int b) {
+    int result = (a + b) % 81;
+    log_arithmetic_op("add81", a, b, result);
+    return result;
 }
 
-/// Multiply two T81 numbers (naive O(n^2) approach)
-impl Mul for T81Number {
-    type Output = T81Number;
+/**
+ * Base-81 modulo operation.
+ */
+static int mod81(int a, int b) {
+    if (b == 0) {
+        log_error("Division by zero in mod81");
+        return -1;
+    }
+    int result = a % b;
+    log_arithmetic_op("mod81", a, b, result);
+    return result;
+}
 
-    fn mul(self, other: T81Number) -> T81Number {
-        let mut result = vec![T81Digit(0); self.digits.len() + other.digits.len()];
+/**
+ * Base-81 negation.
+ */
+static int neg81(int a) {
+    int result = (81 - a) % 81;
+    log_arithmetic_op("neg81", a, 0, result);
+    return result;
+}
 
-        for (i, &T81Digit(a)) in self.digits.iter().enumerate() {
-            let mut carry = 0;
-            for (j, &T81Digit(b)) in other.digits.iter().enumerate() {
-                let idx = i + j;
-                let prod = a as u16 * b as u16 + result[idx].0 as u16 + carry;
-                result[idx] = T81Digit((prod % 81) as u8);
-                carry = prod / 81;
-            }
+/**
+ * Base-81 comparison.
+ */
+static int cmp81(int a, int b) {
+    if (a < b) return -1;
+    if (a > b) return 1;
+    return 0;
+}
+@#
 
-            if carry > 0 {
-                let idx = i + other.digits.len();
-                result[idx] = T81Digit((result[idx].0 as u16 + carry) as u8);
-            }
+@d T81 Number and Addition
+@<T81Number Struct & Arithmetic@>=
+/**
+ * Base-81 addition for T81 numbers.
+ */
+T81Number add_t81_numbers(T81Number num1, T81Number num2) {
+    // Ensure both numbers are of the same sign for addition.
+    if (num1.negative != num2.negative) {
+        return subtract_t81_numbers(num1, negate_t81_number(num2));  // Handle sign mismatch with subtraction
+    }
+
+    // Add each digit with carry (no carry optimization)
+    int max_len = num1.digits.length > num2.digits.length ? num1.digits.length : num2.digits.length;
+    T81Number result = T81Number::zero();
+
+    for (int i = 0; i < max_len; ++i) {
+        int sum = num1.digits[i].value + num2.digits[i].value;
+        result.digits[i].value = sum % 81;
+    }
+
+    return result;
+}
+
+/**
+ * Base-81 subtraction for T81 numbers.
+ */
+T81Number subtract_t81_numbers(T81Number num1, T81Number num2) {
+    // Similar to add, but handle borrow operations.
+}
+@#
+
+@d Base-81 Multiplication
+@<Multiplication for T81@>=
+T81Number multiply_t81_numbers(T81Number num1, T81Number num2) {
+    // Implementation of multiplication
+    T81Number result = T81Number::zero();
+    int max_len = num1.digits.length + num2.digits.length;
+
+    for (int i = 0; i < num1.digits.length; ++i) {
+        for (int j = 0; j < num2.digits.length; ++j) {
+            result.digits[i + j] = add81(result.digits[i + j], num1.digits[i].value * num2.digits[j].value);
         }
-
-        let mut final_result = T81Number::from_digits(result, self.negative ^ other.negative);
-        final_result.normalize();
-        final_result
     }
-}
 
-impl T81Number {
-    /// Returns the additive inverse
-    pub fn negate(&self) -> T81Number {
-        let mut result = self.clone();
-        result.negative = !result.negative;
-        result
-    }
+    return result;
 }
-@*
-This completes the definition of the Base-81 arithmetic layer. This module serves as the
-foundation of all recursive logic layers in HanoiVM. Higher layers (T243, T729) will
-leverage this for packed symbolic operations.
+@#
+
+@h
+@<Arithmetic Helper Functions@>
+@#
