@@ -6,7 +6,7 @@ logic structures (T243, T729) including symbolic AI logic via T729Intent,
 state machines with T243StateVector, semantic graphs with T729MindMap, and 
 complex transformations like FFT on ternary holotensors. Header files are 
 embedded for later extraction using CWEAVE/CTANGLE.
-*@
+@#
 
 @*== Header: t243_ops.h ==*@
 @h
@@ -236,7 +236,7 @@ uint81_t evaluate_extended_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext*
             char out[8] = {0};
             t243_symbol_from_id(t81_to_int(a), &sym);
             t243_symbol_to_string(&sym, out, sizeof(out));
-            printf("SYM[%d] → %s\n", sym.symbol_id, out);
+            if (config.enable_debug_mode) printf("SYM[%d] → %s\n", sym.symbol_id, out);
             return t81_from_int(sym.symbol_id);
         }
 
@@ -278,7 +278,7 @@ uint81_t evaluate_extended_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext*
             char json[512];
             t729_entropy_snapshot(&blob, ctx);
             t729_entropy_dump(&blob, json, sizeof(json));
-            printf("Entropy Snapshot: %s\n", json);
+            if (config.enable_debug_mode) printf("Entropy Snapshot: %s\n", json);
             return t81_from_int(1);
         }
 
@@ -287,7 +287,12 @@ uint81_t evaluate_extended_opcode(Opcode op, uint81_t a, uint81_t b, HVMContext*
             return t81_from_int(1);
 
         default:
-            fprintf(stderr, "[EXT] Unknown extended opcode 0x%02X\n", op);
+            if (config.enable_debug_mode) {
+                fprintf(stderr, "[EXT] Unknown extended opcode 0x%02X\n", op);
+            }
             return (uint81_t){0};
     }
 }
+@*
+This completes the integration of T243 and T729 logical extensions with dynamic configuration control.
+@#
