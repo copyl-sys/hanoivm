@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "config.cweb"  // Include configuration for runtime flags
 
 @d External Modules
 extern void set_source(const char* code);
@@ -60,20 +61,16 @@ void print_timestamp() {
 @d Compiler Pipeline
 int main(int argc, char** argv) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <source-file.t81> [--emit-ir] [--no-analysis] [--emit-hvm]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <source-file.t81>\n", argv[0]);
         return 1;
     }
 
-    int emit_ir_flag = 0;
-    int skip_analysis = 0;
-    int emit_hvm_flag = 0;
+    // Load configuration flags from config.cweb
+    int emit_ir_flag = config.emit_ir_enabled;
+    int skip_analysis = config.skip_analysis;
+    int emit_hvm_flag = config.emit_hvm_enabled;
 
-    for (int i = 2; i < argc; ++i) {
-        if (strcmp(argv[i], "--emit-ir") == 0) emit_ir_flag = 1;
-        if (strcmp(argv[i], "--no-analysis") == 0) skip_analysis = 1;
-        if (strcmp(argv[i], "--emit-hvm") == 0) emit_hvm_flag = 1;
-    }
-
+    // Open the source file
     FILE* f = fopen(argv[1], "r");
     if (!f) {
         perror("Error opening file");
@@ -84,6 +81,7 @@ int main(int argc, char** argv) {
     long len = ftell(f);
     rewind(f);
 
+    // Read the file content into memory
     char* code = malloc(len + 1);
     fread(code, 1, len, f);
     code[len] = '\0';
@@ -92,28 +90,36 @@ int main(int argc, char** argv) {
     print_banner("T81Lang Compiler");
     print_timestamp();
 
+    // Set the source code and start the tokenizer
     set_source(code);
     advance_token();
+
+    // Parse the program into an AST
     ASTNode* ast = parse_program();
 
+    // Semantic analysis (optional, controlled by config)
     if (!skip_analysis) {
         print_banner("Semantic Analysis");
         analyze_program(ast);
     } else {
-        printf("[Skip] Semantic analysis disabled via CLI.\n");
+        printf("[Skip] Semantic analysis disabled via configuration.\n");
     }
 
+    // IR Generation
     print_banner("IR Generation");
     generate_program(ast);
 
+    // Emit IR if enabled
     if (emit_ir_flag) {
         print_banner("IR Output");
         print_ir();
     }
 
+    // Export IR to file
     export_ir("output.ir");
     printf("[Output] IR written to output.ir\n");
 
+    // Emit HVM if enabled
     if (emit_hvm_flag) {
         print_banner("HanoiVM Emission");
         emit_hvm("output.ir", "output.hvm");
