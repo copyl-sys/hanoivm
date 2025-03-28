@@ -1,0 +1,37 @@
+@* resource_management.cweb | Centralized Resource Management for HanoiVM *@
+
+This module handles the allocation and management of system resources such as memory, CPU affinity, and GPU.
+It uses configuration settings defined in `config.cweb` to ensure that resources are allocated according to the system's configuration.
+
+@d Include Dependencies
+#include "config.h"    // Use configuration settings
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sched.h>
+
+@d Resource Allocation Function
+void allocate_resources() {
+    // Allocate memory based on configuration
+    printf("[Resource Management] Allocating %d MB of memory\n", config.memory_allocation);
+    // (Optional) Implement memory allocation logic here, e.g., using malloc, mmap, etc.
+
+    // Set CPU affinity based on config
+    printf("[Resource Management] Setting CPU Affinity: %s\n", config.cpu_affinity);
+    // (Optional) Implement CPU affinity settings, e.g., using `sched_setaffinity` in Linux
+    // This is just a placeholder; actual implementation may depend on the OS and environment.
+
+    // GPU Allocation logic (if applicable)
+    if (config.enable_gpu_support) {
+        printf("[Resource Management] Allocating %d MB of GPU memory\n", config.gpu_allocation);
+        // (Optional) Implement GPU resource allocation logic, possibly via CUDA or OpenCL.
+    }
+}
+
+@d Resource Cleanup Function
+void cleanup_resources() {
+    // Cleanup resources when done
+    printf("[Resource Management] Cleaning up allocated resources\n");
+    // (Optional) Implement resource cleanup logic here
+}
