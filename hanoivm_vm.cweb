@@ -63,6 +63,90 @@ uint81_t fetch_operand(const uint8_t* buf) {
 #define OP_RECURSE_ENTROPY   0x1F
 @#
 
+@<Opcode Execution Functions@>=
+
+void handle_promote_t243(HVMContext* ctx) {
+    promote_to_t243(ctx);
+}
+
+void handle_promote_t729(HVMContext* ctx) {
+    promote_to_t729(ctx);
+}
+
+void handle_demote_stack(HVMContext* ctx) {
+    demote_stack(ctx);
+}
+
+void handle_t729_dot() {
+    TernaryHandle b = stack_pop();
+    TernaryHandle a = stack_pop();
+    TernaryHandle r;
+    t729tensor_contract(a, b, &r);
+    stack_push(r);
+}
+
+void handle_t729_print() {
+    TernaryHandle a = stack_pop();
+    printf("[T729] Tensor @ %p\n", a.data);
+    stack_push(a);
+}
+
+void handle_recurse_fact() {
+    T81BigIntHandle n = stack_pop();
+    T81BigIntHandle r;
+    if (t81bigint_factorial_recursive(n, &r) == TRIT_OK)
+        stack_push(r);
+    else
+        fprintf(stderr, "[VM] RECURSE_FACT error\n");
+    t81bigint_free(n);
+}
+
+void handle_recurse_fib() {
+    T81BigIntHandle n = stack_pop();
+    T81BigIntHandle r;
+    if (t81bigint_fibonacci_tail(n, &r) == TRIT_OK)
+        stack_push(r);
+    else
+        fprintf(stderr, "[VM] RECURSE_FIB error\n");
+    t81bigint_free(n);
+}
+
+void handle_push(HVMContext* ctx) {
+    if (ctx->ip + 8 >= hvm_code_size) {
+        fprintf(stderr, "[VM] PUSH operand overflow\n");
+        return;
+    }
+    uint81_t val = fetch_operand(&hvm_code[ctx->ip]);
+    ctx->ip += 9;
+    push81u(val);
+}
+
+void handle_math_operations(int opcode) {
+    switch (opcode) {
+        case OP_ADD: add81(); break;
+        case OP_SUB: sub81(); break;
+        case OP_MUL: mul81(); break;
+        case OP_DIV: div81(); break;
+        case OP_MOD: mod81(); break;
+        case OP_NEG: neg81(); break;
+        case OP_ABS: abs81(); break;
+        case OP_CMP3: cmp381(); break;
+    }
+}
+
+void handle_ai_operations(int opcode, HVMContext* ctx) {
+    if (ctx->ip + 17 >= hvm_code_size) {
+        fprintf(stderr, "[VM] AI op operand overflow\n");
+        return;
+    }
+    uint81_t a = fetch_operand(&hvm_code[ctx->ip]);
+    uint81_t b = fetch_operand(&hvm_code[ctx->ip + 9]);
+    ctx->ip += 18;
+    uint81_t result = evaluate_opcode(opcode, a, b, ctx);
+    push81u(result);
+}
+@#
+
 @<Opcode Execution Helper@>=
 int vm_run_max_steps(HVMContext* ctx, int max_steps) {
     t81_vm_init();
@@ -84,128 +168,30 @@ int vm_run_max_steps(HVMContext* ctx, int max_steps) {
         PROMOTE_T729(ctx);
         DEMOTE_STACK(ctx);
 
-        // Adjust operation execution based on config
+        // Execute operation based on opcode
         switch (opcode) {
-            case OP_PROMOTE_T243: promote_to_t243(ctx); break;
-            case OP_PROMOTE_T729: promote_to_t729(ctx); break;
+            case OP_PROMOTE_T243: handle_promote_t243(ctx); break;
+            case OP_PROMOTE_T729: handle_promote_t729(ctx); break;
             case OP_DEMOTE_T243:
-            case OP_DEMOTE_T81: demote_stack(ctx); break;
+            case OP_DEMOTE_T81: handle_demote_stack(ctx); break;
 
-            case OP_T729_DOT: {
-                TernaryHandle b = stack_pop();
-                TernaryHandle a = stack_pop();
-                TernaryHandle r;
-                t729tensor_contract(a, b, &r);
-                stack_push(r);
-                break;
-            }
-
-            case OP_T729_PRINT: {
-                TernaryHandle a = stack_pop();
-                printf("[T729] Tensor @ %p\n", a.data);
-                stack_push(a);
-                break;
-            }
-
-            case OP_RECURSE_FACT: {
-                T81BigIntHandle n = stack_pop();
-                T81BigIntHandle r;
-                if (t81bigint_factorial_recursive(n, &r) == TRIT_OK)
-                    stack_push(r);
-                else
-                    fprintf(stderr, "[VM] RECURSE_FACT error\n");
-                t81bigint_free(n);
-                break;
-            }
-
-            case OP_RECURSE_FIB: {
-                T81BigIntHandle n = stack_pop();
-                T81BigIntHandle r;
-                if (t81bigint_fibonacci_tail(n, &r) == TRIT_OK)
-                    stack_push(r);
-                else
-                    fprintf(stderr, "[VM] RECURSE_FIB error\n");
-                t81bigint_free(n);
-                break;
-            }
-
-            case OP_RECURSE_DISPATCH:
-                dispatch_recursive_symbolic();
-                break;
-
-            case OP_RECURSE_ENTROPY:
-                dispatch_entropy_recursive();
-                break;
-
+            case OP_T729_DOT: handle_t729_dot(); break;
+            case OP_T729_PRINT: handle_t729_print(); break;
+            case OP_RECURSE_FACT: handle_recurse_fact(); break;
+            case OP_RECURSE_FIB: handle_recurse_fib(); break;
+            case OP_RECURSE_DISPATCH: dispatch_recursive_symbolic(); break;
+            case OP_RECURSE_ENTROPY: dispatch_entropy_recursive(); break;
             case OP_NOP: break;
-
-            case OP_PUSH: {
-                if (ctx->ip + 8 >= hvm_code_size) {
-                    fprintf(stderr, "[VM] PUSH operand overflow\n"); return steps;
-                }
-                uint81_t val = fetch_operand(&hvm_code[ctx->ip]);
-                ctx->ip += 9;
-                push81u(val);
-                break;
-            }
-
-            case OP_ADD: add81(); break;
-            case OP_SUB: sub81(); break;
-            case OP_MUL: mul81(); break;
-            case OP_DIV: div81(); break;
-            case OP_MOD: mod81(); break;
-            case OP_NEG: neg81(); break;
-            case OP_ABS: abs81(); break;
-            case OP_CMP3: cmp381(); break;
-
-            case OP_TNN_ACCUM:
-            case OP_T81_MATMUL: {
-                if (ctx->ip + 17 >= hvm_code_size) {
-                    fprintf(stderr, "[VM] AI op operand overflow\n"); return steps;
-                }
-                uint81_t a = fetch_operand(&hvm_code[ctx->ip]);
-                uint81_t b = fetch_operand(&hvm_code[ctx->ip + 9]);
-                ctx->ip += 18;
-                uint81_t result = evaluate_opcode(opcode, a, b, ctx);
-                push81u(result);
-                break;
-            }
-
-            case OP_T243_ADD:
-            case OP_T243_MUL: {
-                TernaryHandle b = stack_pop();
-                TernaryHandle a = stack_pop();
-                TernaryHandle r;
-                if (opcode == OP_T243_ADD)
-                    t243bigint_add(a, b, &r);
-                else
-                    t243bigint_mul(a, b, &r);
-                stack_push(r);
-                break;
-            }
-
-            case OP_T243_PRINT: {
-                TernaryHandle a = stack_pop();
-                char* str;
-                t243bigint_to_string(a, &str);
-                printf("[T243] %s\n", str);
-                free(str);
-                stack_push(a);
-                break;
-            }
-
-            case OP_HALT:
-                ctx->halted = 1;
-                break;
-
+            case OP_PUSH: handle_push(ctx); break;
             default:
-                fprintf(stderr, "[VM] Unknown opcode 0x%02X @IP=%zu\n", opcode, ctx->ip - 1);
-                return steps;
+                handle_math_operations(opcode);
+                if (opcode == OP_TNN_ACCUM || opcode == OP_T81_MATMUL) {
+                    handle_ai_operations(opcode, ctx);
+                }
+                break;
         }
-
         steps++;
     }
-
     return steps;
 }
 
