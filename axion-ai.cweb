@@ -2,7 +2,9 @@
 This module provides an AI kernel layer for the Axion platform.
 It supports a ternary AI stack, an NLP interface for runtime commands,
 and features snapshot/rollback for state recovery.
-@c
+@#
+
+@<Include Dependencies@>=
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -14,10 +16,12 @@ and features snapshot/rollback for state recovery.
 #include <linux/random.h>
 #include <linux/string.h>
 #include <linux/time.h>
-@#
+#include "config.cweb"  // Include configuration for runtime flags
 
 #define AXION_NAME "axion-ai"
-#define TBIN_MAX_SIZE 729
+
+// Dynamic stack size from config.cweb
+#define TBIN_MAX_SIZE config.ternary_stack_size
 
 @d Ternary Types and Stack
 @<Ternary AI Stack Types@>=
@@ -47,25 +51,31 @@ static void take_snapshot(void) {
 }
 
 static void rollback_if_anomalous(void) {
-    memcpy(&axion_stack, &snapshot_stack, sizeof(t81_stack_t));
-    pr_warn("%s: anomaly detected, rolled back\n", AXION_NAME);
+    if (config.enable_error_handling) {
+        memcpy(&axion_stack, &snapshot_stack, sizeof(t81_stack_t));
+        pr_warn("%s: anomaly detected, rolled back\n", AXION_NAME);
+    }
 }
+@#
 
 @d Stack Operations
 @<Stack Operations@>=
 static int axion_stack_push(t81_unit_t unit) {
-    if (axion_stack.pointer >= TBIN_MAX_SIZE)
+    if (config.safe_stack_enabled && axion_stack.pointer >= TBIN_MAX_SIZE)
         return -ENOMEM;
     axion_stack.stack[axion_stack.pointer++] = unit;
+    if (config.log_level >= 2) axion_log("[Stack Push] Value pushed to stack");
     return 0;
 }
 
 static int axion_stack_pop(t81_unit_t *unit) {
-    if (axion_stack.pointer <= 0)
+    if (config.safe_stack_enabled && axion_stack.pointer <= 0)
         return -EINVAL;
     *unit = axion_stack.stack[--axion_stack.pointer];
+    if (config.log_level >= 2) axion_log("[Stack Pop] Value popped from stack");
     return 0;
 }
+@#
 
 @d Execution Engine
 @<TBIN Execution Logic@>=
@@ -79,7 +89,7 @@ static void axion_tbin_execute(void) {
         result.value = (op1.value + op2.value) % 3;
         result.entropy = (op1.entropy ^ op2.entropy) ^ get_random_int();
 
-        if (result.entropy > 0xF0) {
+        if (result.entropy > 0xF0 && config.enable_error_handling) {
             rollback_if_anomalous();
             break;
         }
